@@ -36,13 +36,13 @@
     </div>
 
     <!-- Main Content Wrapper (Overlapping the red header) -->
-    <div class="bg-slate-50 md:bg-transparent rounded-t-3xl -mt-8 relative z-20 px-4 md:px-8">
+    <div class="bg-white md:bg-white rounded-t-3xl md:rounded-3xl -mt-8 md:-mt-12 relative z-20 px-5 md:px-8 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.05)] md:shadow-lg min-h-[500px] w-full mx-auto md:border md:border-slate-100 pb-10">
         
         <!-- Stats Grid for Customer -->
-        <div class="grid grid-cols-2 gap-4 mb-8 -translate-y-6">
+        <div class="grid grid-cols-2 gap-4 mb-8 -translate-y-6 md:mt-12 md:-translate-y-0 pt-6">
             <!-- Active Cards -->
             <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
+                <div class="w-10 h-10 rounded-xl bg-white border border-slate-100 text-emerald-500 flex items-center justify-center shrink-0 shadow-sm">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path></svg>
                 </div>
                 <div class="flex flex-col">
@@ -53,7 +53,7 @@
 
             <!-- Rewards Redeemed -->
             <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center shrink-0">
+                <div class="w-10 h-10 rounded-xl bg-white border border-slate-100 text-blue-500 flex items-center justify-center shrink-0 shadow-sm">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"></path></svg>
                 </div>
                 <div class="flex flex-col">

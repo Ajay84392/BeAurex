@@ -40,10 +40,12 @@
 <body class="bg-[#f1f5f9] font-sans antialiased text-[#0f172a] h-[100dvh] flex overflow-hidden" x-data="{ logoutAdminModal: false, sidebarOpen: false }">
 
     <!-- Mobile Sidebar Overlay -->
-    <div x-show="sidebarOpen" class="fixed inset-0 z-40 bg-black/50 md:hidden" style="display: none;" @click="sidebarOpen = false"></div>
+    <div x-show="sidebarOpen" class="fixed inset-0 z-40 bg-black/50 md:hidden" style="display: none;"
+        @click="sidebarOpen = false"></div>
 
     <!-- Sidebar -->
-    <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed md:static inset-y-0 left-0 w-[240px] bg-[#b00000] text-white flex flex-col h-full overflow-y-auto shadow-2xl flex-shrink-0 z-50 transform md:translate-x-0 transition-transform duration-200 ease-in-out">
+    <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+        class="fixed md:static inset-y-0 left-0 w-[240px] bg-[#b00000] text-white flex flex-col h-full overflow-y-auto shadow-2xl flex-shrink-0 z-50 transform md:translate-x-0 transition-transform duration-200 ease-in-out">
         <!-- Logo -->
         <div class="h-[72px] flex items-center px-6">
             <div class="flex items-center space-x-3">
@@ -101,37 +103,15 @@
                 <span>Customer</span>
             </a>
 
-            <a href="/admin/offers"
-                class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition {{ request()->is('admin/offer*') ? 'bg-[#8a0000] text-white' : 'text-red-100 hover:bg-[#8a0000] hover:text-white' }}">
-                <svg class="w-5 h-5 {{ request()->is('admin/offer*') ? 'text-white' : '' }}" fill="none"
-                    stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path>
-                </svg>
-                <span>Offers</span>
-            </a>
-
             <a href="/admin/claims"
                 class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition {{ request()->is('admin/claim*') || request()->is('admin/referral*') ? 'bg-[#8a0000] text-white' : 'text-red-100 hover:bg-[#8a0000] hover:text-white' }}">
-                <svg class="w-5 h-5 {{ request()->is('admin/claim*') || request()->is('admin/referral*') ? 'text-white' : '' }}" fill="none"
-                    stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <svg class="w-5 h-5 {{ request()->is('admin/claim*') || request()->is('admin/referral*') ? 'text-white' : '' }}"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round"
                         d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
                     </path>
                 </svg>
-                <span>Claims & Referrals</span>
-            </a>
-
-
-
-            <a href="/admin/coupons"
-                class="flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition {{ request()->is('admin/coupon*') ? 'bg-[#8a0000] text-white' : 'text-red-100 hover:bg-[#8a0000] hover:text-white' }}">
-                <svg class="w-5 h-5 {{ request()->is('admin/coupon*') ? 'text-white' : '' }}" fill="none"
-                    stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z">
-                    </path>
-                </svg>
-                <span>Coupons</span>
+                <span>Deals & Coupons</span>
             </a>
 
             <a href="/admin/settings"
@@ -162,9 +142,11 @@
     <main class="flex-1 flex flex-col h-full bg-[#f1f5f9] overflow-hidden">
 
         <!-- Topbar -->
-        <header class="h-[72px] bg-white border-b border-[#e2e8f0] flex items-center justify-between px-6 flex-shrink-0 z-30">
+        <header
+            class="h-[72px] bg-white border-b border-[#e2e8f0] flex items-center justify-between px-6 flex-shrink-0 z-30">
             <!-- Mobile Menu / Hamburger -->
-            <button @click="sidebarOpen = true" class="text-[#475569] hover:text-slate-700 focus:outline-none md:hidden">
+            <button @click="sidebarOpen = true"
+                class="text-[#475569] hover:text-slate-700 focus:outline-none md:hidden">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>
                 </svg>
@@ -188,11 +170,21 @@
                     </div>
 
                     <!-- Dropdown Menu -->
-                    <div x-show="open" style="display: none;" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 py-2 z-50">
-                        <a href="/admin/profile" class="block px-4 py-2 text-sm text-slate-700 hover:bg-[#f1f5f9] hover:text-[#8a0000]">My Profile</a>
-                        <a href="/admin/settings" class="block px-4 py-2 text-sm text-slate-700 hover:bg-[#f1f5f9] hover:text-[#8a0000]">Settings</a>
+                    <div x-show="open" style="display: none;" x-transition:enter="transition ease-out duration-100"
+                        x-transition:enter-start="transform opacity-0 scale-95"
+                        x-transition:enter-end="transform opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-75"
+                        x-transition:leave-start="transform opacity-100 scale-100"
+                        x-transition:leave-end="transform opacity-0 scale-95"
+                        class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 py-2 z-50">
+                        <a href="/admin/profile"
+                            class="block px-4 py-2 text-sm text-slate-700 hover:bg-[#f1f5f9] hover:text-[#8a0000]">My
+                            Profile</a>
+                        <a href="/admin/settings"
+                            class="block px-4 py-2 text-sm text-slate-700 hover:bg-[#f1f5f9] hover:text-[#8a0000]">Settings</a>
                         <div class="border-t border-slate-100 my-1"></div>
-                        <a href="javascript:void(0)" @click.prevent="logoutAdminModal = true" class="block px-4 py-2 text-sm text-[#b00000] hover:bg-red-50">Logout</a>
+                        <a href="javascript:void(0)" @click.prevent="logoutAdminModal = true"
+                            class="block px-4 py-2 text-sm text-[#b00000] hover:bg-red-50">Logout</a>
                     </div>
                 </div>
             </div>
@@ -204,18 +196,30 @@
     </main>
 
     <!-- Logout Confirmation Modal Overlay -->
-    <div x-show="logoutAdminModal" style="display: none;" class="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
-        <div class="bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] max-w-sm w-full p-6 text-center border border-slate-100 relative" @click.away="logoutAdminModal = false">
+    <div x-show="logoutAdminModal" style="display: none;"
+        class="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4"
+        x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+        <div class="bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] max-w-sm w-full p-6 text-center border border-slate-100 relative"
+            @click.away="logoutAdminModal = false">
             <div class="w-12 h-12 rounded-full bg-red-50 text-[#b00000] mx-auto flex items-center justify-center mb-4">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                    </path>
+                </svg>
             </div>
             <h3 class="text-lg font-bold text-[#0f172a] mb-2">Log Out?</h3>
             <p class="text-sm text-[#475569] mb-6 leading-relaxed">
                 Are you sure you want to log out from your account?
             </p>
             <div class="flex space-x-3">
-                <button @click="logoutAdminModal = false" class="flex-1 py-2.5 bg-white border border-[#8a0000] text-[#8a0000] font-bold rounded-xl hover:bg-red-50 transition">Cancel</button>
-                <a href="/admin/logout" class="flex-1 py-2.5 bg-[#b00000] text-white font-bold rounded-xl hover:bg-[#8a0000] transition block text-center">Log Out</a>
+                <button @click="logoutAdminModal = false"
+                    class="flex-1 py-2.5 bg-white border border-[#8a0000] text-[#8a0000] font-bold rounded-xl hover:bg-red-50 transition">Cancel</button>
+                <a href="/admin/logout"
+                    class="flex-1 py-2.5 bg-[#b00000] text-white font-bold rounded-xl hover:bg-[#8a0000] transition block text-center">Log
+                    Out</a>
             </div>
         </div>
     </div>
@@ -224,7 +228,3 @@
 </body>
 
 </html>
-
-
-
-

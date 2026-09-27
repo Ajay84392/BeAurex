@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+    <link rel="icon" type="image/jpeg" href="{{ asset('favicon.jpg') }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>BeAurex - Turn Every Visit Into A Repeat Customer</title>
@@ -266,132 +267,90 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch max-w-6xl mx-auto">
-
-            <!-- Standard Plan -->
-            <div
-                class="bg-white border border-slate-200/90 p-8 rounded-3xl shadow-sm hover:shadow-md transition flex flex-col justify-between relative pt-10">
-                <div>
-                    <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">Standard Plan</h3>
-
-                    <div class="mt-6 mb-6 pb-6 border-b border-slate-100">
-                        <!-- Cut Price (Strikethrough) -->
-                        <span
-                            class="text-sm font-bold text-slate-400 line-through tracking-wide block mb-1">₹36,000</span>
-                        <div class="text-3xl font-black text-slate-900 tracking-tight">₹24,000 <span
-                                class="text-sm font-medium text-slate-500">/ Year</span></div>
-                        <div class="text-emerald-600 text-xs font-bold mt-2.5 flex items-center">
-                            <span>✨ Equivalent to ₹2,000/month</span>
+            @if(isset($plans) && $plans->count() > 0)
+                @foreach($plans as $plan)
+                    @php
+                        $features = json_decode($plan->features) ?? [];
+                    @endphp
+                    
+                    @if(strtolower($plan->type) === 'professional')
+                        <!-- Professional Plan (MOST POPULAR HIGHLIGHTED) -->
+                        <div class="bg-white border-2 border-red-600 p-8 rounded-3xl shadow-xl relative flex flex-col justify-between pt-12 transform lg:-translate-y-2" {{ $plan->color ? 'style=border-color:'.$plan->color : '' }}>
+                            <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[11px] font-black px-4 py-1 rounded-full uppercase tracking-wider shadow-sm" {{ $plan->color ? 'style=background-color:'.$plan->color : '' }}>Most Popular</span>
+                            <div>
+                                <h3 class="text-xl font-extrabold text-red-600 tracking-tight" {{ $plan->color ? 'style=color:'.$plan->color : '' }}>{{ $plan->name }}</h3>
+                                <div class="mt-6 mb-6 pb-6 border-b border-slate-100">
+                                    @if($plan->detailed_description)
+                                    <span class="text-sm font-bold text-slate-400 line-through tracking-wide block mb-1">₹{{ number_format((float)$plan->detailed_description) }}</span>
+                                    @endif
+                                    <div class="text-3xl font-black text-slate-900 tracking-tight">₹{{ number_format($plan->price) }} <span class="text-sm font-medium text-slate-500">/ {{ $plan->billing_cycle }}</span></div>
+                                    @if($plan->short_description)
+                                    <div class="text-red-600 text-xs font-bold mt-2.5 flex items-center bg-red-50 px-2 py-1 rounded w-fit">
+                                        <span>{{ $plan->short_description }}</span>
+                                    </div>
+                                    @endif
+                                </div>
+                                <ul class="space-y-3.5 text-slate-600 text-sm mb-8">
+                                    @foreach($features as $feature)
+                                        <li class="flex items-start text-xs"><span class="text-emerald-500 font-bold mr-2.5">✓</span> {{ $feature }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                            <a href="{{ $plan->button_link }}" class="text-center w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl transition shadow-md shadow-red-600/10 cursor-pointer text-sm tracking-wide" {{ $plan->color ? 'style=background-color:'.$plan->color.';color:#fff;' : '' }}>{{ $plan->button_text }}</a>
                         </div>
-                    </div>
-
-                    <ul class="space-y-3.5 text-slate-600 text-sm mb-8">
-                        <li class="flex items-start text-xs"><span class="text-emerald-500 font-bold mr-2.5">✓</span>
-                            Customer retention system</li>
-                        <li class="flex items-start text-xs"><span class="text-emerald-500 font-bold mr-2.5">✓</span>
-                            Free account setup</li>
-                        <li class="flex items-start text-xs"><span class="text-emerald-500 font-bold mr-2.5">✓</span>
-                            QR code</li>
-                        <li class="flex items-start text-xs"><span class="text-emerald-500 font-bold mr-2.5">✓</span>
-                            Unlimited QR code scans</li>
-                        <li class="flex items-start text-xs"><span class="text-slate-400 font-bold mr-2.5">✓</span>
-                            Standard Support</li>
-                    </ul>
-                </div>
-                <a href="/merchant/register"
-                    class="text-center w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl transition cursor-pointer text-sm tracking-wide shadow-sm">Start
-                    2-Day Trial</a>
-            </div>
-
-            <!-- Professional Plan (MOST POPULAR HIGHLIGHTED) -->
-            <div
-                class="bg-white border-2 border-red-600 p-8 rounded-3xl shadow-xl relative flex flex-col justify-between pt-12 transform lg:-translate-y-2">
-                <!-- Highlight Badge -->
-                <span
-                    class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[11px] font-black px-4 py-1 rounded-full uppercase tracking-wider shadow-sm">Most
-                    Popular</span>
-
-                <div>
-                    <h3 class="text-xl font-extrabold text-red-600 tracking-tight">Professional Plan</h3>
-
-                    <div class="mt-6 mb-6 pb-6 border-b border-slate-100">
-                        <!-- Cut Price (Strikethrough) -->
-                        <span
-                            class="text-sm font-bold text-slate-400 line-through tracking-wide block mb-1">₹72,000</span>
-                        <div class="text-3xl font-black text-slate-900 tracking-tight">₹49,000 <span
-                                class="text-sm font-medium text-slate-500">/ 3 Years</span></div>
-                        <div
-                            class="text-red-600 text-xs font-bold mt-2.5 flex items-center bg-red-50 px-2 py-1 rounded w-fit">
-                            <span>🔥 Only ₹1,361/month</span>
+                    @elseif(strtolower($plan->type) === 'legacy')
+                        <!-- Legacy Plan (BEST VALUE HIGHLIGHTED) -->
+                        <div class="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-sm text-white relative flex flex-col justify-between pt-12">
+                            <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-slate-700 text-amber-400 text-[11px] font-black px-4 py-1 rounded-full uppercase tracking-wider border border-slate-600">Best Value</span>
+                            <div>
+                                <h3 class="text-xl font-extrabold text-white tracking-tight">{{ $plan->name }}</h3>
+                                <div class="mt-6 mb-6 pb-6 border-b border-slate-800">
+                                    @if($plan->detailed_description)
+                                    <span class="text-sm font-bold text-slate-500 line-through tracking-wide block mb-1">₹{{ number_format((float)$plan->detailed_description) }}</span>
+                                    @endif
+                                    <div class="text-3xl font-black text-amber-400 tracking-tight">₹{{ number_format($plan->price) }}</div>
+                                    <div class="text-slate-300 text-[10px] font-bold uppercase tracking-widest mt-2.5 flex items-center space-x-1.5">
+                                        <span class="bg-slate-800 px-2 py-0.5 rounded text-emerald-400">{{ $plan->billing_cycle }}</span>
+                                        @if($plan->short_description)
+                                        <span class="bg-slate-800 px-2 py-0.5 rounded text-slate-400">{{ $plan->short_description }}</span>
+                                        @endif
+                                    </div>
+                                </div>
+                                <ul class="space-y-3.5 text-slate-300 text-sm mb-8">
+                                    @foreach($features as $feature)
+                                        <li class="flex items-start text-xs"><span class="text-amber-400 font-bold mr-2.5">✓</span> {{ $feature }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                            <a href="{{ $plan->button_link }}" class="text-center w-full bg-white hover:bg-slate-100 text-slate-900 font-bold py-3.5 rounded-xl transition cursor-pointer text-sm tracking-wide" {{ $plan->color ? 'style=background-color:'.$plan->color.';color:#fff;' : '' }}>{{ $plan->button_text }}</a>
                         </div>
-                    </div>
-
-                    <ul class="space-y-3.5 text-slate-600 text-sm mb-8">
-                        <li class="flex items-start text-xs"><span class="text-emerald-500 font-bold mr-2.5">✓</span>
-                            Customer retention system</li>
-                        <li class="flex items-start text-xs"><span class="text-emerald-500 font-bold mr-2.5">✓</span>
-                            Free account setup</li>
-                        <li class="flex items-start text-xs"><span class="text-emerald-500 font-bold mr-2.5">✓</span>
-                            QR code</li>
-                        <li class="flex items-start text-xs"><span class="text-emerald-500 font-bold mr-2.5">✓</span>
-                            Unlimited QR code scans</li>
-                        <li class="flex items-start text-xs font-bold text-slate-900"><span
-                                class="text-emerald-500 mr-2.5">✓</span> Priority Support</li>
-                        <li class="flex items-start text-xs font-bold text-slate-900"><span
-                                class="text-emerald-500 mr-2.5">✓</span> Free Feature Updates</li>
-                    </ul>
-                </div>
-                <a href="/merchant/register"
-                    class="text-center w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl transition shadow-md shadow-red-600/10 cursor-pointer text-sm tracking-wide">Start
-                    2-Day Trial</a>
-            </div>
-
-            <!-- Legacy Plan (BEST VALUE HIGHLIGHTED) -->
-            <div
-                class="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-sm text-white relative flex flex-col justify-between pt-12">
-                <!-- Highlight Badge -->
-                <span
-                    class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-slate-700 text-amber-400 text-[11px] font-black px-4 py-1 rounded-full uppercase tracking-wider border border-slate-600">Best
-                    Value</span>
-
-                <div>
-                    <h3 class="text-xl font-extrabold text-white tracking-tight">Legacy Plan</h3>
-
-                    <div class="mt-6 mb-6 pb-6 border-b border-slate-800">
-                        <!-- Cut Price (Strikethrough) -->
-                        <span
-                            class="text-sm font-bold text-slate-500 line-through tracking-wide block mb-1">₹1,20,000</span>
-                        <div class="text-3xl font-black text-amber-400 tracking-tight">₹75,000</div>
-                        <div
-                            class="text-slate-300 text-[10px] font-bold uppercase tracking-widest mt-2.5 flex items-center space-x-1.5">
-                            <span class="bg-slate-800 px-2 py-0.5 rounded text-emerald-400">One-Time Payment</span>
-                            <span class="bg-slate-800 px-2 py-0.5 rounded text-slate-400">No Renewals</span>
+                    @else
+                        <!-- Standard Plan -->
+                        <div class="bg-white border border-slate-200/90 p-8 rounded-3xl shadow-sm hover:shadow-md transition flex flex-col justify-between relative pt-10">
+                            <div>
+                                <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">{{ $plan->name }}</h3>
+                                <div class="mt-6 mb-6 pb-6 border-b border-slate-100">
+                                    @if($plan->detailed_description)
+                                    <span class="text-sm font-bold text-slate-400 line-through tracking-wide block mb-1">₹{{ number_format((float)$plan->detailed_description) }}</span>
+                                    @endif
+                                    <div class="text-3xl font-black text-slate-900 tracking-tight">₹{{ number_format($plan->price) }} <span class="text-sm font-medium text-slate-500">/ {{ $plan->billing_cycle }}</span></div>
+                                    @if($plan->short_description)
+                                    <div class="text-emerald-600 text-xs font-bold mt-2.5 flex items-center">
+                                        <span>{{ $plan->short_description }}</span>
+                                    </div>
+                                    @endif
+                                </div>
+                                <ul class="space-y-3.5 text-slate-600 text-sm mb-8">
+                                    @foreach($features as $feature)
+                                        <li class="flex items-start text-xs"><span class="text-emerald-500 font-bold mr-2.5">✓</span> {{ $feature }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                            <a href="{{ $plan->button_link }}" class="text-center w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl transition cursor-pointer text-sm tracking-wide shadow-sm" {{ $plan->color ? 'style=background-color:'.$plan->color.';color:#fff;' : '' }}>{{ $plan->button_text }}</a>
                         </div>
-                    </div>
-
-                    <ul class="space-y-3.5 text-slate-300 text-sm mb-8">
-                        <li class="flex items-start text-xs"><span class="text-amber-400 font-bold mr-2.5">✓</span>
-                            Customer retention system</li>
-                        <li class="flex items-start text-xs"><span class="text-amber-400 font-bold mr-2.5">✓</span>
-                            Free account setup</li>
-                        <li class="flex items-start text-xs"><span class="text-amber-400 font-bold mr-2.5">✓</span> QR
-                            code</li>
-                        <li class="flex items-start text-xs"><span class="text-amber-400 font-bold mr-2.5">✓</span>
-                            Unlimited QR code scans</li>
-                        <li class="flex items-start text-xs"><span class="text-amber-400 font-bold mr-2.5">✓</span>
-                            Free Feature Updates</li>
-                        <li class="flex items-start text-xs"><span class="text-amber-400 font-bold mr-2.5">✓</span>
-                            Priority Support</li>
-                        <li class="flex items-start text-xs font-bold text-white"><span
-                                class="text-amber-400 mr-2.5">✓</span> Dedicated Relationship Manager</li>
-                        <li class="flex items-start text-xs font-bold text-white"><span
-                                class="text-amber-400 mr-2.5">✓</span> All Future Updates</li>
-                    </ul>
-                </div>
-                <a href="/merchant/register"
-                    class="text-center w-full bg-white hover:bg-slate-100 text-slate-900 font-bold py-3.5 rounded-xl transition cursor-pointer text-sm tracking-wide">Start
-                    2-Day Trial</a>
-            </div>
-
+                    @endif
+                @endforeach
+            @endif
         </div>
 
         <p class="text-center text-sm text-emerald-600 font-bold mt-12">🎉 Enjoy any plan free for 2 days. No payment

@@ -134,47 +134,6 @@ class MerchantDashboardController extends Controller
     {
         $business = Business::where('user_id', auth()->id())->first() ?? Business::first();
 
-        if ($business && RewardRequest::where('business_id', $business->id)->count() === 0) {
-            RewardRequest::insert([
-                [
-                    'business_id' => $business->id,
-                    'customer_name' => 'Sumit',
-                    'reward_type' => 'Coupon',
-                    'reward_title' => "30%\nOFF",
-                    'reward_description' => '30% OFF on Next Purchase',
-                    'code' => 'LQR-8F4A29',
-                    'status' => 'pending',
-                    'expires_at' => now()->addDays(30),
-                    'created_at' => now()->subHours(2),
-                    'updated_at' => now()->subHours(2),
-                ],
-                [
-                    'business_id' => $business->id,
-                    'customer_name' => 'Ajeet',
-                    'reward_type' => 'FREE',
-                    'reward_title' => 'COFFEE',
-                    'reward_description' => 'Free Coffee on Any Purchase',
-                    'code' => 'LQR-3K9D21',
-                    'status' => 'pending',
-                    'expires_at' => now()->addDays(28),
-                    'created_at' => now()->subHours(4),
-                    'updated_at' => now()->subHours(4),
-                ],
-                [
-                    'business_id' => $business->id,
-                    'customer_name' => 'Pooja',
-                    'reward_type' => 'Coupon',
-                    'reward_title' => "20%\nOFF",
-                    'reward_description' => '20% OFF on Next Purchase',
-                    'code' => 'LQR-7H2M56',
-                    'status' => 'pending',
-                    'expires_at' => now()->addDays(27),
-                    'created_at' => now()->subDays(1),
-                    'updated_at' => now()->subDays(1),
-                ],
-            ]);
-        }
-
         $query = RewardRequest::query();
         if ($business) {
             $query->where('business_id', $business->id);
@@ -190,7 +149,12 @@ class MerchantDashboardController extends Controller
         $requests = collect();
         $programs = collect();
 
-        $requests = $query->where('status', $status)->latest()->get();
+        // Pending: newest request first. Approved/Declined: most recently actioned first
+        if ($status === 'pending') {
+            $requests = $query->where('status', $status)->latest('created_at')->get();
+        } else {
+            $requests = $query->where('status', $status)->latest('updated_at')->get();
+        }
 
         $counts = [
             'pending' => RewardRequest::where('business_id', $business?->id)->where('status', 'pending')->count(),
@@ -206,10 +170,15 @@ class MerchantDashboardController extends Controller
         $rewardRequest = RewardRequest::findOrFail($id);
 
         if (in_array($request->status, ['approved', 'declined'])) {
-            $rewardRequest->update(['status' => $request->status]);
+            $rewardRequest->update([
+                'status' => $request->status,
+                'updated_at' => now(),
+            ]);
         }
 
-        return back()->with('success', 'Reward status updated.');
+        // Redirect to the tab matching the action so the new card appears at the top
+        return redirect()->route('merchant.rewards', ['status' => $request->status])
+            ->with('success', 'Reward status updated.');
     }
 
     public function liveOffers()
@@ -223,34 +192,31 @@ class MerchantDashboardController extends Controller
     public function createOffer()
     {
         $business = Business::where('user_id', auth()->id())->first();
-        $offers = [];
+
+        $existingOffers = [];
         if ($business) {
-            $offers = Offer::where('business_id', $business->id)->get()->map(function ($offer, $index) {
-                // If it's a local file path, add storage prefix
+            $existingOffers = Offer::where('business_id', $business->id)->get()->map(function ($offer) {
                 $img = $offer->image;
-                if ($img && ! str_starts_with($img, 'http')) {
+                if ($img && ! str_starts_with($img, 'http') && ! str_starts_with($img, 'data:')) {
                     $img = asset('storage/'.$img);
                 }
 
                 return [
-                    'id' => $index + 1,
-                    'visits' => $offer->orex_coins,
-                    'expiry' => $offer->expiry ?? '30',
+                    'id' => $offer->id,
                     'title' => $offer->title,
                     'description' => $offer->description,
+                    'visits' => $offer->orex_coins,
+                    'expiry' => $offer->expiry ?? '',
                     'image' => $img,
                 ];
             })->toArray();
         }
 
-        // Add an empty one if none exist
-        if (empty($offers)) {
-            $offers = [
-                ['id' => 1, 'visits' => 10, 'expiry' => '30', 'description' => '', 'image' => null],
-            ];
-        }
+        $offers = [
+            ['id' => 1, 'visits' => 10, 'expiry' => '', 'title' => '', 'description' => '', 'image' => null],
+        ];
 
-        return view('merchant.create-offer', compact('offers'));
+        return view('merchant.create-offer', compact('offers', 'existingOffers'));
     }
 
     public function storeOffer(Request $request)
@@ -273,9 +239,6 @@ class MerchantDashboardController extends Controller
         $rewards = json_decode($request->rewards_json, true);
 
         if (is_array($rewards)) {
-            // Optional: You could wipe old offers if you want to replace them, but for now we'll just delete them to simulate "Saving the Program".
-            Offer::where('business_id', $business->id)->delete();
-
             foreach ($rewards as $reward) {
                 // Only save if title or description is provided
                 if (! empty($reward['title']) || ! empty($reward['description'])) {
@@ -297,19 +260,47 @@ class MerchantDashboardController extends Controller
                         $imagePath = $reward['image'];
                     }
 
-                    Offer::create([
-                        'business_id' => $business->id,
+                    $offerData = [
                         'title' => $reward['title'] ?? '',
                         'description' => $reward['description'] ?? '',
-                        'orex_coins' => (int) ($reward['visits'] ?? 1), // Mapping visits to orex_coins
-                        'expiry' => $reward['expiry'] ?? '30',
-                        'image' => $imagePath,
-                    ]);
+                        'orex_coins' => (int) ($reward['visits'] ?? 1),
+                        'expiry' => $reward['expiry'] ?? null,
+                    ];
+
+                    if ($imagePath) {
+                        $offerData['image'] = $imagePath;
+                    }
+
+                    if (! empty($reward['id']) && is_numeric($reward['id']) && $reward['id'] < 1000000000) {
+                        // Update existing offer
+                        $offer = Offer::where('business_id', $business->id)->find($reward['id']);
+                        if ($offer) {
+                            $offer->update($offerData);
+                        }
+                    } else {
+                        // Create new offer
+                        $offerData['business_id'] = $business->id;
+                        if (! isset($offerData['image']) && ! empty($reward['image']) && str_starts_with($reward['image'], 'http')) {
+                            $offerData['image'] = $reward['image'];
+                        }
+                        Offer::create($offerData);
+                    }
                 }
             }
         }
 
-        return back()->with('success', 'Reward Program saved successfully!');
+        return redirect()->route('merchant.create-offer')->with('success', 'Offer saved successfully!');
+    }
+
+    public function destroyOffer($id)
+    {
+        $business = Business::where('user_id', auth()->id())->first();
+        if ($business) {
+            $offer = Offer::where('business_id', $business->id)->findOrFail($id);
+            $offer->delete();
+        }
+
+        return redirect()->route('merchant.create-offer')->with('success', 'Offer deleted successfully!');
     }
 
     // Auth flows

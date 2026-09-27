@@ -30,8 +30,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     $faqs = Faq::where('is_active', true)->orderBy('sort_order')->orderBy('id')->get();
     $settings = Setting::pluck('value', 'key');
+    $plans = App\Models\Plan::where('is_active', true)->get();
 
-    return view('welcome', compact('faqs', 'settings'));
+    return view('welcome', compact('faqs', 'settings', 'plans'));
 });
 
 // ─── Google OAuth ─────────────────────────────────────────────────────────────
@@ -189,6 +190,16 @@ Route::get('/merchant/logout', [MerchantAuthController::class, 'logout'])->name(
 // ─── Protected Merchant Routes ────────────────────────────────────────────────
 Route::middleware([CheckMerchantSession::class])->group(function () {
     Route::get('/merchant', [MerchantDashboardController::class, 'index'])->name('merchant.dashboard');
+    Route::get('/merchant/download-qr', function () {
+        $url = 'https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=' . urlencode(url('/customer/claim-reward'));
+        $image = @file_get_contents($url);
+        if (!$image) {
+            return back()->with('error', 'Could not fetch QR code.');
+        }
+        return response($image)
+            ->header('Content-Type', 'image/png')
+            ->header('Content-Disposition', 'attachment; filename="aurex-reward-qr.png"');
+    })->name('merchant.download-qr');
     Route::get('/merchant/profile', [MerchantDashboardController::class, 'profile'])->name('merchant.profile');
     Route::post('/merchant/profile', [MerchantDashboardController::class, 'updateProfile'])->name('merchant.profile.update');
     Route::post('/merchant/profile/auto-approve', [MerchantDashboardController::class, 'updateAutoApproval'])->name('merchant.profile.auto-approve');
@@ -196,4 +207,5 @@ Route::middleware([CheckMerchantSession::class])->group(function () {
     Route::post('/merchant/rewards/{id}/status', [MerchantDashboardController::class, 'updateRewardStatus'])->name('merchant.rewards.status');
     Route::get('/merchant/create-offer', [MerchantDashboardController::class, 'createOffer'])->name('merchant.create-offer');
     Route::post('/merchant/create-offer', [MerchantDashboardController::class, 'storeOffer'])->name('merchant.create-offer.store');
+    Route::delete('/merchant/offer/{id}', [MerchantDashboardController::class, 'destroyOffer'])->name('merchant.offer.destroy');
 });

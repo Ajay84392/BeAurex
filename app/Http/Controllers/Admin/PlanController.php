@@ -43,6 +43,9 @@ class PlanController extends Controller
             'price' => 'required|numeric',
             'billing_cycle' => 'required|string',
             'type' => 'required|string',
+            'button_text' => 'required|string|max:255',
+            'button_link' => 'required|string|max:255',
+            'color' => 'nullable|string|max:50',
             'short_description' => 'nullable|string|max:150',
             'detailed_description' => 'nullable|string|max:500',
             'is_active' => 'boolean',
@@ -77,11 +80,19 @@ class PlanController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'price' => 'required|numeric',
-            'billing_cycle' => 'required|in:monthly,yearly',
+            'billing_cycle' => 'required|string',
+            'type' => 'required|string',
+            'button_text' => 'required|string|max:255',
+            'button_link' => 'required|string|max:255',
+            'color' => 'nullable|string|max:50',
+            'short_description' => 'nullable|string|max:150',
+            'detailed_description' => 'nullable|string|max:500',
             'is_active' => 'boolean',
+            'features' => 'required|array',
+            'features.*' => 'required|string|max:255',
         ]);
 
-        $validated['features'] = $request->input('features');
+        $validated['features'] = json_encode(array_values(array_filter($request->input('features'))));
         $validated['is_active'] = $request->input('is_active', 1);
 
         $plan->update($validated);

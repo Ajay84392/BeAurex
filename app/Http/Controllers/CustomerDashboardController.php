@@ -77,7 +77,17 @@ class CustomerDashboardController extends Controller
 
     public function claimReward()
     {
-        return view('customer.claim-reward');
+        $tab = request('tab', 'claim');
+
+        // Find by customer name since dummy data uses names
+        $requests = RewardRequest::where('customer_name', auth()->user()->name)
+            ->latest()
+            ->get();
+
+        $claimable = $requests->where('status', 'pending');
+        $history = $requests->whereIn('status', ['approved', 'declined']);
+
+        return view('customer.claim-reward', compact('tab', 'claimable', 'history'));
     }
 
     public function logout()

@@ -3,12 +3,12 @@
 @section('title', 'Rewards Requests')
 
 @section('content')
-<div class="bg-slate-50 md:bg-transparent min-h-[100dvh] md:min-h-0 relative pb-24 md:pb-0">
+<div class="bg-slate-50 md:bg-transparent min-h-[100dvh] md:min-h-0 relative pb-24 md:pb-10">
     
     <!-- Red Header Section -->
-    <div class="bg-[#8a0000] px-6 pt-10 pb-20 md:pb-24 text-white relative">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-xl font-black tracking-tight mx-auto">Rewards</h1>
+    <div class="bg-[#8a0000] px-6 pt-10 pb-20 md:pb-24 text-white relative md:rounded-3xl md:shadow-md">
+        <div class="flex justify-between items-center mb-6 w-full mx-auto">
+            <h1 class="text-xl md:text-2xl font-black tracking-tight md:mx-0">Rewards</h1>
             <!-- Profile Avatar (Visible on Mobile) -->
             <a href="/merchant/profile" class="w-10 h-10 rounded-full border border-red-400/50 flex items-center justify-center hover:bg-white/10 transition md:hidden shrink-0 absolute right-6 top-10">
                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path></svg>
@@ -17,12 +17,12 @@
     </div>
 
     <!-- Main Content Wrapper (Overlapping the red header) -->
-    <div class="bg-white md:bg-transparent rounded-t-3xl -mt-8 relative z-20 px-5 md:px-8 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.05)] md:shadow-none min-h-[500px]">
+    <div class="bg-white md:bg-white rounded-t-3xl md:rounded-3xl -mt-8 md:-mt-12 relative z-20 px-5 md:px-8 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.05)] md:shadow-lg min-h-[500px] w-full mx-auto md:border md:border-slate-100 pb-10">
         
-        <div class="pt-6 max-w-[1600px] mx-auto">
+        <div class="pt-6 w-full">
             
             <!-- Tabs -->
-            <div class="flex items-center justify-between space-x-2 bg-slate-50/50 md:bg-white p-1.5 rounded-2xl border border-slate-100 mb-6">
+            <div class="flex items-center justify-between space-x-2 bg-slate-50/50 md:bg-slate-50 p-1.5 rounded-2xl border border-slate-100 mb-8 max-w-2xl mx-auto shadow-sm">
                 <a href="?status=pending" class="flex-1 text-center py-2.5 rounded-xl text-[11px] font-bold transition flex items-center justify-center space-x-1.5 {{ $status == 'pending' ? 'bg-white border border-red-200 text-[#b00000] shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50' }}">
                     <span>Pending</span>
                     @if($counts['pending'] > 0)
@@ -39,29 +39,6 @@
 
             @php
                 $items = $requests;
-                
-                // Use dummy data if database is empty so UI matches mockups
-                if(is_object($items) && $items->count() == 0) {
-                    if($status == 'pending') {
-                        $items = [
-                            (object)['id'=>1, 'reward_type'=>'DISCOUNT', 'reward_title'=>"30%\nOFF", 'customer'=>(object)['name'=>'Sumit', 'customer_id'=>'LQR-8F4A29'], 'reward_description'=>'30% OFF on Next Purchase', 'created_at'=>now()->format('Y-m-d 14:18:00'), 'expires_at'=>now()->addDays(5)->format('Y-m-d')],
-                            (object)['id'=>2, 'reward_type'=>'FREE', 'reward_title'=>"FREE\nCOFFEE", 'customer'=>(object)['name'=>'Ajeet', 'customer_id'=>'LQR-3A2B55'], 'reward_description'=>'Free Coffee on Any Purchase', 'created_at'=>now()->format('Y-m-d 15:30:00'), 'expires_at'=>now()->addDays(2)->format('Y-m-d')],
-                            (object)['id'=>3, 'reward_type'=>'DISCOUNT', 'reward_title'=>"10%\nOFF", 'customer'=>(object)['name'=>'Pooja', 'customer_id'=>'LQR-9Z8X44'], 'reward_description'=>'10% OFF on Next Purchase', 'created_at'=>now()->format('Y-m-d 16:45:00'), 'expires_at'=>now()->addDays(7)->format('Y-m-d')],
-                        ];
-                    } elseif($tab == 'approved') {
-                        $items = [
-                            (object)['id'=>4, 'reward_type'=>'FREE', 'reward_title'=>"FREE\nCOFFEE", 'customer'=>(object)['name'=>'Rohit', 'customer_id'=>'LQR-1A2B34'], 'reward_description'=>'Free Coffee on Any Purchase', 'updated_at'=>now()->format('Y-m-d 11:20:00')],
-                            (object)['id'=>5, 'reward_type'=>'DISCOUNT', 'reward_title'=>"50%\nOFF", 'customer'=>(object)['name'=>'Neha', 'customer_id'=>'LQR-7C8D9E'], 'reward_description'=>'50% OFF on Next Purchase', 'updated_at'=>now()->format('Y-m-d 12:45:00')],
-                            (object)['id'=>6, 'reward_type'=>'FREE', 'reward_title'=>"FREE\nSANDWICH", 'customer'=>(object)['name'=>'Vikas', 'customer_id'=>'LQR-2X3Y4Z'], 'reward_description'=>'Free Sandwich with Coffee', 'updated_at'=>now()->format('Y-m-d 14:10:00')],
-                        ];
-                    } else {
-                        $items = [
-                            (object)['id'=>7, 'reward_type'=>'DISCOUNT', 'reward_title'=>"20%\nOFF", 'customer'=>(object)['name'=>'Karan', 'customer_id'=>'LQR-2X7Y90'], 'reward_description'=>'20% OFF on Next Purchase', 'updated_at'=>now()->format('Y-m-d 15:10:00')],
-                            (object)['id'=>8, 'reward_type'=>'FREE', 'reward_title'=>"FREE\nTEA", 'customer'=>(object)['name'=>'Ishita', 'customer_id'=>'LQR-4M5N6P'], 'reward_description'=>'Free Tea on Any Purchase', 'updated_at'=>now()->format('Y-m-d 16:25:00')],
-                            (object)['id'=>9, 'reward_type'=>'DISCOUNT', 'reward_title'=>"15%\nOFF", 'customer'=>(object)['name'=>'Manish', 'customer_id'=>'LQR-8Q9R0S'], 'reward_description'=>'15% OFF on Next Purchase', 'updated_at'=>now()->format('Y-m-d 17:40:00')],
-                        ];
-                    }
-                }
             @endphp
 
             @if(count($items) == 0)
@@ -78,9 +55,9 @@
             <h3 class="text-xs font-semibold text-[#64748b] mb-4 uppercase tracking-wider">{{ ucfirst($status) }} Requests</h3>
 
             <!-- List -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                 @foreach($items as $request)
-                <div class="bg-white rounded-2xl p-4 shadow-sm border border-[#e2e8f0] relative overflow-hidden flex flex-col">
+                <div x-data="{ submitting: false }" x-show="!submitting" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="bg-white rounded-2xl p-4 shadow-sm border border-[#e2e8f0] relative overflow-hidden flex flex-col">
                     <div class="flex items-start space-x-4 mb-4">
                         <!-- Reward Icon/Image -->
                         <div class="w-20 h-24 rounded-xl flex-shrink-0 flex flex-col justify-center items-center text-white p-2 shadow-inner border border-black/10 {{ $request->reward_type == 'FREE' ? 'bg-slate-900' : ($request->reward_type == 'DISCOUNT' ? 'bg-gradient-to-br from-green-800 to-green-600' : 'bg-gradient-to-br from-[#b00000] to-red-700') }}">
@@ -98,18 +75,18 @@
                             @if($status == 'pending')
                                 <div class="flex items-center space-x-1.5 text-[9px] font-semibold text-slate-500 mb-1">
                                     <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    <span>{{ Carbon\Carbon::parse($request->created_at)->format('M d, g:i A') }}</span>
+                                    <span>{{ now()->format('d M Y, g:i A') }}</span>
                                 </div>
                                 <div class="flex items-center space-x-1.5 text-[9px] font-bold text-orange-500">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                    <span>Expires: {{ Carbon\Carbon::parse($request->expires_at)->format('d M Y') }}</span>
+                                    <span>Expires: {{ Carbon\Carbon::parse($request->expires_at)->setTimezone('Asia/Kolkata')->format('d M Y') }}</span>
                                 </div>
                             @elseif($status == 'approved')
                                 <p class="text-[9px] font-semibold text-slate-500 mb-0.5">Approved on</p>
-                                <p class="text-[10px] font-bold text-slate-700">{{ Carbon\Carbon::parse($request->updated_at)->format('d M Y, g:i A') }}</p>
+                                <p class="text-[10px] font-bold text-green-700">{{ Carbon\Carbon::parse($request->updated_at)->setTimezone('Asia/Kolkata')->format('d M Y, g:i A') }}</p>
                             @else
                                 <p class="text-[9px] font-semibold text-slate-500 mb-0.5">Declined on</p>
-                                <p class="text-[10px] font-bold text-slate-700">{{ Carbon\Carbon::parse($request->updated_at)->format('d M Y, g:i A') }}</p>
+                                <p class="text-[10px] font-bold text-red-700">{{ Carbon\Carbon::parse($request->updated_at)->setTimezone('Asia/Kolkata')->format('d M Y, g:i A') }}</p>
                             @endif
                         </div>
                     </div>
@@ -118,13 +95,15 @@
                     <div class="mt-auto">
                         @if($status == 'pending')
                             <div class="flex items-center justify-between space-x-3 pt-4 border-t border-slate-50">
-                                <form action="/merchant/rewards/{{ $request->id }}/decline" method="POST" class="flex-1">
+                                <form action="/merchant/rewards/{{ $request->id }}/status" method="POST" class="flex-1" @submit="submitting = true">
                                     @csrf
-                                    <button type="submit" class="w-full bg-white border border-[#fca5a5] text-[#b00000] font-bold py-2 rounded-xl text-[11px] hover:bg-red-50 transition shadow-sm">Decline</button>
+                                    <input type="hidden" name="status" value="declined">
+                                    <button type="submit" :disabled="submitting" class="w-full bg-white border border-[#fca5a5] text-[#b00000] font-bold py-2 rounded-xl text-[11px] hover:bg-red-50 transition shadow-sm disabled:opacity-50">Decline</button>
                                 </form>
-                                <form action="/merchant/rewards/{{ $request->id }}/approve" method="POST" class="flex-1">
+                                <form action="/merchant/rewards/{{ $request->id }}/status" method="POST" class="flex-1" @submit="submitting = true">
                                     @csrf
-                                    <button type="submit" class="w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-bold py-2 rounded-xl text-[11px] transition shadow-sm">Accept</button>
+                                    <input type="hidden" name="status" value="approved">
+                                    <button type="submit" :disabled="submitting" class="w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-bold py-2 rounded-xl text-[11px] transition shadow-sm disabled:opacity-50">Accept</button>
                                 </form>
                             </div>
                         @elseif($status == 'approved')

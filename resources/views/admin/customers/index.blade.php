@@ -40,9 +40,9 @@
         this.confirmStatusModal = false;
     },
     
-    cancelStatus(selectElement) {
+        cancelStatus(selectElement) {
         this.confirmStatusModal = false;
-        selectElement.value = this.activeStatus;
+        window.location.reload();
     }
 }">
     <!-- Page Header & Breadcrumbs -->
@@ -114,7 +114,7 @@
                         class="block w-full pl-9 pr-3 py-2.5 border border-[#e2e8f0] rounded-xl leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#b00000] focus:border-[#b00000] text-sm font-semibold text-[#0f172a] transition shadow-sm"
                         placeholder="Search by Customer ID, Name or Email">
                 </div>
-                <select x-model="statusFilter" class="border border-[#e2e8f0] bg-white text-slate-700 px-5 py-2.5 rounded-xl text-sm font-bold focus:outline-none focus:ring-1 focus:ring-[#b00000] focus:border-[#b00000] shadow-sm w-full md:w-auto shrink-0">
+                <select x-model="statusFilter" :class="{'text-red-600': statusFilter === 'Inactive', 'text-black': statusFilter === 'Blocked', 'text-slate-700': statusFilter === '' || statusFilter === 'Active'}" class="border border-[#e2e8f0] bg-white px-5 py-2.5 rounded-xl text-sm font-bold focus:outline-none focus:ring-1 focus:ring-[#b00000] focus:border-[#b00000] shadow-sm w-full md:w-auto shrink-0 transition-colors">
                     <option value="">All Statuses</option>
                     <option value="Active">Active</option>
                     <option value="Inactive">Inactive</option>
@@ -165,17 +165,12 @@
                         <td class="px-6 py-5 text-center font-bold text-slate-700">{{ rand(5, 50) }}</td>
                         <td class="px-6 py-5 text-center font-bold text-[#22C55E]">{{ rand(0, 10) }}</td>
                         <td class="px-6 py-5 text-[#475569] text-xs">{{ $customer->created_at->format('M d, Y') }}</td>
-                        <td class="px-6 py-5">
+                                                <td class="px-6 py-5" x-data="{ rowStatus: '{{ $customer->status }}' }">
                             <div class="relative">
-                                @php
-                                    $statusColor = 'text-[#22C55E]';
-                                    if($customer->status === 'Inactive') $statusColor = 'text-[#F59E0B]';
-                                    if($customer->status === 'Blocked') $statusColor = 'text-[#EF4444]';
-                                @endphp
-                                <select @change="initiateStatusChange('{{ addslashes($customer->name) }}', 'CU-{{ strtoupper(substr(md5($customer->id), 0, 8)) }}', '{{ $customer->id }}', $event.target.value, '{{ $customer->status }}')" class="appearance-none bg-transparent border border-[#e2e8f0] {{ $statusColor }} rounded-xl px-3 py-1.5 pr-8 text-xs font-bold focus:outline-none focus:border-[#b00000] focus:ring-1 focus:ring-[#b00000] cursor-pointer">
-                                    <option value="Active" @if($customer->status === 'Active') selected @endif>Active</option>
-                                    <option value="Inactive" @if($customer->status === 'Inactive') selected @endif>Inactive</option>
-                                    <option value="Blocked" @if($customer->status === 'Blocked') selected @endif>Blocked</option>
+                                <select x-model="rowStatus" @change="initiateStatusChange('{{ addslashes($customer->name) }}', 'CU-{{ strtoupper(substr(md5($customer->id), 0, 8)) }}', '{{ $customer->id }}', rowStatus, '{{ $customer->status }}')" :class="{'text-[#22C55E]': rowStatus === 'Active', 'text-red-600': rowStatus === 'Inactive', 'text-black': rowStatus === 'Blocked'}" class="appearance-none bg-transparent border border-[#e2e8f0] rounded-xl px-3 py-1.5 pr-8 text-xs font-bold focus:outline-none focus:border-[#b00000] focus:ring-1 focus:ring-[#b00000] cursor-pointer transition-colors">
+                                    <option value="Active" class="text-[#22C55E]">Active</option>
+                                    <option value="Inactive" class="text-red-600 font-bold">Inactive</option>
+                                    <option value="Blocked" class="text-black font-bold">Blocked</option>
                                 </select>
                                 <svg class="w-3 h-3 text-slate-400 absolute right-2.5 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </div>
