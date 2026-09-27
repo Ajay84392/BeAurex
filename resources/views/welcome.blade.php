@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>BeAurex - Turn Every Visit Into A Repeat Customer</title>
     <!-- Tailwind CSS for modern responsive aesthetics -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -39,21 +39,11 @@
 
             <!-- Portals Dropdown / Action -->
             <div class="flex items-center space-x-4 sm:space-x-6">
-                <div class="relative group">
-                    <button
+                <div>
+                    <button onclick="document.getElementById('loginModal').classList.add('active')"
                         class="text-slate-600 hover:text-slate-900 font-bold text-sm sm:text-base cursor-pointer flex items-center space-x-1">
                         <span>Login</span>
-                        <span class="text-xs">▼</span>
                     </button>
-                    <div
-                        class="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-xl hidden group-hover:block z-50">
-                        <a href="/merchant/login"
-                            class="w-full text-left px-4 py-3 text-sm hover:bg-slate-50 font-semibold text-slate-700 block">Merchant
-                            Login</a>
-                        <a href="/login"
-                            class="w-full text-left px-4 py-3 text-sm hover:bg-slate-50 font-semibold text-slate-700 block border-t border-slate-100">Customer
-                            Login</a>
-                    </div>
                 </div>
 
                 <a href="/merchant/register"
@@ -508,7 +498,7 @@
                 </div>
             </div>
             <form class="md:col-span-3 space-y-4">
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input type="text" placeholder="Your Name" required
                         class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-600">
                     <input type="text" placeholder="Phone Number" required
@@ -535,6 +525,22 @@
             <p>© 2026 BeAurex Inc. Pure Value-Driven Manual Activation System.</p>
         </div>
     </footer>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal fixed inset-0 bg-slate-900/50 z-[100] items-center justify-center backdrop-blur-sm" onclick="if(event.target === this) this.classList.remove('active')">
+        <div class="bg-white rounded-3xl w-full max-w-sm p-8 shadow-2xl relative">
+            <button onclick="document.getElementById('loginModal').classList.remove('active')" class="absolute top-4 right-5 text-slate-400 hover:text-slate-700 text-3xl font-light">&times;</button>
+            <h2 class="text-2xl font-black text-slate-900 text-center mb-6">Welcome Back</h2>
+            <div class="flex flex-col space-y-4">
+                <a href="/merchant/login" class="w-full text-center bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-3.5 rounded-xl text-md shadow-md transition transform hover:-translate-y-0.5">
+                    Merchant Login
+                </a>
+                <a href="/customer/login" class="w-full text-center bg-slate-900 hover:bg-slate-800 text-white font-bold px-6 py-3.5 rounded-xl text-md shadow-md transition transform hover:-translate-y-0.5">
+                    Customer Login
+                </a>
+            </div>
+        </div>
+    </div>
 
     <script>
         function toggleFaq(id) {

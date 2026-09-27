@@ -1,4 +1,4 @@
-﻿@extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('title', 'Referrals')
 
@@ -59,7 +59,7 @@
                     <tr class="hover:bg-[#f1f5f9]/50 transition">
                         <td class="px-6 py-4 font-semibold text-[#0f172a]">{{ $referral->code }}</td>
                         <td class="px-6 py-4">{{ optional($referral->referrer)->name ?? 'N/A' }}</td>
-                        <td class="px-6 py-4">{{ $referral->referred_email ?? 'â€”' }}</td>
+                        <td class="px-6 py-4">{{ $referral->referred_email ?? '—' }}</td>
                         <td class="px-6 py-4">{{ $referral->reward_coins }}</td>
                         <td class="px-6 py-4">
                             @if($referral->status === 'Completed')
@@ -70,7 +70,7 @@
                                 <span class="inline-block px-2.5 py-1 rounded-full text-[11px] font-bold bg-yellow-100 text-yellow-700">Pending</span>
                             @endif
                         </td>
-                        <td class="px-6 py-4">{{ $referral->expires_at ? $referral->expires_at->format('d M Y') : 'â€”' }}</td>
+                        <td class="px-6 py-4">{{ $referral->expires_at ? $referral->expires_at->format('d M Y') : '—' }}</td>
                         <td class="px-6 py-4 text-right">
                             <a href="{{ route('referrals.edit', $referral->id) }}" class="text-blue-500 hover:text-blue-700 transition mr-3 inline-block">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>

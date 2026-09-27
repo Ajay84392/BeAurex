@@ -1,7 +1,7 @@
 @extends('layouts.customer')
 
 @section('content')
-<div class="bg-slate-50 md:bg-transparent min-h-screen md:min-h-0 relative pb-24 md:pb-0">
+<div class="bg-slate-50 md:bg-transparent min-h-[100dvh] md:min-h-0 relative pb-24 md:pb-0">
     
     <!-- Red Header Section (Mobile-focused, scalable) -->
     <div class="bg-[#8a0000] px-6 pt-10 pb-20 md:pb-24 text-white relative">
@@ -85,7 +85,7 @@
                             </div>
                         </div>
                         <div class="text-right">
-                            <span class="text-[10px] font-bold text-[#b00000] bg-red-50 px-2 py-1.5 rounded-lg border border-red-100 leading-tight inline-block">2 more<br>stamps</span>
+                            <span class="text-[10px] font-bold text-[#b00000] bg-red-50 px-2 py-1.5 rounded-lg border border-red-100 leading-tight inline-block">2 more<br>coins</span>
                         </div>
                     </div>
 
@@ -97,7 +97,7 @@
                         <div class="w-7 h-7 bg-white border border-[#b00000] rounded-full"></div>
                         <div class="w-7 h-7 bg-white border border-[#b00000] rounded-full"></div>
                     </div>
-                    <p class="text-[11px] font-semibold text-slate-400 mb-5">3 of 5 Stamps</p>
+                    <p class="text-[11px] font-semibold text-slate-400 mb-5">3 of 5 Aurex Coins</p>
 
                     <!-- Next Reward Banner -->
                     <div class="bg-red-50/50 rounded-xl p-3 flex justify-between items-center transition">
@@ -107,7 +107,7 @@
                             </div>
                             <div>
                                 <p class="text-[13px] font-black text-[#b00000] leading-tight mb-0.5">30% off on next purchase</p>
-                                <p class="text-[10px] font-semibold text-slate-500">Collect 2 more stamps to unlock</p>
+                                <p class="text-[10px] font-semibold text-slate-500">Collect 2 more coins to unlock</p>
                             </div>
                         </div>
                         <div class="text-[#b00000]">

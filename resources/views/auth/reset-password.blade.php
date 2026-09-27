@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Set New Password - BeAurex</title>
     <link rel="icon" type="image/jpeg" href="/favicon.jpg">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -25,7 +25,7 @@
         }
     </style>
 </head>
-<body class="antialiased text-[#0f172a] flex items-center justify-center min-h-screen">
+<body class="antialiased text-[#0f172a] flex items-center justify-center min-h-[100dvh]">
 
     <div class="mobile-container w-full flex flex-col p-8 pt-12">
         

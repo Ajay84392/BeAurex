@@ -3,7 +3,7 @@
 @section('title', 'Merchant Dashboard')
 
 @section('content')
-<div class="bg-slate-50 md:bg-transparent min-h-screen md:min-h-0 relative pb-24 md:pb-0">
+<div class="bg-slate-50 md:bg-transparent min-h-[100dvh] md:min-h-0 relative pb-24 md:pb-0">
     
     <!-- Red Header Section -->
     <div class="bg-[#8a0000] px-6 pt-10 pb-20 md:pb-24 text-white relative">
@@ -125,17 +125,45 @@
                         
                         <!-- Buttons -->
                         <div class="flex flex-col space-y-3 flex-1">
-                            <button class="w-full bg-[#b00000] hover:bg-[#8a0000] text-white font-bold py-2.5 rounded-xl transition flex justify-center items-center space-x-2 text-xs shadow-sm">
+                            <a href="https://api.qrserver.com/v1/create-qr-code/?size=500x500&data={{ urlencode(url('/customer/claim-reward')) }}" download="qrcode.png" target="_blank" class="w-full bg-[#b00000] hover:bg-[#8a0000] text-white font-bold py-2.5 rounded-xl transition flex justify-center items-center space-x-2 text-xs shadow-sm">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                                 <span>Download QR</span>
-                            </button>
-                            <button class="w-full bg-white hover:bg-slate-50 border border-[#fca5a5] text-[#b00000] font-bold py-2.5 rounded-xl transition flex justify-center items-center space-x-2 text-xs shadow-sm">
+                            </a>
+                            <button onclick="printQR()" class="w-full bg-white hover:bg-slate-50 border border-[#fca5a5] text-[#b00000] font-bold py-2.5 rounded-xl transition flex justify-center items-center space-x-2 text-xs shadow-sm">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                                 <span>Print QR</span>
                             </button>
                         </div>
                     </div>
                 </div>
+
+                <script>
+                function printQR() {
+                    var printWindow = window.open('', '_blank');
+                    printWindow.document.write(`
+                        <html>
+                            <head>
+                                <title>Print QR Code</title>
+                                <style>
+                                    body { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: sans-serif; }
+                                    img { width: 300px; height: 300px; }
+                                    h2 { margin-top: 20px; font-size: 24px; font-weight: bold; }
+                                    p { margin-top: 10px; font-size: 16px; color: #555; }
+                                </style>
+                            </head>
+                            <body>
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=500x500&data={{ urlencode(url('/customer/claim-reward')) }}" />
+                                <h2>Scan to Claim Reward</h2>
+                                <p>Collect Aurex Coins!</p>
+                                <script>
+                                    window.onload = function() { window.print(); window.close(); }
+                                <\/script>
+                            </body>
+                        </html>
+                    `);
+                    printWindow.document.close();
+                }
+                </script>
                 
                 <!-- Pro Plan Banner -->
                 <div class="bg-[#fff8f6] rounded-2xl p-4 shadow-sm border border-[#ffedd5] flex items-center justify-between mb-8">

@@ -1,4 +1,4 @@
-﻿@extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('title', 'Claim Logs')
 
@@ -172,7 +172,7 @@
                             <td class="px-5 py-4 font-bold text-slate-700">CLM10004</td>
                             <td class="px-5 py-4">Neha Verma</td>
                             <td class="px-5 py-4 text-[#475569]">Fashion Hub</td>
-                            <td class="px-5 py-4 text-[#475569]">â‚¹100 Off</td>
+                            <td class="px-5 py-4 text-[#475569]">₹100 Off</td>
                             <td class="px-5 py-4 text-center font-bold text-slate-700">250</td>
                             <td class="px-5 py-4"><span
                                     class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-orange-100 text-orange-700">Pending</span>
@@ -260,7 +260,7 @@
                             <td class="px-5 py-4 font-bold text-slate-700">CLM10008</td>
                             <td class="px-5 py-4">Ishita Malhotra</td>
                             <td class="px-5 py-4 text-[#475569]">Fashion Hub</td>
-                            <td class="px-5 py-4 text-[#475569]">â‚¹200 Off</td>
+                            <td class="px-5 py-4 text-[#475569]">₹200 Off</td>
                             <td class="px-5 py-4 text-center font-bold text-slate-700">300</td>
                             <td class="px-5 py-4"><span
                                     class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-orange-100 text-orange-700">Pending</span>

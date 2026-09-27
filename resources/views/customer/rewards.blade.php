@@ -1,7 +1,7 @@
 @extends('layouts.customer')
 
 @section('content')
-<div class="bg-white md:rounded-[2rem] md:shadow-xl overflow-hidden min-h-screen md:min-h-[700px] border-x border-b border-slate-100 relative pb-24 md:pb-0 flex flex-col md:p-8">
+<div class="bg-white md:rounded-[2rem] md:shadow-xl overflow-hidden min-h-[100dvh] md:min-h-[700px] border-x border-b border-slate-100 relative pb-24 md:pb-0 flex flex-col md:p-8">
     
     <!-- Top Bar -->
     <div class="bg-white px-6 pt-10 pb-4 md:p-0 flex justify-between items-center sticky top-0 z-20">
@@ -40,7 +40,7 @@
         </div>
         
         <h2 class="text-[17px] font-black text-slate-900 mb-2">No Rewards Yet</h2>
-        <p class="text-[13px] font-medium text-slate-500 mb-8 max-w-[250px] mx-auto leading-relaxed">Collect more stamps from your favourite businesses to earn exciting rewards!</p>
+        <p class="text-[13px] font-medium text-slate-500 mb-8 max-w-[250px] mx-auto leading-relaxed">Collect more Aurex coins from your favourite businesses to earn exciting rewards!</p>
         
         <a href="/customer" class="w-full bg-[#900000] hover:bg-[#700000] text-white font-bold py-3.5 rounded-xl transition text-center text-[13px]">
             Explore Businesses

@@ -77,7 +77,7 @@
     $data = $config[$type];
 @endphp
 
-<div class="bg-white min-h-screen mobile-container flex flex-col font-sans relative">
+<div class="bg-white min-h-[100dvh] mobile-container flex flex-col font-sans relative">
     
     <!-- Top Bar -->
     <div class="px-6 py-6 flex items-center">

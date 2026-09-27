@@ -108,6 +108,7 @@
                                 <th class="px-5 py-4">Payment Amount</th>
                                 <th class="px-5 py-4">Plan</th>
                                 <th class="px-5 py-4">Plan Valid Till</th>
+                                <th class="px-5 py-4">Set a Deal</th>
                                 <th class="px-5 py-4">Status</th>
                                 <th class="px-5 py-4 text-center">View</th>
                                 <th class="px-5 py-4 text-center">Complimentary</th>
@@ -128,6 +129,9 @@
                                 <td class="px-5 py-4">₹ 5,900.00</td>
                                 <td class="px-5 py-4 text-slate-600 text-xs">Premium Plan</td>
                                 <td class="px-5 py-4 text-slate-600 text-xs">May 24, 2026</td>
+                                <td class="px-5 py-4 text-center">
+                                    <button class="text-xs font-semibold bg-red-50 text-red-600 px-3 py-1 rounded-lg border border-red-100 hover:bg-red-100 transition">Set Deal</button>
+                                </td>
                                 <td class="px-5 py-4">
                                     <div class="relative group cursor-pointer">
                                         <div class="flex items-center space-x-1 text-emerald-600 font-bold text-xs">
@@ -163,6 +167,9 @@
                                 <td class="px-5 py-4 text-slate-400">-</td>
                                 <td class="px-5 py-4 text-slate-600 text-xs">Trial Plan</td>
                                 <td class="px-5 py-4 text-slate-600 text-xs">Jun 07, 2025</td>
+                                <td class="px-5 py-4 text-center">
+                                    <button class="text-xs font-semibold bg-red-50 text-red-600 px-3 py-1 rounded-lg border border-red-100 hover:bg-red-100 transition">Set Deal</button>
+                                </td>
                                 <td class="px-5 py-4">
                                     <div class="relative group cursor-pointer">
                                         <div class="flex items-center space-x-1 text-blue-600 font-bold text-xs">
@@ -198,6 +205,9 @@
                                 <td class="px-5 py-4 text-slate-400">-</td>
                                 <td class="px-5 py-4 text-slate-600 text-xs">Professional Plan</td>
                                 <td class="px-5 py-4 text-slate-600 text-xs">May 23, 2026</td>
+                                <td class="px-5 py-4 text-center">
+                                    <button class="text-xs font-semibold bg-red-50 text-red-600 px-3 py-1 rounded-lg border border-red-100 hover:bg-red-100 transition">Set Deal</button>
+                                </td>
                                 <td class="px-5 py-4">
                                     <div class="relative group cursor-pointer">
                                         <div class="flex items-center space-x-1 text-amber-500 font-bold text-xs">
@@ -233,6 +243,9 @@
                                 <td class="px-5 py-4">₹ 5,900.00</td>
                                 <td class="px-5 py-4 text-slate-600 text-xs">Basic Plan</td>
                                 <td class="px-5 py-4 text-slate-600 text-xs">May 23, 2026</td>
+                                <td class="px-5 py-4 text-center">
+                                    <button class="text-xs font-semibold bg-red-50 text-red-600 px-3 py-1 rounded-lg border border-red-100 hover:bg-red-100 transition">Set Deal</button>
+                                </td>
                                 <td class="px-5 py-4">
                                     <div class="relative group cursor-pointer">
                                         <div class="flex items-center space-x-1 text-emerald-600 font-bold text-xs">
@@ -268,6 +281,9 @@
                                 <td class="px-5 py-4">₹ 5,900.00</td>
                                 <td class="px-5 py-4 text-slate-600 text-xs">Basic Plan</td>
                                 <td class="px-5 py-4 text-slate-600 text-xs">May 22, 2026</td>
+                                <td class="px-5 py-4 text-center">
+                                    <button class="text-xs font-semibold bg-red-50 text-red-600 px-3 py-1 rounded-lg border border-red-100 hover:bg-red-100 transition">Set Deal</button>
+                                </td>
                                 <td class="px-5 py-4">
                                     <div class="relative group cursor-pointer">
                                         <div class="flex items-center space-x-1 text-red-600 font-bold text-xs">

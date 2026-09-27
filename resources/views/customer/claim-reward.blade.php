@@ -1,7 +1,7 @@
 @extends('layouts.customer')
 
 @section('content')
-<div class="bg-slate-50 md:bg-transparent min-h-screen md:min-h-0 relative pb-24 md:pb-0">
+<div class="bg-slate-50 md:bg-transparent min-h-[100dvh] md:min-h-0 relative pb-24 md:pb-0">
     
     <!-- Top Bar -->
     <div class="bg-white px-6 pt-10 pb-4 md:pt-6 md:pb-6 md:px-8 flex items-center md:rounded-t-[2rem] sticky top-0 z-20">
@@ -22,12 +22,12 @@
     <!-- Main Grid Content -->
     <div class="grid grid-cols-1 lg:grid-cols-12 md:gap-8 bg-slate-50">
 
-        <!-- Left Column: Success Message & Stamps -->
+        <!-- Left Column: Success Message & COINS -->
         <div class="lg:col-span-12">
             <div class="px-6 py-8 bg-red-50/50 mb-2 border-b border-white relative">
                 <div class="text-center relative z-10">
-                    <h2 class="text-[15px] font-black text-slate-900 mb-1">You earned 1 stamp!</h2>
-                    <p class="text-xs font-semibold text-slate-500 mb-6">3 of 5 stamps collected</p>
+                    <h2 class="text-[15px] font-black text-slate-900 mb-1">You earned 1 Aurex coin!</h2>
+                    <p class="text-xs font-semibold text-slate-500 mb-6">3 of 5 Aurex coins collected</p>
                     
                     <div class="flex items-center justify-center space-x-3">
                         <div class="w-12 h-12 bg-[#b00000] rounded-full flex items-center justify-center text-white shadow-md"><svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg></div>
@@ -55,7 +55,7 @@
                             <span class="bg-[#22C55E] text-white text-[9px] font-black uppercase px-2 py-1 rounded tracking-wider leading-none mt-0.5">Achieved</span>
                         </div>
                         <div class="flex items-center text-[10px] font-bold text-[#b00000] mb-2">
-                            2 STAMPS <span class="text-slate-500 font-semibold ml-2">Ready to claim! 🎉</span>
+                            2 COINS <span class="text-slate-500 font-semibold ml-2">Ready to claim! 🎉</span>
                         </div>
                         <p class="text-[9px] font-bold text-orange-500 uppercase tracking-widest">Expires 7/30/2026</p>
                     </div>
@@ -69,7 +69,7 @@
                             <h4 class="font-black text-slate-900 text-[13px] leading-tight">50% discount</h4>
                         </div>
                         <div class="flex items-center text-[10px] font-bold text-[#b00000] mb-2">
-                            5 STAMPS <span class="text-slate-400 font-medium ml-1.5">&bull; Collect 2 more</span>
+                            5 COINS <span class="text-slate-400 font-medium ml-1.5">&bull; Collect 2 more</span>
                         </div>
                         <p class="text-[9px] font-bold text-orange-500 uppercase tracking-widest">Expires 7/30/2026</p>
                     </div>
@@ -83,7 +83,7 @@
                             <h4 class="font-black text-slate-900 text-[13px] leading-tight">Free Coffee</h4>
                         </div>
                         <div class="flex items-center text-[10px] font-bold text-[#b00000] mb-2">
-                            3 STAMPS <span class="text-slate-400 font-medium ml-1.5">&bull; Collect 1 more</span>
+                            3 COINS <span class="text-slate-400 font-medium ml-1.5">&bull; Collect 1 more</span>
                         </div>
                         <p class="text-[9px] font-bold text-orange-500 uppercase tracking-widest">Expires 7/30/2026</p>
                     </div>

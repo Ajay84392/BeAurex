@@ -3,7 +3,7 @@
 @section('title', 'Create Offer')
 
 @section('content')
-<div class="bg-slate-50 md:bg-transparent min-h-screen md:min-h-0 relative pb-24 md:pb-0" x-data="createOfferApp()">
+<div class="bg-slate-50 md:bg-transparent min-h-[100dvh] md:min-h-0 relative pb-24 md:pb-0" x-data="createOfferApp()">
     
     <!-- Red Header Section -->
     <div class="bg-[#8a0000] px-6 pt-10 pb-20 md:pb-24 text-white relative">

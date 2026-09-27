@@ -10,27 +10,28 @@ class ClaimController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Referral::with('referrer', 'referred')->latest();
+        $deals = session()->get('deals', []);
+        return view('admin.claims', compact('deals'));
+    }
 
-        if ($request->filled('search_ref')) {
-            $search = $request->search_ref;
-            $query->where(function ($q) use ($search) {
-                $q->where('code', 'like', "%{$search}%")
-                    ->orWhere('referred_email', 'like', "%{$search}%")
-                    ->orWhereHas('referrer', function ($q2) use ($search) {
-                        $q2->where('name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%");
-                    });
-            });
-        }
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'plan_name' => 'nullable|string',
+            'plan_type' => 'nullable|string',
+            'state' => 'nullable|string',
+            'deal_name' => 'required|string',
+            'coupon_code' => 'required|string',
+            'bonus_amount' => 'nullable|numeric',
+            'discount_amount' => 'nullable|numeric',
+            'discount_percentage' => 'nullable|numeric',
+            'validity_date' => 'required|date',
+            'maximum_usage' => 'nullable|integer',
+        ]);
 
-        if ($request->filled('status_ref') && $request->status_ref !== 'All') {
-            $query->where('status', $request->status_ref);
-        }
+        $request->session()->push('deals', $data);
 
-        $referrals = $query->paginate(10, ['*'], 'ref_page')->withQueryString();
-
-        return view('admin.claims', compact('referrals'));
+        return redirect()->back()->with('success', 'Deal added successfully!');
     }
 
     public function show(string $id)
@@ -40,16 +41,50 @@ class ClaimController extends Controller
 
     public function edit(string $id)
     {
-        return view('admin.claims');
+        $deals = session()->get('deals', []);
+        if (!isset($deals[$id])) {
+            return redirect()->route('claims.index')->with('error', 'Deal not found');
+        }
+        $editDeal = $deals[$id];
+        $editId = $id;
+        
+        return view('admin.claims', compact('deals', 'editDeal', 'editId'));
     }
 
-    public function update(Request $request, ?string $id = null)
+    public function update(Request $request, string $id)
     {
-        return back();
+        $deals = session()->get('deals', []);
+        if (!isset($deals[$id])) {
+            return redirect()->route('claims.index')->with('error', 'Deal not found');
+        }
+
+        $data = $request->validate([
+            'plan_name' => 'nullable|string',
+            'plan_type' => 'nullable|string',
+            'state' => 'nullable|string',
+            'deal_name' => 'required|string',
+            'coupon_code' => 'required|string',
+            'bonus_amount' => 'nullable|numeric',
+            'discount_amount' => 'nullable|numeric',
+            'discount_percentage' => 'nullable|numeric',
+            'validity_date' => 'required|date',
+            'maximum_usage' => 'nullable|integer',
+        ]);
+
+        $deals[$id] = $data;
+        session()->put('deals', $deals);
+
+        return redirect('/admin/claims')->with('success', 'Deal updated successfully!');
     }
 
     public function destroy(string $id)
     {
-        return back();
+        $deals = session()->get('deals', []);
+        if (isset($deals[$id])) {
+            unset($deals[$id]);
+            session()->put('deals', $deals);
+        }
+
+        return redirect()->back()->with('success', 'Deal deleted successfully!');
     }
 }

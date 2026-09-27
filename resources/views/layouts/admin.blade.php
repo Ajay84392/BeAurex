@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>BeAurex Admin - @yield('title', 'Panel')</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="//unpkg.com/alpinejs" defer></script>
@@ -37,7 +37,7 @@
     </style>
 </head>
 
-<body class="bg-[#f1f5f9] font-sans antialiased text-[#0f172a] h-screen flex overflow-hidden" x-data="{ logoutAdminModal: false, sidebarOpen: false }">
+<body class="bg-[#f1f5f9] font-sans antialiased text-[#0f172a] h-[100dvh] flex overflow-hidden" x-data="{ logoutAdminModal: false, sidebarOpen: false }">
 
     <!-- Mobile Sidebar Overlay -->
     <div x-show="sidebarOpen" class="fixed inset-0 z-40 bg-black/50 md:hidden" style="display: none;" @click="sidebarOpen = false"></div>

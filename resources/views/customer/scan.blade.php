@@ -1,7 +1,7 @@
 @extends('layouts.customer')
 
 @section('content')
-<div class="bg-[#1e293b] md:bg-transparent min-h-screen md:min-h-0 relative pb-24 md:pb-0 flex flex-col">
+<div class="bg-[#1e293b] md:bg-transparent min-h-[100dvh] md:min-h-0 relative pb-24 md:pb-0 flex flex-col">
     
     <!-- Top Bar -->
     <div class="px-6 pt-10 pb-4 md:pt-6 md:pb-6 md:px-8 flex items-center justify-between text-white md:bg-white md:text-slate-900 md:rounded-t-[2rem] z-20">
@@ -16,7 +16,7 @@
 
     <!-- Scanner Content -->
     <div class="flex-1 flex flex-col items-center justify-center px-6 relative">
-        <p class="text-xs font-semibold text-slate-300 md:text-slate-500 mb-8 text-center max-w-[200px]">Position the QR code within the frame to collect stamp</p>
+        <p class="text-xs font-semibold text-slate-300 md:text-slate-500 mb-8 text-center max-w-[200px]">Position the QR code within the frame to collect Aurex coins</p>
         
         <!-- Scanner Frame Wrapper -->
         <div class="relative w-64 h-64 md:w-72 md:h-72 mb-12">

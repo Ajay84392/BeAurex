@@ -1,8 +1,8 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Setup Complete - BeAurex</title>
     <link rel="icon" type="image/jpeg" href="/favicon.jpg">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -11,7 +11,7 @@
         body { font-family: "Inter", sans-serif; }
     </style>
 </head>
-<body class="bg-[#f1f5f9] text-[#0f172a] antialiased min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
+<body class="bg-[#f1f5f9] text-[#0f172a] antialiased min-h-[100dvh] flex flex-col items-center justify-center p-4 relative overflow-hidden">
     <!-- Confetti Background Layer -->
     <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div class="absolute top-1/4 left-1/4 w-3 h-3 bg-red-400 rounded-sm rotate-45 opacity-60"></div>
@@ -77,19 +77,19 @@
         <div class="bg-white border border-[#e2e8f0] rounded-2xl px-4 py-4 shadow-sm">
             <p class="text-[10px] font-bold text-slate-700 mb-3 text-center">Merchant Onboarding</p>
             <div class="flex items-center justify-between">
-                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white bg-[#22C55E]">✓</div>
+                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white bg-[#22C55E]">?</div>
                 <div class="flex-1 h-px mx-1 bg-green-200"></div>
-                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white bg-[#22C55E]">✓</div>
+                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white bg-[#22C55E]">?</div>
                 <div class="flex-1 h-px mx-1 bg-green-200"></div>
-                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white bg-[#22C55E]">✓</div>
+                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white bg-[#22C55E]">?</div>
                 <div class="flex-1 h-px mx-1 bg-green-200"></div>
-                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white bg-[#22C55E]">✓</div>
+                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white bg-[#22C55E]">?</div>
                 <div class="flex-1 h-px mx-1 bg-green-200"></div>
-                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white bg-[#22C55E]">✓</div>
+                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white bg-[#22C55E]">?</div>
                 <div class="flex-1 h-px mx-1 bg-green-200"></div>
-                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white bg-[#22C55E]">✓</div>
+                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white bg-[#22C55E]">?</div>
                 <div class="flex-1 h-px mx-1 bg-green-200"></div>
-                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white bg-[#22C55E] ring-2 ring-green-100 ring-offset-1">✓</div>
+                <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white bg-[#22C55E] ring-2 ring-green-100 ring-offset-1">?</div>
             </div>
             <div class="flex justify-between mt-1.5 px-1">
                 <span class="text-[8px] font-semibold text-green-600">Login</span>

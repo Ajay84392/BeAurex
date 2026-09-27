@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Forgot Password - BeAurex</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -24,7 +24,7 @@
         }
     </style>
 </head>
-<body class="antialiased text-[#0f172a] flex items-center justify-center min-h-screen">
+<body class="antialiased text-[#0f172a] flex items-center justify-center min-h-[100dvh]">
 
     <div class="mobile-container w-full flex flex-col p-8 pt-12">
         
