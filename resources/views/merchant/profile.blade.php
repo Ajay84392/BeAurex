@@ -145,6 +145,43 @@
             </div>
         </form>
 
+        <h3 class="text-[13px] font-black text-slate-900 mb-3">Auto Approval Settings</h3>
+        <form action="{{ route('merchant.profile.auto-approve') }}" method="POST" class="bg-white rounded-2xl border border-slate-200 p-5 mb-8 shadow-sm">
+            @csrf
+            
+            <!-- Aurex Coin Approval -->
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h4 class="font-bold text-[13px] text-slate-900">Aurex Coin Auto Approval</h4>
+                    <p class="text-[11px] text-slate-500 font-semibold mt-0.5">Automatically approve aurex coin requests</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" name="auto_approval" class="sr-only peer" {{ $business && $business->auto_approval ? 'checked' : '' }}>
+                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#22c55e]"></div>
+                </label>
+            </div>
+
+            <div class="border-t border-slate-100 my-4"></div>
+
+            <!-- Reward Approval -->
+            <div class="flex items-center justify-between mb-5">
+                <div>
+                    <h4 class="font-bold text-[13px] text-slate-900">Reward Auto Approval</h4>
+                    <p class="text-[11px] text-slate-500 font-semibold mt-0.5">Automatically approve reward requests from customers</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" name="auto_reward_approval" class="sr-only peer" {{ $business && $business->auto_reward_approval ? 'checked' : '' }}>
+                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#22c55e]"></div>
+                </label>
+            </div>
+            
+            <div class="flex justify-end">
+                <button type="submit" class="w-full md:w-auto px-6 py-2.5 bg-[#b00000] text-white text-[13px] font-bold rounded-xl hover:bg-[#8a0000] transition shadow-sm">
+                    Save Settings
+                </button>
+            </div>
+        </form>
+
         <h3 class="text-[13px] font-black text-slate-900 mb-3">Active Plan</h3>
         <div class="bg-[#f0f9f3] rounded-2xl border border-[#dcfce7] p-4 flex items-center justify-between mb-8 shadow-sm">
             <div class="flex items-center space-x-3">

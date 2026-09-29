@@ -62,7 +62,7 @@
             <div class="text-left">
                 <h1
                     class="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-tight mb-6">
-                    Turn Every Customer Visit Into A <span class="text-red-600">Repeat Customer</span>
+                    Turn Every Customer Visit Into A <span class="text-red-600">Repeat Customer Test</span>
                 </h1>
 
                 <p class="text-lg sm:text-xl text-slate-600 mb-8 font-medium leading-relaxed">
@@ -267,86 +267,121 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch max-w-6xl mx-auto">
-            @if(isset($plans) && $plans->count() > 0)
-                @foreach($plans as $plan)
+            @if (isset($plans) && $plans->count() > 0)
+                @foreach ($plans as $plan)
                     @php
                         $features = json_decode($plan->features) ?? [];
                     @endphp
-                    
-                    @if(strtolower($plan->type) === 'professional')
+
+                    @if (strtolower($plan->type) === 'professional')
                         <!-- Professional Plan (MOST POPULAR HIGHLIGHTED) -->
-                        <div class="bg-white border-2 border-red-600 p-8 rounded-3xl shadow-xl relative flex flex-col justify-between pt-12 transform lg:-translate-y-2" {{ $plan->color ? 'style=border-color:'.$plan->color : '' }}>
-                            <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[11px] font-black px-4 py-1 rounded-full uppercase tracking-wider shadow-sm" {{ $plan->color ? 'style=background-color:'.$plan->color : '' }}>Most Popular</span>
+                        <div class="bg-white border-2 border-red-600 p-8 rounded-3xl shadow-xl relative flex flex-col justify-between pt-12 transform lg:-translate-y-2"
+                            {{ $plan->color ? 'style=border-color:' . $plan->color : '' }}>
+                            <span
+                                class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[11px] font-black px-4 py-1 rounded-full uppercase tracking-wider shadow-sm"
+                                {{ $plan->color ? 'style=background-color:' . $plan->color : '' }}>Most Popular</span>
                             <div>
-                                <h3 class="text-xl font-extrabold text-red-600 tracking-tight" {{ $plan->color ? 'style=color:'.$plan->color : '' }}>{{ $plan->name }}</h3>
+                                <h3 class="text-xl font-extrabold text-red-600 tracking-tight"
+                                    {{ $plan->color ? 'style=color:' . $plan->color : '' }}>{{ $plan->name }}</h3>
                                 <div class="mt-6 mb-6 pb-6 border-b border-slate-100">
-                                    @if($plan->detailed_description)
-                                    <span class="text-sm font-bold text-slate-400 line-through tracking-wide block mb-1">₹{{ number_format((float)$plan->detailed_description) }}</span>
+                                    @if ($plan->detailed_description)
+                                        <span
+                                            class="text-sm font-bold text-slate-400 line-through tracking-wide block mb-1">₹{{ number_format((float) $plan->detailed_description) }}</span>
                                     @endif
-                                    <div class="text-3xl font-black text-slate-900 tracking-tight">₹{{ number_format($plan->price) }} <span class="text-sm font-medium text-slate-500">/ {{ $plan->billing_cycle }}</span></div>
-                                    @if($plan->short_description)
-                                    <div class="text-red-600 text-xs font-bold mt-2.5 flex items-center bg-red-50 px-2 py-1 rounded w-fit">
-                                        <span>{{ $plan->short_description }}</span>
-                                    </div>
+                                    <div class="text-3xl font-black text-slate-900 tracking-tight">
+                                        ₹{{ number_format($plan->price) }} <span
+                                            class="text-sm font-medium text-slate-500">/
+                                            {{ $plan->billing_cycle }}</span></div>
+                                    @if ($plan->short_description)
+                                        <div
+                                            class="text-red-600 text-xs font-bold mt-2.5 flex items-center bg-red-50 px-2 py-1 rounded w-fit">
+                                            <span>{{ $plan->short_description }}</span>
+                                        </div>
                                     @endif
                                 </div>
                                 <ul class="space-y-3.5 text-slate-600 text-sm mb-8">
-                                    @foreach($features as $feature)
-                                        <li class="flex items-start text-xs"><span class="text-emerald-500 font-bold mr-2.5">✓</span> {{ $feature }}</li>
+                                    @foreach ($features as $feature)
+                                        <li class="flex items-start text-xs"><span
+                                                class="text-emerald-500 font-bold mr-2.5">✓</span> {{ $feature }}
+                                        </li>
                                     @endforeach
                                 </ul>
                             </div>
-                            <a href="{{ $plan->button_link }}" class="text-center w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl transition shadow-md shadow-red-600/10 cursor-pointer text-sm tracking-wide" {{ $plan->color ? 'style=background-color:'.$plan->color.';color:#fff;' : '' }}>{{ $plan->button_text }}</a>
+                            <a href="{{ $plan->button_link }}"
+                                class="text-center w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl transition shadow-md shadow-red-600/10 cursor-pointer text-sm tracking-wide"
+                                {{ $plan->color ? 'style=background-color:' . $plan->color . ';color:#fff;' : '' }}>{{ $plan->button_text }}</a>
                         </div>
                     @elseif(strtolower($plan->type) === 'legacy')
                         <!-- Legacy Plan (BEST VALUE HIGHLIGHTED) -->
-                        <div class="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-sm text-white relative flex flex-col justify-between pt-12">
-                            <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-slate-700 text-amber-400 text-[11px] font-black px-4 py-1 rounded-full uppercase tracking-wider border border-slate-600">Best Value</span>
+                        <div
+                            class="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-sm text-white relative flex flex-col justify-between pt-12">
+                            <span
+                                class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-slate-700 text-amber-400 text-[11px] font-black px-4 py-1 rounded-full uppercase tracking-wider border border-slate-600">Best
+                                Value</span>
                             <div>
                                 <h3 class="text-xl font-extrabold text-white tracking-tight">{{ $plan->name }}</h3>
                                 <div class="mt-6 mb-6 pb-6 border-b border-slate-800">
-                                    @if($plan->detailed_description)
-                                    <span class="text-sm font-bold text-slate-500 line-through tracking-wide block mb-1">₹{{ number_format((float)$plan->detailed_description) }}</span>
+                                    @if ($plan->detailed_description)
+                                        <span
+                                            class="text-sm font-bold text-slate-500 line-through tracking-wide block mb-1">₹{{ number_format((float) $plan->detailed_description) }}</span>
                                     @endif
-                                    <div class="text-3xl font-black text-amber-400 tracking-tight">₹{{ number_format($plan->price) }}</div>
-                                    <div class="text-slate-300 text-[10px] font-bold uppercase tracking-widest mt-2.5 flex items-center space-x-1.5">
-                                        <span class="bg-slate-800 px-2 py-0.5 rounded text-emerald-400">{{ $plan->billing_cycle }}</span>
-                                        @if($plan->short_description)
-                                        <span class="bg-slate-800 px-2 py-0.5 rounded text-slate-400">{{ $plan->short_description }}</span>
+                                    <div class="text-3xl font-black text-amber-400 tracking-tight">
+                                        ₹{{ number_format($plan->price) }}</div>
+                                    <div
+                                        class="text-slate-300 text-[10px] font-bold uppercase tracking-widest mt-2.5 flex items-center space-x-1.5">
+                                        <span
+                                            class="bg-slate-800 px-2 py-0.5 rounded text-emerald-400">{{ $plan->billing_cycle }}</span>
+                                        @if ($plan->short_description)
+                                            <span
+                                                class="bg-slate-800 px-2 py-0.5 rounded text-slate-400">{{ $plan->short_description }}</span>
                                         @endif
                                     </div>
                                 </div>
                                 <ul class="space-y-3.5 text-slate-300 text-sm mb-8">
-                                    @foreach($features as $feature)
-                                        <li class="flex items-start text-xs"><span class="text-amber-400 font-bold mr-2.5">✓</span> {{ $feature }}</li>
+                                    @foreach ($features as $feature)
+                                        <li class="flex items-start text-xs"><span
+                                                class="text-amber-400 font-bold mr-2.5">✓</span> {{ $feature }}
+                                        </li>
                                     @endforeach
                                 </ul>
                             </div>
-                            <a href="{{ $plan->button_link }}" class="text-center w-full bg-white hover:bg-slate-100 text-slate-900 font-bold py-3.5 rounded-xl transition cursor-pointer text-sm tracking-wide" {{ $plan->color ? 'style=background-color:'.$plan->color.';color:#fff;' : '' }}>{{ $plan->button_text }}</a>
+                            <a href="{{ $plan->button_link }}"
+                                class="text-center w-full bg-white hover:bg-slate-100 text-slate-900 font-bold py-3.5 rounded-xl transition cursor-pointer text-sm tracking-wide"
+                                {{ $plan->color ? 'style=background-color:' . $plan->color . ';color:#fff;' : '' }}>{{ $plan->button_text }}</a>
                         </div>
                     @else
                         <!-- Standard Plan -->
-                        <div class="bg-white border border-slate-200/90 p-8 rounded-3xl shadow-sm hover:shadow-md transition flex flex-col justify-between relative pt-10">
+                        <div
+                            class="bg-white border border-slate-200/90 p-8 rounded-3xl shadow-sm hover:shadow-md transition flex flex-col justify-between relative pt-10">
                             <div>
-                                <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">{{ $plan->name }}</h3>
+                                <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">{{ $plan->name }}
+                                </h3>
                                 <div class="mt-6 mb-6 pb-6 border-b border-slate-100">
-                                    @if($plan->detailed_description)
-                                    <span class="text-sm font-bold text-slate-400 line-through tracking-wide block mb-1">₹{{ number_format((float)$plan->detailed_description) }}</span>
+                                    @if ($plan->detailed_description)
+                                        <span
+                                            class="text-sm font-bold text-slate-400 line-through tracking-wide block mb-1">₹{{ number_format((float) $plan->detailed_description) }}</span>
                                     @endif
-                                    <div class="text-3xl font-black text-slate-900 tracking-tight">₹{{ number_format($plan->price) }} <span class="text-sm font-medium text-slate-500">/ {{ $plan->billing_cycle }}</span></div>
-                                    @if($plan->short_description)
-                                    <div class="text-emerald-600 text-xs font-bold mt-2.5 flex items-center">
-                                        <span>{{ $plan->short_description }}</span>
-                                    </div>
+                                    <div class="text-3xl font-black text-slate-900 tracking-tight">
+                                        ₹{{ number_format($plan->price) }} <span
+                                            class="text-sm font-medium text-slate-500">/
+                                            {{ $plan->billing_cycle }}</span></div>
+                                    @if ($plan->short_description)
+                                        <div class="text-emerald-600 text-xs font-bold mt-2.5 flex items-center">
+                                            <span>{{ $plan->short_description }}</span>
+                                        </div>
                                     @endif
                                 </div>
                                 <ul class="space-y-3.5 text-slate-600 text-sm mb-8">
-                                    @foreach($features as $feature)
-                                        <li class="flex items-start text-xs"><span class="text-emerald-500 font-bold mr-2.5">✓</span> {{ $feature }}</li>
+                                    @foreach ($features as $feature)
+                                        <li class="flex items-start text-xs"><span
+                                                class="text-emerald-500 font-bold mr-2.5">✓</span> {{ $feature }}
+                                        </li>
                                     @endforeach
                                 </ul>
                             </div>
-                            <a href="{{ $plan->button_link }}" class="text-center w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl transition cursor-pointer text-sm tracking-wide shadow-sm" {{ $plan->color ? 'style=background-color:'.$plan->color.';color:#fff;' : '' }}>{{ $plan->button_text }}</a>
+                            <a href="{{ $plan->button_link }}"
+                                class="text-center w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl transition cursor-pointer text-sm tracking-wide shadow-sm"
+                                {{ $plan->color ? 'style=background-color:' . $plan->color . ';color:#fff;' : '' }}>{{ $plan->button_text }}</a>
                         </div>
                     @endif
                 @endforeach
@@ -427,7 +462,8 @@
                         <div class="bg-[#f1f5f9] border border-[#e2e8f0] rounded-xl overflow-hidden cursor-pointer"
                             onclick="toggleFaq('faq-{{ $faq['id'] }}')">
                             <div class="flex justify-between items-center text-left p-5">
-                                <h4 class="font-bold text-[#0f172a] pr-8 text-sm sm:text-base">{{ $faq['q'] }}</h4>
+                                <h4 class="font-bold text-[#0f172a] pr-8 text-sm sm:text-base">{{ $faq['q'] }}
+                                </h4>
                                 <span id="faq-{{ $faq['id'] }}-icon"
                                     class="text-2xl font-black select-none flex-shrink-0"
                                     style="color:#b00000">+</span>
@@ -486,15 +522,20 @@
     </footer>
 
     <!-- Login Modal -->
-    <div id="loginModal" class="modal fixed inset-0 bg-slate-900/50 z-[100] items-center justify-center backdrop-blur-sm" onclick="if(event.target === this) this.classList.remove('active')">
+    <div id="loginModal"
+        class="modal fixed inset-0 bg-slate-900/50 z-[100] items-center justify-center backdrop-blur-sm"
+        onclick="if(event.target === this) this.classList.remove('active')">
         <div class="bg-white rounded-3xl w-full max-w-sm p-8 shadow-2xl relative">
-            <button onclick="document.getElementById('loginModal').classList.remove('active')" class="absolute top-4 right-5 text-slate-400 hover:text-slate-700 text-3xl font-light">&times;</button>
+            <button onclick="document.getElementById('loginModal').classList.remove('active')"
+                class="absolute top-4 right-5 text-slate-400 hover:text-slate-700 text-3xl font-light">&times;</button>
             <h2 class="text-2xl font-black text-slate-900 text-center mb-6">Welcome Back</h2>
             <div class="flex flex-col space-y-4">
-                <a href="/merchant/login" class="w-full text-center bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-3.5 rounded-xl text-md shadow-md transition transform hover:-translate-y-0.5">
+                <a href="/merchant/login"
+                    class="w-full text-center bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-3.5 rounded-xl text-md shadow-md transition transform hover:-translate-y-0.5">
                     Merchant Login
                 </a>
-                <a href="/customer/login" class="w-full text-center bg-slate-900 hover:bg-slate-800 text-white font-bold px-6 py-3.5 rounded-xl text-md shadow-md transition transform hover:-translate-y-0.5">
+                <a href="/customer/login"
+                    class="w-full text-center bg-slate-900 hover:bg-slate-800 text-white font-bold px-6 py-3.5 rounded-xl text-md shadow-md transition transform hover:-translate-y-0.5">
                     Customer Login
                 </a>
             </div>

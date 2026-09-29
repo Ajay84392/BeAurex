@@ -1,0 +1,1 @@
+<?php require "vendor/autoload.php"; $app = require_once "bootstrap/app.php"; $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class); $kernel->bootstrap(); $u = App\Models\User::where("role", "admin")->first(); dump($u->name, $u->phone, $u->language, $u->timezone);

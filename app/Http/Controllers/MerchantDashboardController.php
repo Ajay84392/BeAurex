@@ -84,7 +84,7 @@ class MerchantDashboardController extends Controller
 
     public function updateProfile(Request $request)
     {
-        $business = Business::where('user_id', auth()->id())->first() ?? Business::first();
+        $business = Business::where('user_id', auth()->id())->first();
 
         $request->validate([
             'name' => 'required|string|max:255',
@@ -107,12 +107,15 @@ class MerchantDashboardController extends Controller
 
         if ($business) {
             $business->update($data);
+        } else {
+            $data['user_id'] = auth()->id();
+            $business = Business::create($data);
+        }
 
-            // Also update user if needed, depending on logic
-            $user = auth()->user();
-            if ($user && $request->email) {
-                $user->update(['name' => $data['name'], 'email' => $data['email']]);
-            }
+        // Also update user
+        $user = auth()->user();
+        if ($user && $request->email) {
+            $user->update(['name' => $data['name'], 'email' => $data['email']]);
         }
 
         return redirect()->back()->with('success', 'Profile updated successfully.');

@@ -1,0 +1,1 @@
+<?php require "vendor/autoload.php"; $app = require_once "bootstrap/app.php"; $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class); $kernel->bootstrap(); $u = App\Models\User::first(); auth()->login($u); $u->update(["password" => \Hash::make("newpass")]); echo auth()->check() ? "LOGGED IN" : "LOGGED OUT"; 

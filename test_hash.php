@@ -1,0 +1,1 @@
+<?php require "vendor/autoload.php"; $app = require_once "bootstrap/app.php"; $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class); $kernel->bootstrap(); $u = App\Models\User::first(); $hash1 = \Hash::make("password"); $u->update(["password" => $hash1]); echo \Hash::check("password", $u->password) ? "WORKS" : "FAILS - DOUBLE HASHED!"; 
