@@ -14,19 +14,19 @@ jobs:
       - name: Checkout latest main branch
         uses: actions/checkout@v5
 
-      - name: Validate deployment secrets
+      - name: Check deployment secrets
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_PORT: ${{ secrets.SSH_PORT }}
           SSH_USER: ${{ secrets.SSH_USER }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         run: |
           test -n "$SSH_HOST" || { echo "SSH_HOST is missing"; exit 1; }
           test -n "$SSH_PORT" || { echo "SSH_PORT is missing"; exit 1; }
           test -n "$SSH_USER" || { echo "SSH_USER is missing"; exit 1; }
-          test -n "$DEPLOY_PATH" || { echo "DEPLOY_PATH is missing"; exit 1; }
           test -n "$SSH_PRIVATE_KEY" || { echo "SSH_PRIVATE_KEY is missing"; exit 1; }
+          test -n "$DEPLOY_PATH" || { echo "DEPLOY_PATH is missing"; exit 1; }
 
       - name: Configure SSH
         env:
@@ -37,12 +37,9 @@ jobs:
           mkdir -p ~/.ssh
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/hostinger_key
           chmod 600 ~/.ssh/hostinger_key
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
 
-          ssh-keyscan \
-            -p "$SSH_PORT" \
-            -H "$SSH_HOST" >> ~/.ssh/known_hosts
-
-      - name: Test Hostinger SSH connection
+      - name: Test Hostinger SSH
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_PORT: ${{ secrets.SSH_PORT }}
@@ -52,11 +49,10 @@ jobs:
             -i ~/.ssh/hostinger_key \
             -p "$SSH_PORT" \
             -o BatchMode=yes \
-            -o StrictHostKeyChecking=yes \
             "$SSH_USER@$SSH_HOST" \
             "echo SSH connection successful"
 
-      - name: Upload latest project files
+      - name: Upload latest main branch
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_PORT: ${{ secrets.SSH_PORT }}
@@ -67,15 +63,14 @@ jobs:
             --exclude=".git" \
             --exclude=".github" \
             --exclude=".env" \
-            --exclude="vendor" \
             --exclude="storage" \
-            --exclude="node_modules" \
             --exclude="public/uploads" \
+            --exclude="vendor" \
+            --exclude="node_modules" \
             -czf - . | \
           ssh \
             -i ~/.ssh/hostinger_key \
             -p "$SSH_PORT" \
-            -o StrictHostKeyChecking=yes \
             "$SSH_USER@$SSH_HOST" \
             "mkdir -p '$DEPLOY_PATH' && tar -xzf - -C '$DEPLOY_PATH'"
 
@@ -89,7 +84,6 @@ jobs:
           ssh \
             -i ~/.ssh/hostinger_key \
             -p "$SSH_PORT" \
-            -o StrictHostKeyChecking=yes \
             "$SSH_USER@$SSH_HOST" \
             "cd '$DEPLOY_PATH' && composer install --no-dev --optimize-autoloader"
 
@@ -103,25 +97,5 @@ jobs:
           ssh \
             -i ~/.ssh/hostinger_key \
             -p "$SSH_PORT" \
-            -o StrictHostKeyChecking=yes \
             "$SSH_USER@$SSH_HOST" \
-            "cd '$DEPLOY_PATH' && \
-             php artisan optimize:clear && \
-             php artisan storage:link || true"
-
-      - name: Rebuild Laravel caches
-        env:
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_PORT: ${{ secrets.SSH_PORT }}
-          SSH_USER: ${{ secrets.SSH_USER }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-        run: |
-          ssh \
-            -i ~/.ssh/hostinger_key \
-            -p "$SSH_PORT" \
-            -o StrictHostKeyChecking=yes \
-            "$SSH_USER@$SSH_HOST" \
-            "cd '$DEPLOY_PATH' && \
-             php artisan config:cache && \
-             php artisan route:cache && \
-             php artisan view:cache"
+            "cd '$DEPLOY_PATH' && php artisan optimize:clear"
