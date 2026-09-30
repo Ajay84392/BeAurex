@@ -57,7 +57,7 @@ class GoogleAuthController extends Controller
             );
             $this->loginAs($user);
 
-            return redirect('/customer');
+            return redirect()->intended('/customer');
         }
 
         return redirect('/');

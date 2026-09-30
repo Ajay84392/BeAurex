@@ -2,8 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Business;
+use App\Models\Customer;
 use App\Models\RewardRequest;
+use App\Rules\MobileNumber;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rules\Password;
 
 class CustomerDashboardController extends Controller
 {
@@ -21,6 +26,52 @@ class CustomerDashboardController extends Controller
     {
         return view('customer.after-scan');
     }
+
+    /**
+     * Target of a merchant's QR code: award a coin for the visit, show the
+     * "coins collected" popup, then continue to the claim-reward page.
+     */
+    public function collect(Business $business)
+    {
+        $user = auth()->user();
+        $customer = Customer::firstOrCreate(
+            ['email' => $user->email],
+            ['name' => $user->name, 'phone' => $user->phone ?: '00000'.rand(10000, 99999)]
+        );
+
+        // One coin per business per customer every few minutes, so refreshing the page can't farm coins.
+        $recent = DB::table('customer_visits')
+            ->where('customer_id', $customer->id)
+            ->where('business_id', $business->id)
+            ->where('scanned_at', '>=', now()->subMinutes(self::COLLECT_COOLDOWN_MINUTES))
+            ->exists();
+
+        if (! $recent) {
+            DB::table('customer_visits')->insert([
+                'customer_id' => $customer->id,
+                'business_id' => $business->id,
+                'scanned_at' => now(),
+                'stamp_awarded' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $coins = DB::table('customer_visits')
+            ->where('customer_id', $customer->id)
+            ->where('business_id', $business->id)
+            ->where('stamp_awarded', true)
+            ->count();
+
+        return view('customer.coin-collected', [
+            'business' => $business,
+            'awarded' => ! $recent,
+            'coins' => $coins,
+            'redirectTo' => route('customer.claim-reward'),
+        ]);
+    }
+
+    public const COLLECT_COOLDOWN_MINUTES = 5;
 
     public function rewards()
     {
@@ -47,7 +98,7 @@ class CustomerDashboardController extends Controller
         $user = auth()->user();
         $rules = [
             'name' => 'nullable|string|max:255',
-            'phone' => 'nullable|string|max:20',
+            'phone' => ['nullable', new MobileNumber],
             'photo' => 'nullable|image|max:2048',
             'language' => 'nullable|string',
             'timezone' => 'nullable|string',
@@ -57,7 +108,7 @@ class CustomerDashboardController extends Controller
         // Only validate password if they explicitly provide both fields
         if ($request->filled('password') && $request->filled('current_password')) {
             $rules['current_password'] = 'required';
-            $rules['password'] = 'required|min:8|confirmed';
+            $rules['password'] = ['required', 'confirmed', Password::defaults()];
         } else {
             // Ignore password update if incomplete (e.g. browser autofill)
             $request->request->remove('password');
@@ -75,6 +126,9 @@ class CustomerDashboardController extends Controller
         $data = array_filter($request->only('name', 'phone', 'language', 'timezone', 'date_format'), function($value) {
             return !is_null($value) && $value !== '';
         });
+        if (isset($data['phone'])) {
+            $data['phone'] = MobileNumber::format($data['phone']);
+        }
         
         if ($request->hasFile('photo')) {
             $data['photo'] = '/storage/'.$request->file('photo')->store('profiles', 'public');
@@ -115,7 +169,9 @@ class CustomerDashboardController extends Controller
 
     public function logout()
     {
-        session()->forget('customer_logged_in');
+        auth()->logout();
+        session()->invalidate();
+        session()->regenerateToken();
 
         return redirect('/');
     }

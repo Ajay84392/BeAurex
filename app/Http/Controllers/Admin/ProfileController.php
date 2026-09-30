@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Rules\MobileNumber;
 use Illuminate\Validation\Rules\Password;
 
 class ProfileController extends Controller
@@ -20,7 +21,7 @@ class ProfileController extends Controller
 
         $rules = [
             'name' => 'nullable|string|max:255',
-            'phone' => 'nullable|string|max:20',
+            'phone' => ['nullable', new MobileNumber],
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'language' => 'nullable|string',
             'timezone' => 'nullable|string',
@@ -31,7 +32,7 @@ class ProfileController extends Controller
         if ($request->filled('password') && $request->filled('current_password')) {
             $rules['current_password'] = 'required';
             // Assuming the complexity rules can be mapped to Laravel's Password rule or just regex
-            $rules['password'] = ['required', 'min:8', 'confirmed', Password::min(8)->letters()->mixedCase()->numbers()];
+            $rules['password'] = ['required', 'confirmed', Password::defaults()];
         } else {
             $request->request->remove('password');
             $request->request->remove('current_password');
@@ -48,6 +49,9 @@ class ProfileController extends Controller
         $data = array_filter($request->only('name', 'phone', 'language', 'timezone', 'date_format'), function($value) {
             return !is_null($value) && $value !== '';
         });
+        if (isset($data['phone'])) {
+            $data['phone'] = MobileNumber::format($data['phone']);
+        }
 
         // Generate a username if empty
         if (empty($user->username) && !empty($request->name)) {

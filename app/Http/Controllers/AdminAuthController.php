@@ -23,8 +23,8 @@ class AdminAuthController extends Controller
     public function processLogin(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
+            'email' => 'required|email:rfc|max:255',
+            'password' => 'required|string|max:64',
         ]);
 
         $user = User::where('email', $request->email)->where('role', 'admin')->first();

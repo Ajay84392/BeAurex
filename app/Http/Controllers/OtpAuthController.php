@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Password;
 
 class OtpAuthController extends Controller
 {
@@ -20,16 +21,12 @@ class OtpAuthController extends Controller
      */
     public function register(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'password' => 'required|string|min:6',
-        ]);
+        $request->validate(self::registrationRules(), self::registrationMessages());
 
         $user = User::where('email', $request->email)->where('role', 'customer')->first();
 
         if ($user && $user->email_verified_at) {
-            return back()->withErrors(['email' => 'A customer account with this email already exists. Please login or reset your password.'])->withInput();
+            return self::alreadyRegistered('customer', $request->email);
         }
 
         $user ??= User::create([
@@ -60,7 +57,7 @@ class OtpAuthController extends Controller
     {
         abort_unless(in_array($role, self::ROLES), 404);
 
-        $request->validate(['email' => 'required|email']);
+        $request->validate(['email' => 'required|email:rfc|max:255']);
 
         $user = User::where('email', $request->email)->where('role', $role)->first();
 
@@ -150,8 +147,41 @@ class OtpAuthController extends Controller
         return match ($role) {
             'admin' => redirect('/admin/dashboard'),
             'merchant' => app(MerchantAuthController::class)->redirectBasedOnOnboarding($user),
-            default => redirect()->route('customer.home'),
+            default => redirect()->intended(route('customer.home')),
         };
+    }
+
+    /**
+     * Validation shared by customer and merchant sign-up.
+     */
+    public static function registrationRules(array $extra = []): array
+    {
+        return [
+            'name' => ['required', 'string', 'min:2', 'max:100', 'regex:/^[\pL\s.\'-]+$/u'],
+            'email' => ['required', 'string', 'email:rfc', 'max:255'],
+            'password' => ['required', 'confirmed', Password::defaults()],
+            ...$extra,
+        ];
+    }
+
+    public static function registrationMessages(): array
+    {
+        return [
+            'name.regex' => 'Name can only contain letters, spaces, dots, apostrophes and hyphens.',
+            'password.confirmed' => 'The passwords do not match.',
+        ];
+    }
+
+    /**
+     * Send someone who already has a verified account of this role to its login page.
+     */
+    public static function alreadyRegistered(string $role, string $email)
+    {
+        $login = ['admin' => '/admin', 'merchant' => '/merchant/login', 'customer' => '/customer/login'][$role];
+
+        return redirect($login)
+            ->withErrors(['email' => 'You already have a '.$role.' account with this email. Please login below, or use Forgot Password.'])
+            ->withInput(['email' => $email]);
     }
 
     private function pendingUser(): ?User

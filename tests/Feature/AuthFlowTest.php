@@ -103,23 +103,23 @@ class AuthFlowTest extends TestCase
     {
         $this->makeUser('merchant');
 
-        $this->post('/customer/register', ['name' => 'New Cust', 'email' => 'same@example.com', 'password' => 'mypass123'])
+        $this->post('/customer/register', ['name' => 'New Cust', 'email' => 'same@example.com', 'password' => 'Mypass@123', 'password_confirmation' => 'Mypass@123'])
             ->assertRedirect('/verify-otp');
 
         $customer = User::where('email', 'same@example.com')->where('role', 'customer')->first();
         $this->assertNotNull($customer);
-        $this->assertFalse(Hash::check('mypass123', $customer->password), 'Password must not apply before OTP is verified');
+        $this->assertFalse(Hash::check('Mypass@123', $customer->password), 'Password must not apply before OTP is verified');
         $this->assertSame('merchant', User::where('email', 'same@example.com')->where('role', 'merchant')->value('role'));
 
         $this->post('/verify-otp', ['otp' => $customer->fresh()->otp])->assertRedirect(route('customer.home'));
 
         $customer->refresh();
-        $this->assertTrue(Hash::check('mypass123', $customer->password));
+        $this->assertTrue(Hash::check('Mypass@123', $customer->password));
         $this->assertNotNull($customer->email_verified_at);
         $this->assertDatabaseHas('customers', ['email' => 'same@example.com']);
 
         auth()->logout();
-        $this->post('/customer/register', ['name' => 'Again', 'email' => 'same@example.com', 'password' => 'other123'])
+        $this->post('/customer/register', ['name' => 'Again', 'email' => 'same@example.com', 'password' => 'Other@123', 'password_confirmation' => 'Other@123'])
             ->assertSessionHasErrors('email');
     }
 
@@ -127,7 +127,7 @@ class AuthFlowTest extends TestCase
     {
         $customer = $this->makeUser('customer');
 
-        $this->post('/merchant/register', ['name' => 'Shop Owner', 'email' => 'same@example.com', 'phone' => '9876543210', 'password' => 'shop1234'])
+        $this->post('/merchant/register', ['name' => 'Shop Owner', 'email' => 'same@example.com', 'phone' => '9876543210', 'password' => 'Shop@1234', 'password_confirmation' => 'Shop@1234'])
             ->assertRedirect(route('merchant.verify'));
 
         $this->assertSame('customer', $customer->fresh()->role);
@@ -154,13 +154,159 @@ class AuthFlowTest extends TestCase
         $this->assertTrue(Hash::check('old-cust', $customer->fresh()->password));
     }
 
+    public function test_weak_passwords_are_rejected_everywhere(): void
+    {
+        $base = ['name' => 'Asha Rao', 'email' => 'new@example.com'];
+
+        foreach (['short1!', 'onlyletters!', 'NoSymbol123', '12345678!', 'Pass@123x'] as $i => $password) {
+            $response = $this->post('/customer/register', $base + ['password' => $password, 'password_confirmation' => $password]);
+            if ($password === 'Pass@123x') {
+                $response->assertRedirect('/verify-otp');
+            } else {
+                $response->assertSessionHasErrors('password');
+            }
+        }
+
+        $this->post('/customer/register', $base + ['password' => 'Pass@1234', 'password_confirmation' => 'Pass@9999'])
+            ->assertSessionHasErrors('password');
+    }
+
+    public function test_reset_password_enforces_policy(): void
+    {
+        $user = $this->makeUser('customer');
+        $this->post('/forgot-password', ['email' => 'same@example.com', 'role' => 'customer']);
+        $this->post(route('password.verify.post'), ['otp' => $user->fresh()->otp]);
+
+        $this->post(route('password.update'), ['password' => 'weakpass', 'password_confirmation' => 'weakpass'])
+            ->assertSessionHasErrors('password');
+        $this->post(route('password.update'), ['password' => 'Strong@12', 'password_confirmation' => 'Strong@12'])
+            ->assertRedirect('/customer/login');
+    }
+
+    public function test_merchant_mobile_number_must_be_ten_valid_digits(): void
+    {
+        $base = ['name' => 'Shop Owner', 'email' => 'shop@example.com', 'password' => 'Shop@1234', 'password_confirmation' => 'Shop@1234'];
+
+        foreach (['12345', '98765432101', '5876543210', 'abcdefghij', '98765-4321'] as $phone) {
+            $this->post('/merchant/register', $base + ['phone' => $phone])->assertSessionHasErrors('phone');
+        }
+
+        $this->post('/merchant/register', $base + ['phone' => '98765 43210'])->assertRedirect(route('merchant.verify'));
+        $this->assertSame('+91 9876543210', User::where('email', 'shop@example.com')->value('phone'));
+    }
+
+    public function test_existing_account_is_sent_to_login_instead_of_signing_up_again(): void
+    {
+        $this->makeUser('merchant');
+
+        $this->post('/merchant/register', ['name' => 'Dup', 'email' => 'same@example.com', 'phone' => '9876543210', 'password' => 'Shop@1234', 'password_confirmation' => 'Shop@1234'])
+            ->assertRedirect('/merchant/login')
+            ->assertSessionHasErrors('email');
+        $this->assertSame(1, User::where('email', 'same@example.com')->where('role', 'merchant')->count());
+    }
+
+    public function test_logged_in_users_are_sent_to_their_dashboard_from_login_and_register(): void
+    {
+        $this->makeUser('customer', password: 'Cust@1234');
+        $this->post('/customer/login', ['email' => 'same@example.com', 'password' => 'Cust@1234']);
+
+        $this->get('/customer/login')->assertRedirect(route('customer.home'));
+        $this->get('/customer/register')->assertRedirect(route('customer.home'));
+        $this->post('/customer/register', ['name' => 'X Y', 'email' => 'other@example.com', 'password' => 'Pass@1234', 'password_confirmation' => 'Pass@1234'])
+            ->assertRedirect(route('customer.home'));
+        // Other portals stay reachable, since the same email may hold a merchant account too.
+        $this->get('/merchant/register')->assertOk();
+
+        $this->makeUser('merchant', password: 'Merch@1234');
+        $this->post('/merchant/login', ['email' => 'same@example.com', 'password' => 'Merch@1234']);
+        $this->get('/merchant/login')->assertRedirect(route('merchant.dashboard'));
+        $this->get('/merchant/register')->assertRedirect(route('merchant.dashboard'));
+    }
+
+    public function test_unverified_merchant_can_go_back_to_fix_sign_up(): void
+    {
+        $this->post('/merchant/register', ['name' => 'Shop Owner', 'email' => 'typo@example.com', 'phone' => '9876543210', 'password' => 'Shop@1234', 'password_confirmation' => 'Shop@1234']);
+
+        $this->get('/merchant/register')->assertOk();
+    }
+
+    public function test_logout_confirmation_popup_and_full_logout_for_each_portal(): void
+    {
+        foreach (['customer' => ['/customer/profile', '/customer/logout', '/customer'], 'merchant' => ['/merchant/profile', '/merchant/logout', '/merchant'], 'admin' => ['/admin/profile', '/admin/logout', '/admin/dashboard']] as $role => [$profile, $logout, $home]) {
+            $this->makeUser($role, password: 'Pass@1234');
+            $this->post($role === 'admin' ? '/admin' : "/$role/login", ['email' => 'same@example.com', 'password' => 'Pass@1234']);
+
+            $this->get($profile)->assertOk()->assertSee('Log Out?')->assertSee('Are you sure you want to log out');
+
+            $this->get($logout)->assertRedirect('/');
+            $this->assertGuest();
+            $this->get($home)->assertRedirect();
+        }
+    }
+
+    public function test_scanning_merchant_qr_awards_coin_shows_popup_then_goes_to_claim_reward(): void
+    {
+        $merchant = $this->makeUser('merchant', 'shop@example.com', 'Pass@1234');
+        $business = \App\Models\Business::create(['user_id' => $merchant->id, 'name' => 'Ka-feen Cafe', 'email' => 'shop@example.com']);
+
+        // The merchant's QR points at their own collect page.
+        $this->post('/merchant/login', ['email' => 'shop@example.com', 'password' => 'Pass@1234']);
+        $collectUrl = route('customer.collect', $business);
+        $this->get('/merchant')->assertOk()->assertSee(urlencode($collectUrl), false);
+        $this->get('/merchant/logout');
+
+        // A logged-out customer scanning it is sent to login, then straight back to collect.
+        $this->get($collectUrl)->assertRedirect('/customer/login');
+        $this->makeUser('customer', 'cust@example.com', 'Pass@1234');
+        $this->post('/customer/login', ['email' => 'cust@example.com', 'password' => 'Pass@1234'])->assertRedirect($collectUrl);
+
+        $this->get($collectUrl)->assertOk()
+            ->assertSee('Coin Collected!')->assertSee('Ka-feen Cafe')
+            ->assertSee(route('customer.claim-reward'));
+        $this->assertDatabaseCount('customer_visits', 1);
+
+        // Scanning again right away doesn't award another coin.
+        $this->get($collectUrl)->assertOk()->assertSee('Already Collected');
+        $this->assertDatabaseCount('customer_visits', 1);
+
+        // After the cooldown, the next visit earns another coin.
+        $this->travel(\App\Http\Controllers\CustomerDashboardController::COLLECT_COOLDOWN_MINUTES + 1)->minutes();
+        $this->get($collectUrl)->assertOk()->assertSee('Coin Collected!');
+        $this->assertDatabaseCount('customer_visits', 2);
+
+        $this->get('/customer/collect/999999')->assertNotFound();
+    }
+
+    public function test_profile_pages_save_with_phone_and_password_rules(): void
+    {
+        $customer = $this->makeUser('customer', 'c@example.com', 'Pass@1234');
+        $this->post('/customer/login', ['email' => 'c@example.com', 'password' => 'Pass@1234']);
+        $this->post('/customer/profile', ['phone' => '12345'])->assertSessionHasErrors('phone');
+        $this->post('/customer/profile', ['name' => 'Cust Name', 'phone' => '98765 43210'])->assertSessionHasNoErrors();
+        $this->assertSame('+91 9876543210', $customer->fresh()->phone);
+        $this->get('/customer/logout');
+
+        $merchant = $this->makeUser('merchant', 'm@example.com', 'Pass@1234');
+        \App\Models\Business::create(['user_id' => $merchant->id, 'name' => 'Shop', 'email' => 'm@example.com']);
+        $this->post('/merchant/login', ['email' => 'm@example.com', 'password' => 'Pass@1234']);
+        $this->post('/merchant/profile', ['phone' => '5555555555'])->assertSessionHasErrors('phone');
+        $this->post('/merchant/profile', ['phone' => '9123456789'])->assertSessionHasNoErrors();
+        $this->post('/merchant/profile', ['current_password' => 'Pass@1234', 'password' => 'weak', 'password_confirmation' => 'weak'])->assertSessionHasErrors('password');
+        $this->get('/merchant/logout');
+
+        $admin = $this->makeUser('admin', 'a@example.com', 'Pass@1234');
+        $this->post('/admin', ['email' => 'a@example.com', 'password' => 'Pass@1234']);
+        $this->post('/admin/profile', ['phone' => '9000000001'])->assertSessionHasNoErrors();
+        $this->assertSame('+91 9000000001', $admin->fresh()->phone);
+    }
+
     public function test_reset_page_requires_verified_otp(): void
     {
         $this->makeUser('customer');
 
         $this->post('/forgot-password', ['email' => 'same@example.com', 'role' => 'customer']);
         $this->get(route('password.reset'))->assertRedirect(route('password.request'));
-        $this->post(route('password.update'), ['password' => 'hijack123', 'password_confirmation' => 'hijack123'])
+        $this->post(route('password.update'), ['password' => 'Hijack@123', 'password_confirmation' => 'Hijack@123'])
             ->assertRedirect(route('password.request'));
     }
 }

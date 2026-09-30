@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\SendsOtp;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class ForgotPasswordController extends Controller
 {
@@ -21,7 +22,7 @@ class ForgotPasswordController extends Controller
     public function sendOtp(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
+            'email' => 'required|email:rfc|max:255',
             'role' => 'required|in:'.implode(',', OtpAuthController::ROLES),
         ]);
 
@@ -97,9 +98,10 @@ class ForgotPasswordController extends Controller
 
     public function resetPassword(Request $request)
     {
-        $request->validate([
-            'password' => 'required|min:6|confirmed',
-        ]);
+        $request->validate(
+            ['password' => ['required', 'confirmed', Password::defaults()]],
+            ['password.confirmed' => 'The passwords do not match.']
+        );
 
         if (! session('reset_otp_verified') || ! ($user = $this->resetUser())) {
             return redirect()->route('password.request');

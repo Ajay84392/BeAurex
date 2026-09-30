@@ -19,6 +19,7 @@ use App\Http\Controllers\OtpAuthController;
 use App\Http\Middleware\CheckAdminSession;
 use App\Http\Middleware\CheckCustomerSession;
 use App\Http\Middleware\CheckMerchantSession;
+use App\Http\Middleware\RedirectIfPortalAuthenticated;
 use App\Models\Faq;
 use App\Models\Setting;
 use App\Models\User;
@@ -45,12 +46,12 @@ Route::get('/auth/google/{role}/callback', [GoogleAuthController::class, 'callba
 // ─── Customer Auth ────────────────────────────────────────────────────────────
 use App\Http\Controllers\CustomerAuthController;
 
-Route::get('/customer/login', [CustomerAuthController::class, 'showLogin'])->name('login');
-Route::post('/customer/login', [CustomerAuthController::class, 'processLogin'])->middleware('throttle:10,1');
+Route::get('/customer/login', [CustomerAuthController::class, 'showLogin'])->name('login')->middleware(RedirectIfPortalAuthenticated::class.':customer');
+Route::post('/customer/login', [CustomerAuthController::class, 'processLogin'])->middleware(['throttle:10,1', RedirectIfPortalAuthenticated::class.':customer']);
 Route::get('/customer/register', function () {
     return view('auth.register');
-});
-Route::post('/customer/register', [OtpAuthController::class, 'register'])->middleware('throttle:10,1');
+})->middleware(RedirectIfPortalAuthenticated::class.':customer');
+Route::post('/customer/register', [OtpAuthController::class, 'register'])->middleware(['throttle:10,1', RedirectIfPortalAuthenticated::class.':customer']);
 
 // OTP login (customer, merchant, admin) + verify routes
 Route::post('/{role}/login/otp', [OtpAuthController::class, 'sendLoginOtp'])
@@ -72,6 +73,7 @@ Route::middleware([CheckCustomerSession::class])->group(function () {
     Route::get('/customer/after-scan', [CustomerDashboardController::class, 'afterScan'])->name('customer.after-scan');
     Route::get('/customer/rewards', [CustomerDashboardController::class, 'rewards'])->name('customer.rewards');
     Route::get('/customer/claim-reward', [CustomerDashboardController::class, 'claimReward'])->name('customer.claim-reward');
+    Route::get('/customer/collect/{business}', [CustomerDashboardController::class, 'collect'])->name('customer.collect');
     Route::get('/customer/status/{type}', [CustomerDashboardController::class, 'showStatus'])->name('customer.status');
     Route::get('/customer/profile', [CustomerDashboardController::class, 'profile'])->name('customer.profile');
     Route::post('/customer/profile', [CustomerDashboardController::class, 'updateProfile'])->name('customer.profile.update');
@@ -88,8 +90,8 @@ Route::get('/reset-password', [ForgotPasswordController::class, 'showResetForm']
 Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword'])->name('password.update');
 
 // ─── Admin Login ─────────────────────────────────────────────────────────────
-Route::get('/admin', [AdminAuthController::class, 'showLogin'])->name('admin.login');
-Route::post('/admin', [AdminAuthController::class, 'processLogin'])->middleware('throttle:10,1');
+Route::get('/admin', [AdminAuthController::class, 'showLogin'])->name('admin.login')->middleware(RedirectIfPortalAuthenticated::class.':admin');
+Route::post('/admin', [AdminAuthController::class, 'processLogin'])->middleware(['throttle:10,1', RedirectIfPortalAuthenticated::class.':admin']);
 
 // ─── Protected Admin Routes ───────────────────────────────────────────────────
 Route::middleware([CheckAdminSession::class])->group(function () {
@@ -129,10 +131,10 @@ Route::middleware([CheckAdminSession::class])->group(function () {
 
 // ─── Merchant Auth ────────────────────────────────────────────────────────────
 
-Route::get('/merchant/login', [MerchantAuthController::class, 'showLogin'])->name('merchant.login');
-Route::post('/merchant/login', [MerchantAuthController::class, 'processLogin'])->middleware('throttle:10,1');
-Route::get('/merchant/register', [MerchantAuthController::class, 'showRegister'])->name('merchant.register');
-Route::post('/merchant/register', [MerchantAuthController::class, 'processRegister']);
+Route::get('/merchant/login', [MerchantAuthController::class, 'showLogin'])->name('merchant.login')->middleware(RedirectIfPortalAuthenticated::class.':merchant');
+Route::post('/merchant/login', [MerchantAuthController::class, 'processLogin'])->middleware(['throttle:10,1', RedirectIfPortalAuthenticated::class.':merchant']);
+Route::get('/merchant/register', [MerchantAuthController::class, 'showRegister'])->name('merchant.register')->middleware(RedirectIfPortalAuthenticated::class.':merchant');
+Route::post('/merchant/register', [MerchantAuthController::class, 'processRegister'])->middleware(['throttle:10,1', RedirectIfPortalAuthenticated::class.':merchant']);
 Route::get('/merchant/verify', [MerchantAuthController::class, 'showVerify'])->name('merchant.verify');
 Route::post('/merchant/verify', [MerchantAuthController::class, 'processVerify'])->middleware('throttle:10,1');
 Route::post('/merchant/resend-otp', [MerchantAuthController::class, 'resendOtp'])->name('merchant.resend-otp');
@@ -149,7 +151,7 @@ Route::get('/merchant/logout', [MerchantAuthController::class, 'logout'])->name(
 Route::middleware([CheckMerchantSession::class])->group(function () {
     Route::get('/merchant', [MerchantDashboardController::class, 'index'])->name('merchant.dashboard');
     Route::get('/merchant/download-qr', function () {
-        $url = 'https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=' . urlencode(url('/customer/claim-reward'));
+        $url = 'https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=' . urlencode(MerchantDashboardController::qrTargetUrl());
         $image = @file_get_contents($url);
         if (!$image) {
             return back()->with('error', 'Could not fetch QR code.');

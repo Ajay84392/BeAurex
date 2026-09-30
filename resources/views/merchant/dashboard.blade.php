@@ -178,7 +178,7 @@
                             <!-- QR Box -->
                             <div
                                 class="w-[110px] h-[110px] bg-slate-50 rounded-xl flex items-center justify-center relative overflow-hidden border border-slate-200 shrink-0">
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ urlencode(url('/customer/claim-reward')) }}"
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ urlencode($qrUrl) }}"
                                     alt="QR Code" class="w-full h-full object-contain mix-blend-multiply opacity-80" />
                                 <!-- Inner Red Icon (Gift) -->
                                 <div
@@ -220,7 +220,7 @@
                     <script>
                         function printQR() {
                             const qrUrl =
-                                "https://api.qrserver.com/v1/create-qr-code/?size=500x500&data={{ urlencode(url('/customer/claim-reward')) }}";
+                                "https://api.qrserver.com/v1/create-qr-code/?size=500x500&data={{ urlencode($qrUrl) }}";
                             var printWindow = window.open('', '_blank');
                             printWindow.document.write(`
                                                                         <html>

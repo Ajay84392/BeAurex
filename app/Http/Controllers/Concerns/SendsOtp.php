@@ -24,8 +24,7 @@ trait SendsOtp
         try {
             Mail::to($user->email)->send(new LoginOtpMail($otp));
         } catch (\Exception $e) {
-            Log::error('Mail sending failed: '.$e->getMessage());
-            session()->flash('mail_error', 'Warning: Email could not be sent. Please check your SMTP settings.');
+            Log::error('OTP mail to '.$user->email.' failed: '.$e->getMessage());
         }
     }
 

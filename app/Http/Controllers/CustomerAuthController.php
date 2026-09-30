@@ -19,8 +19,8 @@ class CustomerAuthController extends Controller
     public function processLogin(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
+            'email' => 'required|email:rfc|max:255',
+            'password' => 'required|string|max:64',
         ]);
 
         $user = User::where('email', $request->email)->where('role', 'customer')->first();
@@ -30,6 +30,6 @@ class CustomerAuthController extends Controller
 
         $this->loginAs($user, true); // remember by default
 
-        return redirect()->route('customer.home');
+        return redirect()->intended(route('customer.home'));
     }
 }

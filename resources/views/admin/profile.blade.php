@@ -61,7 +61,7 @@
 
                         <div>
                             <label class="block text-sm font-bold text-slate-700 mb-2">Phone Number <span class="text-[#EF4444]">*</span></label>
-                            <input type="text" name="phone" value="{{ old('phone', auth()->user()->phone) }}" required class="w-full bg-[#f1f5f9] border border-[#e2e8f0] rounded-xl px-4 py-3 text-sm font-medium text-[#0f172a] focus:outline-none focus:border-[#b00000] focus:ring-2 focus:ring-red-600/10 transition">
+                            <input type="tel" name="phone" value="{{ old('phone', \App\Rules\MobileNumber::normalize(auth()->user()->phone)) }}" required inputmode="numeric" maxlength="10" pattern="[6-9][0-9]{9}" title="10-digit mobile number starting with 6-9" placeholder="9876543210" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)" class="w-full bg-[#f1f5f9] border border-[#e2e8f0] rounded-xl px-4 py-3 text-sm font-medium text-[#0f172a] focus:outline-none focus:border-[#b00000] focus:ring-2 focus:ring-red-600/10 transition">
                         </div>
                         <div>
                             <label class="block text-sm font-bold text-slate-700 mb-2">Account Status</label>

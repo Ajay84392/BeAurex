@@ -1,9 +1,9 @@
 @extends('layouts.auth')
 
 @section('title', 'Verify OTP')
+@section('portal', ucfirst($role ?? 'customer').' Portal')
 @section('heading', 'Verify Your Email')
 @section('subtitle', 'Enter the 4-digit code we emailed you')
-@section('portal_name', ucfirst($role ?? 'customer').' Portal')
 
 @section('content')
     <div class="text-center mb-5">
@@ -34,10 +34,11 @@
             Resend OTP <span id="resendTimer">in 00:45</span>
         </button>
     </form>
+@endsection
 
-    <div class="mt-6 text-center">
-        <a href="{{ $backUrl }}" class="text-xs font-bold text-slate-500 hover:text-[#0f172a]">&larr; Use a different email</a>
-    </div>
+@section('switch')
+    Wrong email?
+    <a href="{{ $backUrl }}" class="font-bold hover:underline ml-1 text-[#b00000]">Use a different email</a>
 @endsection
 
 @push('scripts')

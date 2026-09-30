@@ -16,7 +16,8 @@ class CheckCustomerSession
     public function handle(Request $request, Closure $next): Response
     {
         if (! session('customer_logged_in') || auth()->user()?->role !== 'customer') {
-            return redirect('/customer/login');
+            // Remember where they were going (e.g. a scanned QR) so login can send them back.
+            return redirect()->guest('/customer/login');
         }
 
         return $next($request);

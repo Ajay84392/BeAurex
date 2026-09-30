@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\SendsOtp;
 use App\Models\Business;
 use App\Models\User;
+use App\Rules\MobileNumber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -16,8 +17,8 @@ class MerchantAuthController extends Controller
     public function processLogin(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
+            'email' => 'required|email:rfc|max:255',
+            'password' => 'required|string|max:64',
         ]);
 
         $user = User::where('email', $request->email)->where('role', 'merchant')->first();
@@ -42,32 +43,31 @@ class MerchantAuthController extends Controller
 
     public function processRegister(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email',
-            'phone' => 'required|string|min:7',
-            'password' => 'required|string|min:6',
-        ]);
+        $request->validate(
+            OtpAuthController::registrationRules(['phone' => ['required', new MobileNumber]]),
+            OtpAuthController::registrationMessages()
+        );
 
         // The same email may also hold a customer or admin account; only merchant accounts matter here.
         $user = User::where('email', $request->email)->where('role', 'merchant')->first();
 
         if ($user && $user->email_verified_at) {
-            return back()->withErrors(['email' => 'A merchant account with this email already exists. Please login or reset your password.'])->withInput();
+            return OtpAuthController::alreadyRegistered('merchant', $request->email);
         }
+
+        $phone = MobileNumber::format($request->phone);
 
         if ($user) {
             $user->name = $request->name;
-            $user->phone = $request->input('country_code', '+91').' '.$request->phone;
+            $user->phone = $phone;
             $user->password = Hash::make($request->password);
-            $user->role = 'merchant';
             $user->onboarding_step = 'email_verification';
             $user->save();
         } else {
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
-                'phone' => $request->input('country_code', '+91').' '.$request->phone,
+                'phone' => $phone,
                 'password' => Hash::make($request->password),
                 'role' => 'merchant',
                 'onboarding_step' => 'email_verification',
@@ -250,7 +250,8 @@ class MerchantAuthController extends Controller
     public function logout()
     {
         Auth::logout();
-        session()->forget('merchant_logged_in');
+        session()->invalidate();
+        session()->regenerateToken();
 
         return redirect('/');
     }

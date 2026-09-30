@@ -6,6 +6,7 @@ use App\Mail\LoginOtpMail;
 use App\Models\Business;
 use App\Models\Offer;
 use App\Models\RewardRequest;
+use App\Rules\MobileNumber;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rules\Password;
 
 class MerchantDashboardController extends Controller
 {
@@ -65,14 +67,27 @@ class MerchantDashboardController extends Controller
             $repeatRate = 42;
         }
 
+        $qrUrl = self::qrTargetUrl();
+
         return view('merchant.dashboard', compact(
             'business',
             'totalScans',
             'totalCustomers',
             'rewardsRedeemed',
             'repeatRate',
-            'qrCode'
+            'qrCode',
+            'qrUrl'
         ));
+    }
+
+    /**
+     * Where the logged-in merchant's QR code sends customers: the coin-collect step for their business.
+     */
+    public static function qrTargetUrl(): string
+    {
+        $business = Business::where('user_id', auth()->id())->first();
+
+        return $business ? route('customer.collect', $business) : url('/customer/claim-reward');
     }
 
     public function profile()
@@ -90,7 +105,7 @@ class MerchantDashboardController extends Controller
         $rules = [
             'name' => 'nullable|string|max:255',
             'category' => 'nullable|string|max:255',
-            'phone' => 'nullable|string|max:255',
+            'phone' => ['nullable', new MobileNumber],
             'email' => 'nullable|email|max:255',
             'address' => 'nullable|string|max:255',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
@@ -98,7 +113,7 @@ class MerchantDashboardController extends Controller
 
         if ($request->filled('password') && $request->filled('current_password')) {
             $rules['current_password'] = 'required';
-            $rules['password'] = 'required|min:8|confirmed';
+            $rules['password'] = ['required', 'confirmed', Password::defaults()];
         } else {
             $request->request->remove('password');
             $request->request->remove('current_password');
@@ -115,6 +130,9 @@ class MerchantDashboardController extends Controller
         $data = array_filter($request->only(['name', 'category', 'phone', 'email', 'address']), function($value) {
             return !is_null($value) && $value !== '';
         });
+        if (isset($data['phone'])) {
+            $data['phone'] = MobileNumber::format($data['phone']);
+        }
 
         if ($request->hasFile('logo')) {
             if ($business && $business->logo) {
