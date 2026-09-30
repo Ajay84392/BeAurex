@@ -15,7 +15,7 @@ class CheckCustomerSession
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (! session('customer_logged_in') || ! auth()->check()) {
+        if (! session('customer_logged_in') || auth()->user()?->role !== 'customer') {
             return redirect('/customer/login');
         }
 

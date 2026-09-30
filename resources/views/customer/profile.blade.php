@@ -54,7 +54,7 @@
                          <!-- Avatar image -->
                          <div class="w-20 h-20 rounded-full border border-slate-200 shadow-sm overflow-hidden bg-slate-50 flex items-center justify-center">
                               @if(auth()->user()->photo)
-                                  <img src="{{ auth()->user()->photo }}" class="w-full h-full object-cover group-hover:opacity-80 transition">
+                                  <img src="{{ asset(auth()->user()->photo) }}" class="w-full h-full object-cover group-hover:opacity-80 transition">
                               @else
                                   <div class="w-full h-full bg-red-50 text-[#b00000] flex items-center justify-center text-3xl font-black group-hover:opacity-80 transition">{{ $initials }}</div>
                               @endif

@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\PlanController as AdminPlanController;
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Admin\ReferralController as AdminReferralController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
+use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\CustomerDashboardController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\MerchantAuthController;
@@ -45,29 +46,24 @@ Route::get('/auth/google/{role}/callback', [GoogleAuthController::class, 'callba
 use App\Http\Controllers\CustomerAuthController;
 
 Route::get('/customer/login', [CustomerAuthController::class, 'showLogin'])->name('login');
-Route::post('/customer/login', [CustomerAuthController::class, 'processLogin']);
+Route::post('/customer/login', [CustomerAuthController::class, 'processLogin'])->middleware('throttle:10,1');
 Route::get('/customer/register', function () {
     return view('auth.register');
 });
-Route::post('/customer/register', function (Request $request) {
-    $request->merge(['role' => 'customer']);
+Route::post('/customer/register', [OtpAuthController::class, 'register'])->middleware('throttle:10,1');
 
-    return app(OtpAuthController::class)->sendOtp($request);
-});
-
-// OTP verify routes
-Route::get('/verify-otp', function () {
-    return view('auth.verify-otp');
-})->name('otp.verify.get');
-Route::post('/verify-otp', [OtpAuthController::class, 'verifyOtp'])->name('otp.verify.post');
-Route::get('/admin/verify-otp', function () {
-    return view('auth.verify-otp');
-});
-Route::post('/admin/verify-otp', [OtpAuthController::class, 'verifyOtp']);
-Route::get('/merchant/verify-otp', function () {
-    return view('merchant.auth.verify');
-});
-Route::post('/merchant/verify-otp', [OtpAuthController::class, 'verifyOtp']);
+// OTP login (customer, merchant, admin) + verify routes
+Route::post('/{role}/login/otp', [OtpAuthController::class, 'sendLoginOtp'])
+    ->whereIn('role', OtpAuthController::ROLES)
+    ->middleware('throttle:10,1')
+    ->name('otp.login');
+Route::post('/otp/resend', [OtpAuthController::class, 'resend'])->middleware('throttle:5,1')->name('otp.resend');
+Route::get('/verify-otp', [OtpAuthController::class, 'showVerify'])->name('otp.verify.get');
+Route::post('/verify-otp', [OtpAuthController::class, 'verifyOtp'])->middleware('throttle:10,1')->name('otp.verify.post');
+Route::get('/admin/verify-otp', [OtpAuthController::class, 'showVerify']);
+Route::post('/admin/verify-otp', [OtpAuthController::class, 'verifyOtp'])->middleware('throttle:10,1');
+Route::get('/merchant/verify-otp', [OtpAuthController::class, 'showVerify']);
+Route::post('/merchant/verify-otp', [OtpAuthController::class, 'verifyOtp'])->middleware('throttle:10,1');
 
 // ─── Protected Customer Routes ────────────────────────────────────────────────
 Route::middleware([CheckCustomerSession::class])->group(function () {
@@ -84,58 +80,20 @@ Route::middleware([CheckCustomerSession::class])->group(function () {
 
 // ─── Password Reset ───────────────────────────────────────────────────────────
 Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotForm'])->name('password.request');
-Route::post('/forgot-password', [ForgotPasswordController::class, 'sendOtp'])->name('password.email');
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendOtp'])->middleware('throttle:10,1')->name('password.email');
 Route::get('/forgot-password/verify', [ForgotPasswordController::class, 'showVerifyForm'])->name('password.verify');
-Route::post('/forgot-password/verify', [ForgotPasswordController::class, 'verifyOtp'])->name('password.verify.post');
+Route::post('/forgot-password/verify', [ForgotPasswordController::class, 'verifyOtp'])->middleware('throttle:10,1')->name('password.verify.post');
+Route::post('/forgot-password/resend', [ForgotPasswordController::class, 'resendOtp'])->middleware('throttle:5,1')->name('password.resend');
 Route::get('/reset-password', [ForgotPasswordController::class, 'showResetForm'])->name('password.reset');
 Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword'])->name('password.update');
 
-// ─── Admin Login (direct password) ───────────────────────────────────────────
-Route::get('/admin', function () {
-    if (session('admin_logged_in')) {
-        return redirect('/admin/dashboard');
-    }
-
-    return view('admin.login');
-});
-
-Route::post('/admin', function (Request $request) {
-    $request->validate([
-        'email' => 'required|email',
-        'password' => 'required|string',
-    ]);
-
-    // For local testing: allow ANY email/password to login as admin.
-    // If the user doesn't exist, create them on the fly.
-    $user = User::firstOrCreate(
-        ['email' => $request->email],
-        [
-            'name' => 'Admin User',
-            'password' => Hash::make($request->password),
-            'role' => 'admin',
-        ]
-    );
-
-    // Ensure the user has the admin role just in case
-    if ($user->role !== 'admin') {
-        $user->update(['role' => 'admin']);
-    }
-
-    Auth::login($user);
-    session(['admin_logged_in' => true]);
-    $request->session()->regenerate();
-
-    return redirect('/admin/dashboard');
-});
+// ─── Admin Login ─────────────────────────────────────────────────────────────
+Route::get('/admin', [AdminAuthController::class, 'showLogin'])->name('admin.login');
+Route::post('/admin', [AdminAuthController::class, 'processLogin'])->middleware('throttle:10,1');
 
 // ─── Protected Admin Routes ───────────────────────────────────────────────────
 Route::middleware([CheckAdminSession::class])->group(function () {
-    Route::get('/admin/logout', function () {
-        Auth::logout();
-        session()->flush();
-
-        return redirect('/');
-    })->name('admin.logout');
+    Route::get('/admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
 
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'index']);
 
@@ -172,11 +130,11 @@ Route::middleware([CheckAdminSession::class])->group(function () {
 // ─── Merchant Auth ────────────────────────────────────────────────────────────
 
 Route::get('/merchant/login', [MerchantAuthController::class, 'showLogin'])->name('merchant.login');
-Route::post('/merchant/login', [MerchantAuthController::class, 'processLogin']);
+Route::post('/merchant/login', [MerchantAuthController::class, 'processLogin'])->middleware('throttle:10,1');
 Route::get('/merchant/register', [MerchantAuthController::class, 'showRegister'])->name('merchant.register');
 Route::post('/merchant/register', [MerchantAuthController::class, 'processRegister']);
 Route::get('/merchant/verify', [MerchantAuthController::class, 'showVerify'])->name('merchant.verify');
-Route::post('/merchant/verify', [MerchantAuthController::class, 'processVerify']);
+Route::post('/merchant/verify', [MerchantAuthController::class, 'processVerify'])->middleware('throttle:10,1');
 Route::post('/merchant/resend-otp', [MerchantAuthController::class, 'resendOtp'])->name('merchant.resend-otp');
 Route::get('/merchant/account-created', [MerchantAuthController::class, 'showCreated'])->name('merchant.created');
 Route::post('/merchant/proceed-batch2', [MerchantAuthController::class, 'proceedToBatch2'])->name('merchant.proceed-batch2');

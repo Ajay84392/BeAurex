@@ -45,18 +45,41 @@ class CustomerDashboardController extends Controller
     public function updateProfile(Request $request)
     {
         $user = auth()->user();
-        $request->validate([
-            'name' => 'required|string|max:255',
+        $rules = [
+            'name' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:20',
             'photo' => 'nullable|image|max:2048',
-            'language' => 'required|string',
-            'timezone' => 'required|string',
-            'date_format' => 'required|string',
-        ]);
-        $data = $request->only('name', 'phone', 'language', 'timezone', 'date_format');
+            'language' => 'nullable|string',
+            'timezone' => 'nullable|string',
+            'date_format' => 'nullable|string',
+        ];
+
+        // Only validate password if they explicitly provide both fields
+        if ($request->filled('password') && $request->filled('current_password')) {
+            $rules['current_password'] = 'required';
+            $rules['password'] = 'required|min:8|confirmed';
+        } else {
+            // Ignore password update if incomplete (e.g. browser autofill)
+            $request->request->remove('password');
+            $request->request->remove('current_password');
+        }
+
+        $request->validate($rules);
+
+        if ($request->filled('current_password')) {
+            if (! \Hash::check($request->current_password, $user->password)) {
+                return back()->withErrors(['current_password' => 'Current password does not match.'])->withInput();
+            }
+        }
+
+        $data = array_filter($request->only('name', 'phone', 'language', 'timezone', 'date_format'), function($value) {
+            return !is_null($value) && $value !== '';
+        });
+        
         if ($request->hasFile('photo')) {
             $data['photo'] = '/storage/'.$request->file('photo')->store('profiles', 'public');
         }
+        
         if ($request->filled('password')) {
             $data['password'] = \Hash::make($request->password);
         }

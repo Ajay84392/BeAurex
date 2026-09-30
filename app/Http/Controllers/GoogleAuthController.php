@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\SendsOtp;
 use App\Models\Business;
 use App\Models\Customer;
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class GoogleAuthController extends Controller
 {
+    use SendsOtp;
+
     public function redirect($role)
     {
         // Mocking the OAuth redirection for local testing
@@ -19,11 +21,13 @@ class GoogleAuthController extends Controller
 
     public function callback($role)
     {
+        abort_unless(in_array($role, ['customer', 'merchant']), 404);
+
         $googleEmail = 'demo_'.$role.'@gmail.com';
         $googleName = 'Google '.ucfirst($role);
 
         $user = User::firstOrCreate(
-            ['email' => $googleEmail],
+            ['email' => $googleEmail, 'role' => $role],
             [
                 'name' => $googleName,
                 'password' => Hash::make(Str::random(24)),
@@ -40,8 +44,7 @@ class GoogleAuthController extends Controller
                     'phone' => '00000'.rand(10000, 99999),
                 ]
             );
-            Auth::login($user);
-            session(['merchant_logged_in' => true]);
+            $this->loginAs($user);
 
             return redirect('/merchant');
         } elseif ($role === 'customer') {
@@ -52,8 +55,7 @@ class GoogleAuthController extends Controller
                     'phone' => '00000'.rand(10000, 99999),
                 ]
             );
-            Auth::login($user);
-            session(['customer_logged_in' => true]);
+            $this->loginAs($user);
 
             return redirect('/customer');
         }

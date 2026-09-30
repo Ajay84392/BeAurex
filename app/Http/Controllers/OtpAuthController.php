@@ -2,149 +2,176 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\LoginOtpMail;
-use App\Models\Business;
+use App\Http\Controllers\Concerns\SendsOtp;
 use App\Models\Customer;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class OtpAuthController extends Controller
 {
+    use SendsOtp;
+
+    public const ROLES = ['customer', 'merchant', 'admin'];
+
     /**
-     * Generate OTP and send via email.
+     * Customer sign-up: send an OTP, and only apply the name/password once it is verified.
      */
-    public function sendOtp(Request $request)
+    public function register(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
-            'role' => 'required|in:admin,merchant,customer',
-            'phone' => 'required_if:role,customer,merchant|string|min:7',
-            'name' => 'nullable|string',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'password' => 'required|string|min:6',
         ]);
 
-        $email = $request->email;
-        $role = $request->role;
-        $name = $request->input('name', 'Demo User');
-        $phone = $request->input('country_code', '').$request->input('phone', '');
+        $user = User::where('email', $request->email)->where('role', 'customer')->first();
 
-        // Store details in session for verifyOtp
-        session(['otp_pending_phone' => $phone]);
-
-        // Find or create user
-        $user = User::firstOrCreate(
-            ['email' => $email],
-            [
-                'name' => $name,
-                'password' => Hash::make('password'),
-                'role' => $role,
-            ]
-        );
-
-        // If they provided a name during login/register, let's update it in case they want to change it or firstOrCreate found them
-        if ($request->filled('name') && $user->name !== $name) {
-            $user->name = $name;
+        if ($user && $user->email_verified_at) {
+            return back()->withErrors(['email' => 'A customer account with this email already exists. Please login or reset your password.'])->withInput();
         }
 
-        // Generate 4-digit OTP
-        $otp = rand(1000, 9999);
+        $user ??= User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make(Str::random(32)),
+            'role' => 'customer',
+        ]);
 
-        // Update User
-        $user->otp = $otp;
-        $user->otp_expires_at = Carbon::now()->addMinutes(10);
-        $user->save();
+        $this->issueOtp($user);
 
-        // Send Email
-        try {
-            Mail::to($user->email)->send(new LoginOtpMail($otp));
-        } catch (\Exception $e) {
-            Log::error('Mail sending failed: '.$e->getMessage());
-            session()->flash('mail_error', 'Warning: Email could not be sent. Please check your SMTP settings.');
-        }
+        session([
+            'otp_pending_email' => $user->email,
+            'otp_pending_role' => 'customer',
+            'otp_pending_register' => [
+                'name' => $request->name,
+                'password' => Hash::make($request->password),
+            ],
+        ]);
 
-        // For local testing, flash the OTP
-        session()->flash('demo_otp', $otp);
-
-        // Store role and email in session
-        session(['otp_pending_email' => $user->email, 'otp_pending_role' => $role]);
-
-        // Redirect to respective verify pages
-        if ($role == 'admin') {
-            return redirect('/admin/verify-otp');
-        } elseif ($role == 'merchant') {
-            return redirect('/merchant/verify-otp');
-        } else {
-            return redirect('/verify-otp');
-        }
+        return redirect($this->verifyUrl('customer'));
     }
 
     /**
-     * Verify the submitted OTP.
+     * Passwordless login: email an OTP to an existing account of the given role.
      */
-    public function verifyOtp(Request $request)
+    public function sendLoginOtp(Request $request, string $role)
     {
-        $request->validate([
-            'otp' => 'required|numeric',
-        ]);
+        abort_unless(in_array($role, self::ROLES), 404);
 
-        $email = session('otp_pending_email');
-        $role = session('otp_pending_role');
+        $request->validate(['email' => 'required|email']);
 
-        if (! $email || ! $role) {
-            return redirect('/')->withErrors(['error' => 'Session expired. Please login again.']);
+        $user = User::where('email', $request->email)->where('role', $role)->first();
+
+        if (! $user) {
+            return back()->withErrors(['email' => 'No '.$role.' account found with this email.'])->withInput()->with('otp_mode', true);
         }
 
-        $user = User::where('email', $email)->first();
+        $this->issueOtp($user);
 
-        if (! $user || $user->otp !== $request->otp || Carbon::now()->greaterThan($user->otp_expires_at)) {
+        session()->forget('otp_pending_register');
+        session([
+            'otp_pending_email' => $user->email,
+            'otp_pending_role' => $role,
+            'otp_pending_remember' => $request->boolean('remember'),
+        ]);
+
+        return redirect($this->verifyUrl($role));
+    }
+
+    public function showVerify()
+    {
+        if (! session('otp_pending_email') || ! session('otp_pending_role')) {
+            return redirect('/customer/login');
+        }
+
+        return view('auth.verify-otp', [
+            'email' => session('otp_pending_email'),
+            'role' => session('otp_pending_role'),
+            'action' => $this->verifyUrl(session('otp_pending_role')),
+            'resendAction' => route('otp.resend'),
+            'backUrl' => $this->loginUrl(session('otp_pending_role')),
+        ]);
+    }
+
+    public function resend()
+    {
+        $user = $this->pendingUser();
+
+        if (! $user) {
+            return redirect('/customer/login')->withErrors(['email' => 'Session expired. Please login again.']);
+        }
+
+        $this->issueOtp($user);
+
+        return back()->with('status', 'A new OTP has been sent to '.$user->email.'.');
+    }
+
+    public function verifyOtp(Request $request)
+    {
+        $request->validate(['otp' => 'required|digits:4']);
+
+        $role = session('otp_pending_role');
+        $user = $this->pendingUser();
+
+        if (! $user) {
+            return redirect($this->loginUrl($role))->withErrors(['email' => 'Session expired. Please login again.']);
+        }
+
+        if (! $this->consumeOtp($user, $request->otp)) {
             return back()->withErrors(['otp' => 'Invalid or expired OTP.']);
         }
 
-        // OTP is valid - Clear it
-        $user->otp = null;
-        $user->otp_expires_at = null;
+        if ($pending = session('otp_pending_register')) {
+            $user->name = $pending['name'];
+            $user->password = $pending['password'];
+        }
+
+        // Receiving the OTP proves the user owns this email.
+        $user->email_verified_at ??= now();
+        if ($role === 'merchant' && $user->onboarding_step === 'email_verification') {
+            $user->onboarding_step = 'account_created';
+        }
         $user->save();
 
-        if ($role == 'merchant') {
-            Business::firstOrCreate(
-                ['email' => $user->email],
-                [
-                    'user_id' => $user->id,
-                    'name' => $user->name,
-                    'phone' => session('otp_pending_phone') ?: '00000'.rand(10000, 99999),
-                ]
-            );
-        } elseif ($role == 'customer') {
+        if ($role === 'customer') {
             Customer::firstOrCreate(
                 ['email' => $user->email],
-                [
-                    'name' => $user->name,
-                    'phone' => session('otp_pending_phone') ?: '00000'.rand(10000, 99999),
-                ]
+                ['name' => $user->name, 'phone' => $user->phone ?: '00000'.rand(10000, 99999)]
             );
         }
 
-        Auth::login($user);
+        $remember = (bool) session('otp_pending_remember');
+        session()->forget(['otp_pending_email', 'otp_pending_role', 'otp_pending_register', 'otp_pending_remember']);
 
-        // Login by setting the session prototype variables
-        if ($role == 'admin') {
-            session(['admin_logged_in' => true]);
-            $redirect = '/admin/dashboard';
-        } elseif ($role == 'merchant') {
-            session(['merchant_logged_in' => true]);
-            $redirect = '/merchant';
-        } else {
-            session(['customer_logged_in' => true]);
-            $redirect = '/customer';
+        $this->loginAs($user, $remember);
+
+        return match ($role) {
+            'admin' => redirect('/admin/dashboard'),
+            'merchant' => app(MerchantAuthController::class)->redirectBasedOnOnboarding($user),
+            default => redirect()->route('customer.home'),
+        };
+    }
+
+    private function pendingUser(): ?User
+    {
+        $email = session('otp_pending_email');
+        $role = session('otp_pending_role');
+
+        if (! $email || ! in_array($role, self::ROLES)) {
+            return null;
         }
 
-        // Clear pending OTP session
-        session()->forget(['otp_pending_email', 'otp_pending_role']);
+        return User::where('email', $email)->where('role', $role)->first();
+    }
 
-        return redirect($redirect);
+    private function verifyUrl(?string $role): string
+    {
+        return match ($role) {
+            'admin' => url('/admin/verify-otp'),
+            'merchant' => url('/merchant/verify-otp'),
+            default => url('/verify-otp'),
+        };
     }
 }

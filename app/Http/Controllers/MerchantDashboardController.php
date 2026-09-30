@@ -85,17 +85,36 @@ class MerchantDashboardController extends Controller
     public function updateProfile(Request $request)
     {
         $business = Business::where('user_id', auth()->id())->first();
+        $user = auth()->user();
 
-        $request->validate([
-            'name' => 'required|string|max:255',
+        $rules = [
+            'name' => 'nullable|string|max:255',
             'category' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:255',
-            'email' => 'required|email|max:255',
+            'email' => 'nullable|email|max:255',
             'address' => 'nullable|string|max:255',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
-        ]);
+        ];
 
-        $data = $request->only(['name', 'category', 'phone', 'email', 'address']);
+        if ($request->filled('password') && $request->filled('current_password')) {
+            $rules['current_password'] = 'required';
+            $rules['password'] = 'required|min:8|confirmed';
+        } else {
+            $request->request->remove('password');
+            $request->request->remove('current_password');
+        }
+
+        $request->validate($rules);
+
+        if ($request->filled('current_password')) {
+            if (! \Hash::check($request->current_password, $user->password)) {
+                return back()->withErrors(['current_password' => 'Current password does not match.'])->withInput();
+            }
+        }
+
+        $data = array_filter($request->only(['name', 'category', 'phone', 'email', 'address']), function($value) {
+            return !is_null($value) && $value !== '';
+        });
 
         if ($request->hasFile('logo')) {
             if ($business && $business->logo) {
@@ -105,17 +124,25 @@ class MerchantDashboardController extends Controller
             $data['logo'] = $logoPath;
         }
 
-        if ($business) {
-            $business->update($data);
-        } else {
-            $data['user_id'] = auth()->id();
-            $business = Business::create($data);
+        if (!empty($data)) {
+            if ($business) {
+                $business->update($data);
+            } else {
+                $data['user_id'] = auth()->id();
+                $business = Business::create($data);
+            }
         }
 
         // Also update user
-        $user = auth()->user();
-        if ($user && $request->email) {
-            $user->update(['name' => $data['name'], 'email' => $data['email']]);
+        if ($user) {
+            $userData = [];
+            if ($request->email) $userData['email'] = $request->email;
+            if ($request->name) $userData['name'] = $request->name;
+            if ($request->filled('password')) $userData['password'] = \Hash::make($request->password);
+            
+            if (!empty($userData)) {
+                $user->update($userData);
+            }
         }
 
         return redirect()->back()->with('success', 'Profile updated successfully.');
@@ -304,184 +331,5 @@ class MerchantDashboardController extends Controller
         }
 
         return redirect()->route('merchant.create-offer')->with('success', 'Offer deleted successfully!');
-    }
-
-    // Auth flows
-    public function showLogin()
-    {
-        return view('merchant.auth.login');
-    }
-
-    public function processLogin(Request $request)
-    {
-        session(['merchant_logged_in' => true]);
-
-        return redirect('/merchant');
-    }
-
-    public function showRegister()
-    {
-        return view('merchant.auth.register');
-    }
-
-    public function processRegister(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|email',
-        ]);
-
-        $name = $request->input('business_name', 'New Merchant');
-
-        $user = User::firstOrCreate(
-            ['email' => $request->email],
-            [
-                'name' => $name,
-                'password' => Hash::make('password'),
-                'role' => 'merchant',
-            ]
-        );
-
-        if ($request->filled('business_name') && $user->name !== $name) {
-            $user->name = $name;
-            $user->save();
-        }
-
-        $otp = rand(1000, 9999);
-        $user->otp = $otp;
-        $user->otp_expires_at = Carbon::now()->addMinutes(10);
-        $user->save();
-
-        try {
-            Mail::to($user->email)->send(new LoginOtpMail($otp));
-        } catch (\Exception $e) {
-            Log::error('Mail sending failed: '.$e->getMessage());
-            session()->flash('mail_error', 'Warning: Email could not be sent. Please check your SMTP settings.');
-        }
-
-        // For local testing, flash the OTP to the session so the user can see it on screen
-        session()->flash('demo_otp', $otp);
-
-        session(['register_otp_email' => $user->email]);
-
-        return redirect('/merchant/verify');
-    }
-
-    public function showVerify()
-    {
-        return view('merchant.auth.verify');
-    }
-
-    public function processVerify(Request $request)
-    {
-        $request->validate(['otp' => 'required|numeric']);
-        $email = session('register_otp_email');
-
-        if (! $email) {
-            return redirect('/merchant/register')->withErrors(['error' => 'Session expired. Please try again.']);
-        }
-
-        $user = User::where('email', $email)->first();
-
-        if (! $user || $user->otp !== $request->otp || Carbon::now()->greaterThan($user->otp_expires_at)) {
-            return back()->withErrors(['otp' => 'Invalid or expired OTP.']);
-        }
-
-        $user->otp = null;
-        $user->otp_expires_at = null;
-        $user->save();
-
-        Business::firstOrCreate(
-            ['email' => $user->email],
-            [
-                'user_id' => $user->id,
-                'name' => $user->name,
-                'phone' => '0000000000',
-            ]
-        );
-
-        Auth::login($user);
-
-        session()->forget('register_otp_email');
-
-        // Log them in
-        session(['merchant_logged_in' => true]);
-
-        return redirect('/merchant/account-created');
-    }
-
-    public function showCreated()
-    {
-        return view('merchant.auth.created');
-    }
-
-    public function showBusinessInfo()
-    {
-        return view('merchant.auth.business-info');
-    }
-
-    public function processBusinessInfo(Request $request)
-    {
-        // Add basic validation
-        $request->validate([
-            'business_name' => 'required|string|max:255',
-            'business_category' => 'required|string|max:255',
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
-        ]);
-
-        $business = Business::where('user_id', auth()->id())->first();
-        if ($business) {
-            $business->name = $request->business_name;
-            $business->category = $request->business_category;
-
-            if ($request->hasFile('logo')) {
-                $logoPath = $request->file('logo')->store('merchant_logos', 'public');
-                $business->logo = $logoPath;
-            }
-            $business->save();
-        }
-
-        return redirect()->route('merchant.business-address');
-    }
-
-    public function showBusinessAddress()
-    {
-        return view('merchant.auth.business-address');
-    }
-
-    public function processBusinessAddress(Request $request)
-    {
-        // Basic validation
-        $request->validate([
-            'address_line_1' => 'required|string|max:255',
-            'city' => 'required|string|max:100',
-            'state' => 'required|string|max:100',
-            'pin_code' => 'required|string|max:20',
-        ]);
-
-        $business = Business::where('user_id', auth()->id())->first();
-        if ($business) {
-            $fullAddress = $request->address_line_1;
-            if ($request->filled('address_line_2')) {
-                $fullAddress .= ', '.$request->address_line_2;
-            }
-            $fullAddress .= ', '.$request->city.', '.$request->state.' - '.$request->pin_code;
-
-            $business->address = $fullAddress;
-            $business->save();
-        }
-
-        return redirect()->route('merchant.setup-complete');
-    }
-
-    public function showSetupComplete()
-    {
-        return view('merchant.auth.setup-complete');
-    }
-
-    public function logout()
-    {
-        session()->forget('merchant_logged_in');
-
-        return redirect('/');
     }
 }

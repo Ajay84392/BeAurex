@@ -19,19 +19,22 @@ class ProfileController extends Controller
         $user = auth()->user();
 
         $rules = [
-            'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
+            'name' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:20',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'language' => 'required|string',
-            'timezone' => 'required|string',
-            'date_format' => 'required|string',
+            'language' => 'nullable|string',
+            'timezone' => 'nullable|string',
+            'date_format' => 'nullable|string',
         ];
 
         // Conditional password validation
-        if ($request->filled('current_password') || $request->filled('password')) {
+        if ($request->filled('password') && $request->filled('current_password')) {
             $rules['current_password'] = 'required';
             // Assuming the complexity rules can be mapped to Laravel's Password rule or just regex
             $rules['password'] = ['required', 'min:8', 'confirmed', Password::min(8)->letters()->mixedCase()->numbers()];
+        } else {
+            $request->request->remove('password');
+            $request->request->remove('current_password');
         }
 
         $request->validate($rules);
@@ -42,10 +45,12 @@ class ProfileController extends Controller
             }
         }
 
-        $data = $request->only('name', 'phone', 'language', 'timezone', 'date_format');
+        $data = array_filter($request->only('name', 'phone', 'language', 'timezone', 'date_format'), function($value) {
+            return !is_null($value) && $value !== '';
+        });
 
         // Generate a username if empty
-        if (empty($user->username)) {
+        if (empty($user->username) && !empty($request->name)) {
             $data['username'] = strtolower(preg_replace('/\s+/', '', $request->name)).$user->id;
         }
 

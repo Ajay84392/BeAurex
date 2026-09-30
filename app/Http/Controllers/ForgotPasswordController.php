@@ -2,48 +2,39 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\LoginOtpMail;
+use App\Http\Controllers\Concerns\SendsOtp;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 
 class ForgotPasswordController extends Controller
 {
-    public function showForgotForm()
+    use SendsOtp;
+
+    public function showForgotForm(Request $request)
     {
-        return view('auth.forgot-password');
+        $role = in_array($request->query('role'), OtpAuthController::ROLES) ? $request->query('role') : 'customer';
+
+        return view('auth.forgot-password', ['role' => $role, 'loginUrl' => $this->loginUrl($role)]);
     }
 
     public function sendOtp(Request $request)
     {
         $request->validate([
             'email' => 'required|email',
+            'role' => 'required|in:'.implode(',', OtpAuthController::ROLES),
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $request->email)->where('role', $request->role)->first();
 
         if (! $user) {
-            return back()->withErrors(['email' => 'We could not find a user with that email address.']);
+            return back()->withErrors(['email' => 'We could not find a '.$request->role.' account with that email address.'])->withInput();
         }
 
-        $otp = rand(1000, 9999);
+        $this->issueOtp($user);
 
-        $user->otp = $otp;
-        $user->otp_expires_at = Carbon::now()->addMinutes(10);
-        $user->save();
-
-        try {
-            Mail::to($user->email)->send(new LoginOtpMail($otp));
-        } catch (\Exception $e) {
-            Log::error('Mail sending failed: '.$e->getMessage());
-            session()->flash('mail_error', 'Warning: Email could not be sent. Please check your SMTP settings.');
-        }
-
-        session()->flash('demo_otp', $otp);
-        session(['reset_email' => $user->email]);
+        session(['reset_email' => $user->email, 'reset_role' => $user->role]);
+        session()->forget('reset_otp_verified');
 
         return redirect()->route('password.verify');
     }
@@ -54,29 +45,41 @@ class ForgotPasswordController extends Controller
             return redirect()->route('password.request');
         }
 
-        return view('auth.verify-otp-reset');
+        return view('auth.verify-otp', [
+            'email' => session('reset_email'),
+            'role' => session('reset_role'),
+            'action' => route('password.verify.post'),
+            'resendAction' => route('password.resend'),
+            'backUrl' => route('password.request', ['role' => session('reset_role')]),
+        ]);
+    }
+
+    public function resendOtp()
+    {
+        $user = $this->resetUser();
+
+        if (! $user) {
+            return redirect()->route('password.request')->withErrors(['email' => 'Session expired. Please try again.']);
+        }
+
+        $this->issueOtp($user);
+
+        return back()->with('status', 'A new OTP has been sent to '.$user->email.'.');
     }
 
     public function verifyOtp(Request $request)
     {
-        $request->validate([
-            'otp' => 'required|numeric',
-        ]);
+        $request->validate(['otp' => 'required|digits:4']);
 
-        $email = session('reset_email');
-        if (! $email) {
+        $user = $this->resetUser();
+
+        if (! $user) {
             return redirect()->route('password.request')->withErrors(['email' => 'Session expired. Please try again.']);
         }
 
-        $user = User::where('email', $email)->first();
-
-        if (! $user || $user->otp !== $request->otp || Carbon::now()->greaterThan($user->otp_expires_at)) {
+        if (! $this->consumeOtp($user, $request->otp)) {
             return back()->withErrors(['otp' => 'Invalid or expired OTP.']);
         }
-
-        $user->otp = null;
-        $user->otp_expires_at = null;
-        $user->save();
 
         session(['reset_otp_verified' => true]);
 
@@ -98,25 +101,27 @@ class ForgotPasswordController extends Controller
             'password' => 'required|min:6|confirmed',
         ]);
 
-        $email = session('reset_email');
-        if (! $email || ! session('reset_otp_verified')) {
+        if (! session('reset_otp_verified') || ! ($user = $this->resetUser())) {
             return redirect()->route('password.request');
         }
 
-        $user = User::where('email', $email)->first();
-        if ($user) {
-            $user->password = Hash::make($request->password);
-            $user->save();
+        $user->password = Hash::make($request->password);
+        $user->email_verified_at ??= now();
+        $user->save();
+
+        session()->forget(['reset_email', 'reset_role', 'reset_otp_verified']);
+
+        return redirect($this->loginUrl($user->role))->with('status', 'Password reset successfully. Please login.');
+    }
+
+    private function resetUser(): ?User
+    {
+        $email = session('reset_email');
+
+        if (! $email) {
+            return null;
         }
 
-        session()->forget(['reset_email', 'reset_otp_verified']);
-
-        if ($user && $user->role === 'merchant') {
-            return redirect('/merchant/login')->with('status', 'Password reset successfully. Please login.');
-        } elseif ($user && $user->role === 'admin') {
-            return redirect('/admin')->with('status', 'Password reset successfully. Please login.');
-        } else {
-            return redirect('/customer/login')->with('status', 'Password reset successfully. Please login.');
-        }
+        return User::where('email', $email)->where('role', session('reset_role', 'customer'))->first();
     }
 }

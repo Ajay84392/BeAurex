@@ -2,22 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\LoginOtpMail;
+use App\Http\Controllers\Concerns\SendsOtp;
 use App\Models\Business;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 
 class MerchantAuthController extends Controller
 {
-    public function showLogin()
-    {
-        return view('merchant.auth.login');
-    }
+    use SendsOtp;
 
     public function processLogin(Request $request)
     {
@@ -31,10 +25,14 @@ class MerchantAuthController extends Controller
             return back()->withErrors(['email' => 'These credentials do not match our records.'])->withInput();
         }
 
-        Auth::login($user, $request->has('remember'));
-        session(['merchant_logged_in' => true]);
+        $this->loginAs($user, $request->boolean('remember'));
 
         return $this->redirectBasedOnOnboarding($user);
+    }
+
+    public function showLogin()
+    {
+        return view('auth.login', ['role' => 'merchant']);
     }
 
     public function showRegister()
@@ -51,7 +49,12 @@ class MerchantAuthController extends Controller
             'password' => 'required|string|min:6',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        // The same email may also hold a customer or admin account; only merchant accounts matter here.
+        $user = User::where('email', $request->email)->where('role', 'merchant')->first();
+
+        if ($user && $user->email_verified_at) {
+            return back()->withErrors(['email' => 'A merchant account with this email already exists. Please login or reset your password.'])->withInput();
+        }
 
         if ($user) {
             $user->name = $request->name;
@@ -71,10 +74,9 @@ class MerchantAuthController extends Controller
             ]);
         }
 
-        $this->sendOtp($user);
+        $this->issueOtp($user);
 
-        Auth::login($user);
-        session(['merchant_logged_in' => true]);
+        $this->loginAs($user);
 
         return redirect()->route('merchant.verify');
     }
@@ -94,26 +96,31 @@ class MerchantAuthController extends Controller
             return $this->redirectBasedOnOnboarding($user);
         }
 
-        return view('merchant.auth.verify', ['email' => Auth::user()->email]);
+        return view('auth.verify-otp', [
+            'email' => Auth::user()->email,
+            'role' => 'merchant',
+            'action' => route('merchant.verify'),
+            'resendAction' => route('merchant.resend-otp'),
+            'backUrl' => route('merchant.register'),
+        ]);
     }
 
     public function processVerify(Request $request)
     {
         $request->validate([
-            'otp' => 'required|numeric',
+            'otp' => 'required|digits:4',
         ]);
 
         $user = Auth::user();
 
-        if ($user->otp !== $request->otp) {
-            return back()->withErrors(['otp' => 'Invalid verification code. Please try again.']);
-        }
-        if (Carbon::now()->greaterThan($user->otp_expires_at)) {
-            return back()->withErrors(['otp' => 'This OTP has expired. Please request a new code.']);
+        if (! $user || $user->role !== 'merchant') {
+            return redirect()->route('merchant.login');
         }
 
-        $user->otp = null;
-        $user->otp_expires_at = null;
+        if (! $this->consumeOtp($user, $request->otp)) {
+            return back()->withErrors(['otp' => 'Invalid or expired OTP. Please try again.']);
+        }
+
         $user->email_verified_at = now();
         $user->onboarding_step = 'account_created';
         $user->save();
@@ -124,12 +131,12 @@ class MerchantAuthController extends Controller
     public function resendOtp()
     {
         $user = Auth::user();
-        if ($user->email_verified_at) {
+        if (! $user || $user->email_verified_at) {
             return back();
         }
-        $this->sendOtp($user);
+        $this->issueOtp($user);
 
-        return back()->with('success', 'A new OTP has been sent.');
+        return back()->with('status', 'A new OTP has been sent to '.$user->email.'.');
     }
 
     public function showCreated()
@@ -248,23 +255,7 @@ class MerchantAuthController extends Controller
         return redirect('/');
     }
 
-    private function sendOtp($user)
-    {
-        $otp = (string) rand(1000, 9999);
-        $user->otp = $otp;
-        $user->otp_expires_at = Carbon::now()->addMinutes(10);
-        $user->save();
-
-        try {
-            Mail::to($user->email)->send(new LoginOtpMail($otp));
-        } catch (\Exception $e) {
-            Log::error('Mail sending failed: '.$e->getMessage());
-        }
-
-        session()->flash('demo_otp', $otp);
-    }
-
-    private function redirectBasedOnOnboarding($user)
+    public function redirectBasedOnOnboarding($user)
     {
         switch ($user->onboarding_step) {
             case 'account_registration':

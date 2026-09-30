@@ -1,120 +1,85 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Verify OTP - BeAurex</title>
-    <link rel="icon" type="image/jpeg" href="/favicon.jpg">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #f8fafc;
-        }
-        .mobile-container {
-            max-width: 414px;
-            margin: 0 auto;
-            background-color: #ffffff;
-            min-height: 100vh;
-            position: relative;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        }
-        @media (max-width: 414px) {
-            .mobile-container { box-shadow: none; }
-        }
-        /* Hide arrows on number input */
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none; 
-            margin: 0; 
-        }
-    </style>
-</head>
-<body class="antialiased text-[#0f172a] flex items-center justify-center min-h-[100dvh]">
+@extends('layouts.auth')
 
-    <div class="mobile-container w-full flex flex-col p-8 pt-12">
-        
-        <!-- Top Nav -->
-        <a href="/forgot-password" class="text-[#0f172a] hover:text-[#475569] transition inline-block mb-10">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-        </a>
+@section('title', 'Verify OTP')
+@section('heading', 'Verify Your Email')
+@section('subtitle', 'Enter the 4-digit code we emailed you')
+@section('portal_name', ucfirst($role ?? 'customer').' Portal')
 
-        <!-- Illustration -->
-        <div class="flex justify-center mb-8 relative">
-            <div class="absolute w-40 h-40 bg-red-50 rounded-full flex items-center justify-center -z-10 mt-2"></div>
-            <!-- Logo -->
-            <div class="relative">
-                <img src="/images/logo.jpg" alt="BeAurex Logo" class="w-24 h-24 rounded-3xl object-cover shadow-2xl">
-            </div>
-            
+@section('content')
+    <div class="text-center mb-5">
+        <div class="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center text-[#b00000] mx-auto mb-3">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
         </div>
-        
-        <div class="text-center mb-8">
-            <h1 class="text-2xl font-extrabold text-[#0f172a] mb-3">Verify OTP</h1>
-            <p class="text-xs text-[#475569] font-medium px-4 leading-relaxed">
-                Enter the 4-digit code sent to<br>
-                <span class="text-[#0f172a] font-bold">your email address</span>
-            </p>
-        </div>
-
-        <form id="otpForm" action="" method="POST" class="space-y-8 flex-1 flex flex-col">
-            <input type="hidden" name="_token" value="{{ csrf_token() }}">
-            <input type="hidden" name="otp" id="otpValue" value="">
-            
-            <div class="flex justify-center gap-4 px-1">
-                <input type="text" maxlength="1" class="otp-input w-14 h-16 border border-[#e2e8f0] rounded-xl text-center text-2xl font-black text-[#0f172a] focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-500 transition shadow-sm">
-                <input type="text" maxlength="1" class="otp-input w-14 h-16 border border-[#e2e8f0] rounded-xl text-center text-2xl font-black text-[#0f172a] focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-500 transition shadow-sm">
-                <input type="text" maxlength="1" class="otp-input w-14 h-16 border border-[#e2e8f0] rounded-xl text-center text-2xl font-black text-[#0f172a] focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-500 transition shadow-sm">
-                <input type="text" maxlength="1" class="otp-input w-14 h-16 border border-[#e2e8f0] rounded-xl text-center text-2xl font-black text-[#0f172a] focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-500 transition shadow-sm">
-            </div>
-
-            @error('otp')
-                <div class="text-[#EF4444] text-sm text-center font-bold">{{ $message }}</div>
-            @enderror
-
-            <div class="text-center">
-                <p class="text-xs font-semibold text-[#475569]">Resend OTP in <span class="text-[#b00000] font-bold">00:45</span></p>
-            </div>
-
-            <div class="pt-2">
-                <button type="button" onclick="submitOtp()" class="w-full bg-[#8a0000] hover:bg-[#8a0000] text-white font-bold py-3.5 rounded-xl transition shadow-md shadow-red-200/50">
-                    Verify OTP
-                </button>
-            </div>
-
-            <div class="text-center pt-2">
-                <a href="/" class="text-xs font-bold text-[#b00000] hover:text-[#8a0000] transition">Change Email</a>
-            </div>
-            
-        </form>
-
+        <p class="text-xs font-medium text-[#475569]">Code sent to</p>
+        <p class="text-sm font-bold text-[#0f172a] break-all">{{ $email }}</p>
     </div>
 
-    <script>
-        const inputs = document.querySelectorAll('.otp-input');
-        inputs.forEach((input, index) => {
-            input.addEventListener('keyup', (e) => {
-                if (e.key >= 0 && e.key <= 9) {
-                    if (index < inputs.length - 1) inputs[index + 1].focus();
-                } else if (e.key === 'Backspace') {
-                    if (index > 0) inputs[index - 1].focus();
-                }
+    <form id="otpForm" action="{{ $action }}" method="POST" class="space-y-5">
+        @csrf
+        <input type="hidden" name="otp" id="otpValue">
+
+        <div class="flex justify-center gap-3">
+            @for($i = 0; $i < 4; $i++)
+                <input type="text" inputmode="numeric" maxlength="1" autocomplete="{{ $i === 0 ? 'one-time-code' : 'off' }}" class="otp-input w-12 h-14 text-center text-xl font-black text-[#0f172a] bg-white border border-[#e2e8f0] rounded-xl transition">
+            @endfor
+        </div>
+
+        <button type="submit" class="btn-primary w-full text-white font-bold py-3.5 rounded-xl text-sm transition">Verify &amp; Continue</button>
+    </form>
+
+    <form action="{{ $resendAction }}" method="POST" class="mt-4 text-center">
+        @csrf
+        <span class="text-xs font-medium text-[#475569]">Didn't receive the code?</span>
+        <button type="submit" id="resendBtn" class="text-xs font-bold text-[#b00000] hover:underline disabled:text-slate-400 disabled:no-underline" disabled>
+            Resend OTP <span id="resendTimer">in 00:45</span>
+        </button>
+    </form>
+
+    <div class="mt-6 text-center">
+        <a href="{{ $backUrl }}" class="text-xs font-bold text-slate-500 hover:text-[#0f172a]">&larr; Use a different email</a>
+    </div>
+@endsection
+
+@push('scripts')
+<script>
+    (function () {
+        const inputs = [...document.querySelectorAll('.otp-input')];
+        inputs[0].focus();
+
+        inputs.forEach((input, i) => {
+            input.addEventListener('input', () => {
+                input.value = input.value.replace(/\D/g, '').slice(-1);
+                if (input.value && i < inputs.length - 1) inputs[i + 1].focus();
+            });
+            input.addEventListener('keydown', e => {
+                if (e.key === 'Backspace' && !input.value && i > 0) inputs[i - 1].focus();
+            });
+            input.addEventListener('paste', e => {
+                const digits = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, inputs.length);
+                if (!digits) return;
+                e.preventDefault();
+                digits.split('').forEach((d, j) => inputs[j].value = d);
+                inputs[Math.min(digits.length, inputs.length) - 1].focus();
             });
         });
 
-        function submitOtp() {
-            let otp = '';
-            inputs.forEach(input => otp += input.value);
-            document.getElementById('otpValue').value = otp;
-            document.getElementById('otpForm').submit();
-        }
-    </script>
+        document.getElementById('otpForm').addEventListener('submit', () => {
+            document.getElementById('otpValue').value = inputs.map(x => x.value).join('');
+        });
 
-    </div>
-
-</body>
-</html>
-
-
-
+        const btn = document.getElementById('resendBtn');
+        const timer = document.getElementById('resendTimer');
+        let left = 45;
+        const tick = setInterval(() => {
+            left--;
+            if (left <= 0) {
+                clearInterval(tick);
+                btn.disabled = false;
+                timer.textContent = '';
+                return;
+            }
+            timer.textContent = 'in 00:' + String(left).padStart(2, '0');
+        }, 1000);
+    })();
+</script>
+@endpush

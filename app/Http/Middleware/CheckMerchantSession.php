@@ -15,7 +15,7 @@ class CheckMerchantSession
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (! session('merchant_logged_in') || ! auth()->check()) {
+        if (! session('merchant_logged_in') || auth()->user()?->role !== 'merchant') {
             return redirect('/merchant/login');
         }
 
