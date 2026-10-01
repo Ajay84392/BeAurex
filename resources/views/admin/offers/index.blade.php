@@ -3,7 +3,7 @@
 @section('title', 'Manage Offers')
 
 @section('content')
-<div class="flex-1 overflow-auto p-6 md:p-10">
+<div class="flex-1 min-w-0 overflow-auto p-4 sm:p-6 lg:p-10">
     <div class="mb-6">
         <h1 class="text-2xl font-bold text-[#0f172a] mb-1">Offers</h1>
         <div class="text-xs text-[#475569] font-medium flex items-center space-x-1">
@@ -48,7 +48,7 @@
                             {{ $offer->expiry }}
                         </td>
                         <td class="px-6 py-4 text-right">
-                            <a href="{{ route('offers.edit', $offer->id) }}" class="text-blue-500 hover:text-blue-700 transition mr-3 inline-block">
+                            <a href="{{ route('offers.edit', $offer->id) }}" class="text-slate-500 hover:text-[#b00000] transition mr-3 inline-block">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                             </a>
                             <form action="{{ route('offers.destroy', $offer->id) }}" method="POST" class="inline-block">

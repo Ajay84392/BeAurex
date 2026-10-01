@@ -8,11 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('username')->nullable()->unique()->after('email');
-            $table->string('language')->default('English')->after('photo');
-            $table->string('timezone')->default('Asia/Kolkata')->after('language');
-            $table->string('date_format')->default('d M, Y')->after('timezone');
+        if (Schema::hasTable('users')) Schema::table('users', function (Blueprint $table) {
+            if (! Schema::hasColumn('users', 'username')) { $table->string('username')->nullable()->unique()->after('email'); }
+            if (! Schema::hasColumn('users', 'language')) { $table->string('language')->default('English')->after('photo'); }
+            if (! Schema::hasColumn('users', 'timezone')) { $table->string('timezone')->default('Asia/Kolkata')->after('language'); }
+            if (! Schema::hasColumn('users', 'date_format')) { $table->string('date_format')->default('d M, Y')->after('timezone'); }
         });
     }
 

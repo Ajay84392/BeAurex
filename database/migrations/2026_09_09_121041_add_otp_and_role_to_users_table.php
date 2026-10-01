@@ -11,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('role')->default('customer')->after('email'); // admin, merchant, customer
-            $table->string('otp')->nullable()->after('password');
-            $table->timestamp('otp_expires_at')->nullable()->after('otp');
+        if (Schema::hasTable('users')) Schema::table('users', function (Blueprint $table) {
+            if (! Schema::hasColumn('users', 'role')) { $table->string('role')->default('customer')->after('email'); } // admin, merchant, customer
+            if (! Schema::hasColumn('users', 'otp')) { $table->string('otp')->nullable()->after('password'); }
+            if (! Schema::hasColumn('users', 'otp_expires_at')) { $table->timestamp('otp_expires_at')->nullable()->after('otp'); }
         });
     }
 

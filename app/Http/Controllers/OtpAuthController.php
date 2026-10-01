@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\SendsOtp;
+use App\Http\Requests\Auth\EmailRequest;
+use App\Http\Requests\Auth\OtpRequest;
+use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\Customer;
 use App\Models\User;
-use Illuminate\Http\Request;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rules\Password;
 
 class OtpAuthController extends Controller
 {
@@ -16,71 +18,79 @@ class OtpAuthController extends Controller
 
     public const ROLES = ['customer', 'merchant', 'admin'];
 
+    /** Shown whether or not the account exists, so emails can't be probed. */
+    public const CODE_SENT_MESSAGE = 'If an account exists for this email address, we have sent a 4-digit code to it.';
+
     /**
      * Customer sign-up: send an OTP, and only apply the name/password once it is verified.
      */
-    public function register(Request $request)
+    public function register(RegisterRequest $request)
     {
-        $request->validate(self::registrationRules(), self::registrationMessages());
-
-        $user = User::where('email', $request->email)->where('role', 'customer')->first();
+        $email = $request->validated('email');
+        $user = User::where('email', $email)->where('role', 'customer')->first();
 
         if ($user && $user->email_verified_at) {
-            return self::alreadyRegistered('customer', $request->email);
+            return self::alreadyRegistered('customer', $email);
         }
 
-        $user ??= User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make(Str::random(32)),
-            'role' => 'customer',
-        ]);
+        try {
+            $user ??= User::create([
+                'name' => $request->validated('name'),
+                'email' => $email,
+                'password' => Hash::make(Str::random(32)),
+                'role' => 'customer',
+            ]);
+        } catch (UniqueConstraintViolationException $e) {
+            // A database that still allows each email only once in total (migration
+            // 2026_09_30_120000 not run yet) rejects a customer account for a merchant's email.
+            return self::emailUsedElsewhere($e);
+        }
 
         $this->issueOtp($user);
 
         session([
             'otp_pending_email' => $user->email,
             'otp_pending_role' => 'customer',
+            'otp_pending_remember' => false,
             'otp_pending_register' => [
-                'name' => $request->name,
-                'password' => Hash::make($request->password),
+                'name' => $request->validated('name'),
+                'password' => Hash::make($request->validated('password')),
             ],
         ]);
 
-        return redirect($this->verifyUrl('customer'));
+        return redirect($this->verifyUrl('customer'))->with('status', 'We have sent a 4-digit code to '.$user->email.'.');
     }
 
     /**
-     * Passwordless login: email an OTP to an existing account of the given role.
+     * Passwordless login: email a code to the account of this role, if there is one.
+     * The response is the same either way.
      */
-    public function sendLoginOtp(Request $request, string $role)
+    public function sendLoginOtp(EmailRequest $request, string $role)
     {
-        abort_unless(in_array($role, self::ROLES), 404);
+        $email = $request->validated('email');
+        $user = User::where('email', $email)->where('role', $role)->first();
 
-        $request->validate(['email' => 'required|email:rfc|max:255']);
-
-        $user = User::where('email', $request->email)->where('role', $role)->first();
-
-        if (! $user) {
-            return back()->withErrors(['email' => 'No '.$role.' account found with this email.'])->withInput()->with('otp_mode', true);
+        if ($user) {
+            $this->issueOtp($user);
         }
-
-        $this->issueOtp($user);
 
         session()->forget('otp_pending_register');
         session([
-            'otp_pending_email' => $user->email,
+            'otp_pending_email' => $email,
             'otp_pending_role' => $role,
             'otp_pending_remember' => $request->boolean('remember'),
         ]);
 
-        return redirect($this->verifyUrl($role));
+        return redirect($this->verifyUrl($role))->with('status', self::CODE_SENT_MESSAGE);
     }
 
     public function showVerify()
     {
-        if (! session('otp_pending_email') || ! session('otp_pending_role')) {
-            return redirect('/customer/login');
+        if (! session('otp_pending_email') || ! in_array(session('otp_pending_role'), self::ROLES)) {
+            // No code was requested: back to the login page of the portal this URL belongs to.
+            $role = request()->is('admin/*') ? 'admin' : (request()->is('merchant/*') ? 'merchant' : 'customer');
+
+            return redirect($this->loginUrl($role));
         }
 
         return view('auth.verify-otp', [
@@ -94,30 +104,29 @@ class OtpAuthController extends Controller
 
     public function resend()
     {
-        $user = $this->pendingUser();
-
-        if (! $user) {
-            return redirect('/customer/login')->withErrors(['email' => 'Session expired. Please login again.']);
+        if (! session('otp_pending_email')) {
+            return redirect('/customer/login')->withErrors(['email' => 'Your session has expired. Please try again.']);
         }
 
-        $this->issueOtp($user);
+        if ($user = $this->pendingUser()) {
+            $this->issueOtp($user);
+        }
 
-        return back()->with('status', 'A new OTP has been sent to '.$user->email.'.');
+        return back()->with('status', 'If an account exists for this email address, a new code has been sent.');
     }
 
-    public function verifyOtp(Request $request)
+    public function verifyOtp(OtpRequest $request)
     {
-        $request->validate(['otp' => 'required|digits:4']);
-
         $role = session('otp_pending_role');
-        $user = $this->pendingUser();
 
-        if (! $user) {
-            return redirect($this->loginUrl($role))->withErrors(['email' => 'Session expired. Please login again.']);
+        if (! session('otp_pending_email') || ! in_array($role, self::ROLES)) {
+            return redirect($this->loginUrl($role))->withErrors(['email' => 'Your session has expired. Please try again.']);
         }
 
-        if (! $this->consumeOtp($user, $request->otp)) {
-            return back()->withErrors(['otp' => 'Invalid or expired OTP.']);
+        $user = $this->pendingUser();
+
+        if (! $this->consumeOtp($user, $request->validated('otp'))) {
+            return back()->withErrors(['otp' => 'Invalid or expired code. Please try again or request a new code.']);
         }
 
         if ($pending = session('otp_pending_register')) {
@@ -125,7 +134,7 @@ class OtpAuthController extends Controller
             $user->password = $pending['password'];
         }
 
-        // Receiving the OTP proves the user owns this email.
+        // Receiving the code proves the user owns this email.
         $user->email_verified_at ??= now();
         if ($role === 'merchant' && $user->onboarding_step === 'email_verification') {
             $user->onboarding_step = 'account_created';
@@ -133,10 +142,7 @@ class OtpAuthController extends Controller
         $user->save();
 
         if ($role === 'customer') {
-            Customer::firstOrCreate(
-                ['email' => $user->email],
-                ['name' => $user->name, 'phone' => $user->phone ?: '00000'.rand(10000, 99999)]
-            );
+            Customer::forUser($user);
         }
 
         $remember = (bool) session('otp_pending_remember');
@@ -152,24 +158,15 @@ class OtpAuthController extends Controller
     }
 
     /**
-     * Validation shared by customer and merchant sign-up.
+     * Sign-up hit a unique-email rule (the email is used by an account in another portal and this
+     * database does not allow that yet). Show a clear message instead of a 500 error.
      */
-    public static function registrationRules(array $extra = []): array
+    public static function emailUsedElsewhere(UniqueConstraintViolationException $e)
     {
-        return [
-            'name' => ['required', 'string', 'min:2', 'max:100', 'regex:/^[\pL\s.\'-]+$/u'],
-            'email' => ['required', 'string', 'email:rfc', 'max:255'],
-            'password' => ['required', 'confirmed', Password::defaults()],
-            ...$extra,
-        ];
-    }
+        report($e);
 
-    public static function registrationMessages(): array
-    {
-        return [
-            'name.regex' => 'Name can only contain letters, spaces, dots, apostrophes and hyphens.',
-            'password.confirmed' => 'The passwords do not match.',
-        ];
+        return back()->withInput(request()->except(['password', 'password_confirmation']))
+            ->withErrors(['email' => 'This email is already used by another BeAurex account. Please use a different email address, or log in to that account.']);
     }
 
     /**
@@ -180,7 +177,7 @@ class OtpAuthController extends Controller
         $login = ['admin' => '/admin', 'merchant' => '/merchant/login', 'customer' => '/customer/login'][$role];
 
         return redirect($login)
-            ->withErrors(['email' => 'You already have a '.$role.' account with this email. Please login below, or use Forgot Password.'])
+            ->withErrors(['email' => 'An account with this email already exists. Please log in, or use Forgot Password.'])
             ->withInput(['email' => $email]);
     }
 

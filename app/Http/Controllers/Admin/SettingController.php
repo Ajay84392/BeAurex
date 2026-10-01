@@ -138,7 +138,7 @@ class SettingController extends Controller
                 'logo' => 'nullable|file|mimes:png,jpg,jpeg,svg|max:2048',
                 'favicon' => 'nullable|file|mimes:ico,png|max:512',
             ], [
-                'primary_color.regex' => 'Primary color must be a valid hex color (e.g. #D60000).',
+                'primary_color.regex' => 'Primary color must be a valid hex color (e.g. #B00000).',
                 'secondary_color.regex' => 'Secondary color must be a valid hex color (e.g. #FFFFFF).',
             ]);
         }
@@ -170,8 +170,8 @@ class SettingController extends Controller
 
         foreach ($inputs as $key => $value) {
             if ($request->hasFile($key)) {
-                $path = $request->file($key)->store('settings', 'public');
-                $value = '/storage/'.$path;
+                // Saved under public/uploads so the live host can serve it (see App\Support\Media).
+                $value = '/'.\App\Support\Media::store($request->file($key), 'settings');
             }
 
             if ($value !== null) {

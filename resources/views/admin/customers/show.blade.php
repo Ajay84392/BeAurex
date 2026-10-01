@@ -3,15 +3,15 @@
 @section('title', 'Customer View (Read Only)')
 
 @section('content')
-<div class="flex-1 overflow-auto p-6 md:p-10 bg-[#f1f5f9]">
+<div class="flex-1 min-w-0 overflow-auto p-4 sm:p-6 lg:p-10 bg-[#f1f5f9]">
 
     <!-- Read Only Banner -->
-    <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-8 text-center flex flex-col items-center justify-center">
-        <div class="flex items-center space-x-2 text-blue-600 mb-1">
+    <div class="bg-red-50 border border-red-100 rounded-xl p-4 mb-8 text-center flex flex-col items-center justify-center">
+        <div class="flex items-center space-x-2 text-red-600 mb-1">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
             <span class="font-bold">Viewing as Admin (Read Only)</span>
         </div>
-        <p class="text-sm font-medium text-blue-600">You are viewing the customer profile in read-only mode.</p>
+        <p class="text-sm font-medium text-red-600">You are viewing the customer profile in read-only mode.</p>
     </div>
 
     <!-- Customer Profile Header -->
@@ -51,7 +51,7 @@
         
         <!-- Stat 1 -->
         <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center">
-            <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-4">
+            <div class="w-12 h-12 rounded-xl bg-red-50 text-red-600 flex items-center justify-center mb-4">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
             </div>
             <h3 class="text-sm font-semibold text-[#475569] mb-1">Active Loyalty Cards</h3>

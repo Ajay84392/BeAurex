@@ -3,9 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\SendsOtp;
-use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use App\Http\Requests\Auth\LoginRequest;
 
 class AdminAuthController extends Controller
 {
@@ -20,21 +18,13 @@ class AdminAuthController extends Controller
         return view('auth.login', ['role' => 'admin']);
     }
 
-    public function processLogin(Request $request)
+    public function processLogin(LoginRequest $request)
     {
-        $request->validate([
-            'email' => 'required|email:rfc|max:255',
-            'password' => 'required|string|max:64',
-        ]);
-
-        $user = User::where('email', $request->email)->where('role', 'admin')->first();
-        if (! $user || ! Hash::check($request->password, $user->password)) {
-            return back()->withErrors(['email' => 'These credentials do not match our records.'])->withInput();
-        }
+        $user = $request->authenticate('admin');
 
         $this->loginAs($user, $request->boolean('remember'));
 
-        return redirect('/admin/dashboard');
+        return redirect()->intended('/admin/dashboard');
     }
 
     public function logout()

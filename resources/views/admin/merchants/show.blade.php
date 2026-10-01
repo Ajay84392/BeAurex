@@ -3,7 +3,7 @@
 @section('title', 'Admin')
 
 @section('content')
-<div class="flex-1 overflow-auto p-6 md:p-10">
+<div class="flex-1 min-w-0 overflow-auto p-4 sm:p-6 lg:p-10">
 
             
             <!-- Read Only Banner -->
@@ -18,7 +18,7 @@
             <!-- Merchant Profile Header -->
             <div class="bg-white rounded-2xl border border-[#e2e8f0] p-6 flex flex-col md:flex-row items-center justify-between shadow-sm mb-8">
                 <div class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6">
-                    <div class="w-24 h-24 bg-[#1e4832] rounded-2xl flex flex-col items-center justify-center text-white p-2 text-2xl font-bold uppercase">
+                    <div class="w-24 h-24 bg-[#b00000] rounded-2xl flex flex-col items-center justify-center text-white p-2 text-2xl font-bold uppercase">
                         {{ substr($merchant->business_name ?? $merchant->name ?? 'M', 0, 1) }}
                     </div>
                     <div>
@@ -52,14 +52,14 @@
                 
                 <!-- Stat 1 -->
                 <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center">
-                    <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
+                    <div class="w-12 h-12 rounded-xl bg-red-50 text-red-600 flex items-center justify-center mb-4">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
                     </div>
                     <h3 class="text-sm font-semibold text-[#475569] mb-1">Total Scans</h3>
-                    <div class="text-3xl font-black text-[#0f172a] mb-2">1,248</div>
+                    <div class="text-3xl font-black text-[#0f172a] mb-2">{{ number_format($stats['scans']) }}</div>
                     <div class="flex items-center text-xs font-bold text-[#22C55E]">
-                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
-                        12.5% <span class="text-slate-400 ml-1 font-medium">vs last 30 days</span>
+                        
+                        <span class="text-slate-500 font-medium">{{ number_format($stats['scans30']) }} in the last 30 days</span>
                     </div>
                 </div>
 
@@ -69,23 +69,23 @@
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                     </div>
                     <h3 class="text-sm font-semibold text-[#475569] mb-1">Total Customers</h3>
-                    <div class="text-3xl font-black text-[#0f172a] mb-2">846</div>
+                    <div class="text-3xl font-black text-[#0f172a] mb-2">{{ number_format($stats['customers']) }}</div>
                     <div class="flex items-center text-xs font-bold text-[#22C55E]">
-                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
-                        8.3% <span class="text-slate-400 ml-1 font-medium">vs last 30 days</span>
+                        
+                        <span class="text-slate-500 font-medium">{{ number_format($stats['customers30']) }} in the last 30 days</span>
                     </div>
                 </div>
 
                 <!-- Stat 3 -->
                 <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center">
-                    <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-4">
+                    <div class="w-12 h-12 rounded-xl bg-red-50 text-red-600 flex items-center justify-center mb-4">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path></svg>
                     </div>
                     <h3 class="text-sm font-semibold text-[#475569] mb-1">Rewards Redeemed</h3>
-                    <div class="text-3xl font-black text-[#0f172a] mb-2">328</div>
+                    <div class="text-3xl font-black text-[#0f172a] mb-2">{{ number_format($stats['redeemed']) }}</div>
                     <div class="flex items-center text-xs font-bold text-[#22C55E]">
-                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
-                        15.2% <span class="text-slate-400 ml-1 font-medium">vs last 30 days</span>
+                        
+                        <span class="text-slate-500 font-medium">{{ number_format($stats['pending']) }} waiting for approval</span>
                     </div>
                 </div>
                 
@@ -95,10 +95,10 @@
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                     </div>
                     <h3 class="text-sm font-semibold text-[#475569] mb-1">Customer Repeat Rate</h3>
-                    <div class="text-3xl font-black text-[#0f172a] mb-2">32.6%</div>
+                    <div class="text-3xl font-black text-[#0f172a] mb-2">{{ $stats['repeatRate'] }}%</div>
                     <div class="flex items-center text-xs font-bold text-[#22C55E]">
-                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
-                        6.1% <span class="text-slate-400 ml-1 font-medium">vs last 30 days</span>
+                        
+                        <span class="text-slate-500 font-medium">{{ number_format($stats['repeatCustomers']) }} returning customers</span>
                     </div>
                 </div>
 

@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\UpdatesProfile;
 use App\Mail\LoginOtpMail;
 use App\Models\Business;
+use App\Models\CustomerVisit;
 use App\Models\Offer;
+use App\Models\Plan;
 use App\Models\RewardRequest;
-use App\Rules\MobileNumber;
 use App\Models\User;
+use App\Support\Media;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,67 +19,61 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Rules\Password;
 
 class MerchantDashboardController extends Controller
 {
+    use UpdatesProfile;
+
     public function index()
     {
-        // Get the first business or a default dummy one
-        $business = DB::table('businesses')->first();
+        // The logged-in merchant's own business (the same one their QR code points to).
+        $business = self::ownBusiness();
 
-        $totalScans = 0;
-        $totalCustomers = 0;
-        $rewardsRedeemed = 0;
-        $repeatRate = 0;
+        $visits = CustomerVisit::where('business_id', $business->id);
+        $monthStart = now()->startOfMonth();
+
+        $totalScans = (clone $visits)->count();
+        $scansThisMonth = (clone $visits)->where('scanned_at', '>=', $monthStart)->count();
+        $totalCustomers = (clone $visits)->distinct()->count('customer_id');
+        // Customers whose first visit here was this month.
+        $newCustomersThisMonth = CustomerVisit::where('business_id', $business->id)
+            ->selectRaw('customer_id, MIN(scanned_at) as first_visit')->groupBy('customer_id')
+            ->havingRaw('MIN(scanned_at) >= ?', [$monthStart])->get()->count();
+
+        $approved = RewardRequest::where('business_id', $business->id)->where('status', 'approved');
+        $rewardsRedeemed = (clone $approved)->count();
+        $redeemedThisMonth = (clone $approved)->where('updated_at', '>=', $monthStart)->count();
+        $pendingRewards = RewardRequest::where('business_id', $business->id)->where('status', 'pending')->count();
+
+        // Repeat rate: customers with more than one visit / all customers.
+        $repeatCustomers = CustomerVisit::where('business_id', $business->id)
+            ->select('customer_id')->groupBy('customer_id')->havingRaw('COUNT(*) > 1')->get()->count();
+        $repeatRate = $totalCustomers > 0 ? round($repeatCustomers / $totalCustomers * 100) : 0;
+
+        // Plan shown in the banner comes from the business record (set by admin / payments).
+        $plan = Plan::where('name', $business->plan)->first();
+        $planValidTill = $business->plan_valid_till ? Carbon::parse($business->plan_valid_till) : null;
+
         $qrCode = null;
-
-        if ($business) {
-            $totalScans = DB::table('customer_visits')->where('business_id', $business->id)->count();
-            $totalCustomers = DB::table('customer_visits')->where('business_id', $business->id)->distinct('customer_id')->count('customer_id');
-            // Assuming rewards might be in a customer_rewards table or similar
-            // For now, let's just make it count from rewards if redeemed, or just use a dummy if not found
-            $rewardsRedeemed = 0; // DB::table('customer_rewards')->where('business_id', $business->id)->where('status', 'redeemed')->count();
-
-            // Repeat rate calculation: customers with > 1 visit / total customers
-            $repeatCustomers = DB::table('customer_visits')
-                ->select('customer_id')
-                ->where('business_id', $business->id)
-                ->groupBy('customer_id')
-                ->havingRaw('COUNT(*) > 1')
-                ->get()
-                ->count();
-
-            $repeatRate = $totalCustomers > 0 ? round(($repeatCustomers / $totalCustomers) * 100) : 0;
-
-            $qrCode = DB::table('qr_codes')->where('business_id', $business->id)->first();
-        }
-
-        // Dummy data fallback to match the design if DB is empty
-        if (! $business) {
-            $business = (object) [
-                'name' => 'Ka-feen Café',
-                'category' => 'Café',
-                'contact_number' => '+91 98765 43210',
-                'email' => 'kafeencafe@gmail.com',
-                'address' => '123, MG Road, Connaught Place, New Delhi - 110001',
-            ];
-            $totalScans = 2453;
-            $totalCustomers = 586;
-            $rewardsRedeemed = 128;
-            $repeatRate = 42;
-        }
-
         $qrUrl = self::qrTargetUrl();
+        $qrImage = self::qrImageUrl();
 
         return view('merchant.dashboard', compact(
             'business',
             'totalScans',
+            'scansThisMonth',
             'totalCustomers',
+            'newCustomersThisMonth',
             'rewardsRedeemed',
+            'redeemedThisMonth',
+            'pendingRewards',
             'repeatRate',
+            'repeatCustomers',
+            'plan',
+            'planValidTill',
             'qrCode',
-            'qrUrl'
+            'qrUrl',
+            'qrImage'
         ));
     }
 
@@ -85,14 +82,43 @@ class MerchantDashboardController extends Controller
      */
     public static function qrTargetUrl(): string
     {
-        $business = Business::where('user_id', auth()->id())->first();
+        return route('customer.collect', self::ownBusiness());
+    }
 
-        return $business ? route('customer.collect', $business) : url('/customer/claim-reward');
+    /**
+     * PNG of the merchant's QR code. High error correction (H, ~30%) keeps it readable with the
+     * logo drawn over its centre, and the quiet-zone margin lets phone cameras lock on quickly.
+     */
+    public static function qrImageUrl(int $size = 400): string
+    {
+        return 'https://api.qrserver.com/v1/create-qr-code/?'.http_build_query([
+            'size' => $size.'x'.$size,
+            'ecc' => 'H',
+            'qzone' => 2,
+            'margin' => 0,
+            'format' => 'png',
+            'data' => self::qrTargetUrl(),
+        ]);
+    }
+
+    /**
+     * The logged-in merchant's business. A merchant who skipped onboarding gets a basic one
+     * created from their account, so their QR code always awards coins instead of dead-ending.
+     */
+    public static function ownBusiness(): Business
+    {
+        $user = auth()->user();
+
+        return Business::firstOrCreate(
+            ['user_id' => $user->id],
+            ['name' => $user->name, 'email' => $user->email, 'phone' => $user->phone]
+        );
     }
 
     public function profile()
     {
-        $business = Business::where('user_id', auth()->id())->first() ?? Business::first();
+        // Only ever show the logged-in merchant's own business.
+        $business = Business::where('user_id', auth()->id())->first();
 
         return view('merchant.profile', compact('business'));
     }
@@ -101,66 +127,69 @@ class MerchantDashboardController extends Controller
     {
         $business = Business::where('user_id', auth()->id())->first();
         $user = auth()->user();
+        $this->normalizeProfileInput($request);
+        if (is_string($request->input('business_name'))) {
+            $request->merge(['business_name' => preg_replace('/\s+/', ' ', trim($request->input('business_name')))]);
+        }
 
-        $rules = [
-            'name' => 'nullable|string|max:255',
-            'category' => 'nullable|string|max:255',
-            'phone' => ['nullable', new MobileNumber],
-            'email' => 'nullable|email|max:255',
-            'address' => 'nullable|string|max:255',
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+        $rules = $this->accountRules($request, $user, phoneRequired: true) + [
+            'business_name' => ['sometimes', 'required', 'string', 'min:2', 'max:255'],
+            'category' => ['nullable', 'string', 'max:100'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'city' => ['nullable', 'string', 'max:100', 'regex:/^[\pL\s.\'-]+$/u'],
+            'state' => ['nullable', 'string', 'max:100', 'regex:/^[\pL\s.\'-]+$/u'],
+            'pincode' => ['nullable', 'digits:6'],
+            'logo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
         ];
 
-        if ($request->filled('password') && $request->filled('current_password')) {
-            $rules['current_password'] = 'required';
-            $rules['password'] = ['required', 'confirmed', Password::defaults()];
-        } else {
-            $request->request->remove('password');
-            $request->request->remove('current_password');
+        $validated = $request->validate($rules, $this->accountMessages() + [
+            'business_name.required' => 'Business name is required.',
+            'business_name.min' => 'Business name must be at least 2 characters.',
+            'city.regex' => 'City can only contain letters.',
+            'state.regex' => 'State can only contain letters.',
+            'pincode.digits' => 'Pincode must be exactly 6 digits.',
+            'logo.image' => 'The logo must be an image (JPG, PNG, GIF or WEBP).',
+            'logo.mimes' => 'The logo must be a JPG, PNG, GIF or WEBP file.',
+            'logo.max' => 'The logo may not be larger than 2 MB.',
+        ]);
+
+        $business ??= new Business(['user_id' => $user->id, 'name' => $user->name]);
+        $oldLogo = $business->logo;
+        $newLogo = $request->hasFile('logo') ? Media::store($request->file('logo'), 'merchant_logos') : null;
+
+        try {
+            DB::transaction(function () use ($request, $user, $business, $validated, $newLogo) {
+                $this->saveAccount($request, $user, $validated);
+
+                if (array_key_exists('business_name', $validated)) {
+                    $business->name = $validated['business_name'];
+                }
+                foreach (['category', 'description', 'address', 'city', 'state', 'pincode'] as $field) {
+                    if (array_key_exists($field, $validated)) {
+                        $business->{$field} = $validated[$field];
+                    }
+                }
+                if ($newLogo) {
+                    $business->logo = $newLogo;
+                }
+
+                // The business contact details follow the merchant's account.
+                $business->email = $user->email;
+                $business->phone = $user->phone ?? $business->phone;
+                $business->save();
+            });
+        } catch (\Throwable $e) {
+            // Never fail silently: keep the old logo, log the real cause, tell the merchant.
+            Media::delete($newLogo);
+            report($e);
+
+            return redirect()->back()->withInput($request->except(['password', 'password_confirmation', 'current_password', 'logo']))
+                ->with('error', 'Your profile could not be saved. Please try again in a moment — if it keeps happening, contact BeAurex support.');
         }
 
-        $request->validate($rules);
-
-        if ($request->filled('current_password')) {
-            if (! \Hash::check($request->current_password, $user->password)) {
-                return back()->withErrors(['current_password' => 'Current password does not match.'])->withInput();
-            }
-        }
-
-        $data = array_filter($request->only(['name', 'category', 'phone', 'email', 'address']), function($value) {
-            return !is_null($value) && $value !== '';
-        });
-        if (isset($data['phone'])) {
-            $data['phone'] = MobileNumber::format($data['phone']);
-        }
-
-        if ($request->hasFile('logo')) {
-            if ($business && $business->logo) {
-                // optionally delete old logo
-            }
-            $logoPath = $request->file('logo')->store('merchant_logos', 'public');
-            $data['logo'] = $logoPath;
-        }
-
-        if (!empty($data)) {
-            if ($business) {
-                $business->update($data);
-            } else {
-                $data['user_id'] = auth()->id();
-                $business = Business::create($data);
-            }
-        }
-
-        // Also update user
-        if ($user) {
-            $userData = [];
-            if ($request->email) $userData['email'] = $request->email;
-            if ($request->name) $userData['name'] = $request->name;
-            if ($request->filled('password')) $userData['password'] = \Hash::make($request->password);
-            
-            if (!empty($userData)) {
-                $user->update($userData);
-            }
+        if ($newLogo) {
+            Media::delete($oldLogo);
         }
 
         return redirect()->back()->with('success', 'Profile updated successfully.');
@@ -180,14 +209,14 @@ class MerchantDashboardController extends Controller
 
     public function rewards()
     {
-        $business = Business::where('user_id', auth()->id())->first() ?? Business::first();
-
-        $query = RewardRequest::query();
-        if ($business) {
-            $query->where('business_id', $business->id);
-        }
+        // Only this merchant's own claims.
+        $business = self::ownBusiness();
+        $query = RewardRequest::with('customer')->where('business_id', $business->id);
 
         $status = request('status', 'pending');
+        if (! in_array($status, ['pending', 'approved', 'declined', 'programs'], true)) {
+            $status = 'pending';
+        }
 
         // Redirect programs tab to pending (tab removed from UI)
         if ($status === 'programs') {
@@ -205,9 +234,9 @@ class MerchantDashboardController extends Controller
         }
 
         $counts = [
-            'pending' => RewardRequest::where('business_id', $business?->id)->where('status', 'pending')->count(),
-            'approved' => RewardRequest::where('business_id', $business?->id)->where('status', 'approved')->count(),
-            'declined' => RewardRequest::where('business_id', $business?->id)->where('status', 'declined')->count(),
+            'pending' => RewardRequest::where('business_id', $business->id)->where('status', 'pending')->count(),
+            'approved' => RewardRequest::where('business_id', $business->id)->where('status', 'approved')->count(),
+            'declined' => RewardRequest::where('business_id', $business->id)->where('status', 'declined')->count(),
         ];
 
         return view('merchant.rewards', compact('requests', 'programs', 'status', 'counts'));
@@ -215,23 +244,26 @@ class MerchantDashboardController extends Controller
 
     public function updateRewardStatus(Request $request, $id)
     {
-        $rewardRequest = RewardRequest::findOrFail($id);
+        $request->validate(['status' => ['required', 'in:approved,declined']]);
 
-        if (in_array($request->status, ['approved', 'declined'])) {
-            $rewardRequest->update([
-                'status' => $request->status,
-                'updated_at' => now(),
-            ]);
+        // A merchant can only act on claims made at their own business, and only once.
+        $rewardRequest = RewardRequest::where('business_id', self::ownBusiness()->id)->findOrFail($id);
+        if ($rewardRequest->status !== 'pending') {
+            return redirect()->route('merchant.rewards', ['status' => $rewardRequest->status])
+                ->with('error', 'This reward was already '.$rewardRequest->status.'.');
         }
+
+        // Declining returns the customer's coins automatically (declined claims don't count as spent).
+        $rewardRequest->update(['status' => $request->status]);
 
         // Redirect to the tab matching the action so the new card appears at the top
         return redirect()->route('merchant.rewards', ['status' => $request->status])
-            ->with('success', 'Reward status updated.');
+            ->with('success', $request->status === 'approved' ? 'Reward approved.' : 'Reward declined. The customer\'s coins were returned.');
     }
 
     public function liveOffers()
     {
-        $business = Business::first();
+        $business = self::ownBusiness();
         $offers = Offer::where('business_id', $business->id)->get();
 
         return view('merchant.live-offers', compact('offers'));
@@ -244,10 +276,7 @@ class MerchantDashboardController extends Controller
         $existingOffers = [];
         if ($business) {
             $existingOffers = Offer::where('business_id', $business->id)->get()->map(function ($offer) {
-                $img = $offer->image;
-                if ($img && ! str_starts_with($img, 'http') && ! str_starts_with($img, 'data:')) {
-                    $img = asset('storage/'.$img);
-                }
+                $img = Media::url($offer->image);
 
                 return [
                     'id' => $offer->id,
@@ -273,16 +302,7 @@ class MerchantDashboardController extends Controller
             'rewards_json' => 'required|string',
         ]);
 
-        $business = Business::where('user_id', auth()->id())->first();
-        if (! $business) {
-            // Auto-create basic business profile if missing
-            $business = Business::create([
-                'user_id' => auth()->id(),
-                'name' => auth()->user()->name ?? 'My Business',
-                'phone' => '0000000000',
-                'email' => 'business_'.auth()->id().'_'.time().'@druto.com',
-            ]);
-        }
+        $business = self::ownBusiness();
 
         $rewards = json_decode($request->rewards_json, true);
 
@@ -295,16 +315,16 @@ class MerchantDashboardController extends Controller
                     if (! empty($reward['image']) && str_starts_with($reward['image'], 'data:image')) {
                         // Decode base64 image
                         $imageParts = explode(';base64,', $reward['image']);
-                        if (count($imageParts) == 2) {
-                            $imageTypeAux = explode('image/', $imageParts[0]);
-                            $imageType = $imageTypeAux[1];
-                            $imageBase64 = base64_decode($imageParts[1]);
-                            $fileName = 'reward_'.uniqid().'.'.$imageType;
-                            Storage::disk('public')->put('offers/'.$fileName, $imageBase64);
-                            $imagePath = 'offers/'.$fileName;
+                        $imageType = strtolower(explode('image/', $imageParts[0])[1] ?? '');
+                        $extensions = ['jpeg' => 'jpg', 'jpg' => 'jpg', 'png' => 'png', 'webp' => 'webp', 'gif' => 'gif'];
+                        $bytes = count($imageParts) === 2 ? base64_decode($imageParts[1], true) : false;
+                        // Real raster images only, at most 2 MB (no SVG: it can carry scripts).
+                        if ($bytes !== false && isset($extensions[$imageType]) && strlen($bytes) <= 2 * 1024 * 1024 && @getimagesizefromstring($bytes)) {
+                            $imagePath = Media::put('offers', $extensions[$imageType], $bytes);
                         }
-                    } elseif (! empty($reward['image']) && str_starts_with($reward['image'], 'http')) {
-                        // Keep placeholder image for testing
+                    } elseif (! empty($reward['image']) && str_starts_with($reward['image'], 'http')
+                        && ! str_starts_with($reward['image'], url('/'))) {
+                        // An external image link. (Our own image URL coming back means "unchanged".)
                         $imagePath = $reward['image'];
                     }
 
@@ -328,9 +348,6 @@ class MerchantDashboardController extends Controller
                     } else {
                         // Create new offer
                         $offerData['business_id'] = $business->id;
-                        if (! isset($offerData['image']) && ! empty($reward['image']) && str_starts_with($reward['image'], 'http')) {
-                            $offerData['image'] = $reward['image'];
-                        }
                         Offer::create($offerData);
                     }
                 }
@@ -346,6 +363,7 @@ class MerchantDashboardController extends Controller
         if ($business) {
             $offer = Offer::where('business_id', $business->id)->findOrFail($id);
             $offer->delete();
+            Media::delete($offer->image);
         }
 
         return redirect()->route('merchant.create-offer')->with('success', 'Offer deleted successfully!');

@@ -3,7 +3,7 @@
 @section('title', 'FAQ Editor')
 
 @section('content')
-<div class="flex-1 overflow-auto p-6 md:p-10">
+<div class="flex-1 min-w-0 overflow-auto p-4 sm:p-6 lg:p-10">
     <div class="mb-8">
         <h1 class="text-2xl font-bold text-[#0f172a] mb-1">FAQ Editor</h1>
         <div class="text-xs text-[#475569] font-medium flex items-center space-x-1">
@@ -94,7 +94,7 @@
                                 <button onclick="openPreviewModal(`{{ addslashes($faq->question) }}`, `{{ addslashes($faq->answer) }}`)" class="p-1.5 rounded text-slate-400 hover:text-[#475569] hover:bg-slate-100 transition" title="Preview">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                 </button>
-                                <button onclick="openEditModal({{ $faq->id }}, `{{ addslashes($faq->question) }}`, `{{ addslashes($faq->answer) }}`, `{{ $faq->category }}`, `{{ $faq->status }}`, {{ $faq->sort_order }})" class="p-1.5 rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition" title="Edit">
+                                <button onclick="openEditModal({{ $faq->id }}, `{{ addslashes($faq->question) }}`, `{{ addslashes($faq->answer) }}`, `{{ $faq->category }}`, `{{ $faq->status }}`, {{ $faq->sort_order }})" class="p-1.5 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition" title="Edit">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                 </button>
                                 <form action="{{ route('admin.faq.destroy', $faq->id) }}" method="POST" onsubmit="return confirm('Delete this FAQ?')">
@@ -149,7 +149,7 @@
             @csrf
             <div>
                 <label class="block text-sm font-bold text-slate-700 mb-2">Question <span class="text-[#EF4444]">*</span></label>
-                <input type="text" name="question" placeholder="What is LoyalQR?" required class="w-full bg-[#f1f5f9] border border-[#e2e8f0] rounded-xl px-4 py-3 text-sm font-medium text-[#0f172a] placeholder-slate-400 focus:outline-none focus:border-[#b00000] focus:ring-2 focus:ring-red-600/10 transition">
+                <input type="text" name="question" placeholder="What is BeAurex?" required class="w-full bg-[#f1f5f9] border border-[#e2e8f0] rounded-xl px-4 py-3 text-sm font-medium text-[#0f172a] placeholder-slate-400 focus:outline-none focus:border-[#b00000] focus:ring-2 focus:ring-red-600/10 transition">
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -180,7 +180,7 @@
 
             <div>
                 <label class="block text-sm font-bold text-slate-700 mb-2">Answer <span class="text-[#EF4444]">*</span></label>
-                <textarea name="answer" rows="4" placeholder="LoyalQR is a..." required class="w-full bg-[#f1f5f9] border border-[#e2e8f0] rounded-xl px-4 py-3 text-sm font-medium text-[#0f172a] placeholder-slate-400 focus:outline-none focus:border-[#b00000] focus:ring-2 focus:ring-red-600/10 transition resize-none"></textarea>
+                <textarea name="answer" rows="4" placeholder="BeAurex is a..." required class="w-full bg-[#f1f5f9] border border-[#e2e8f0] rounded-xl px-4 py-3 text-sm font-medium text-[#0f172a] placeholder-slate-400 focus:outline-none focus:border-[#b00000] focus:ring-2 focus:ring-red-600/10 transition resize-none"></textarea>
             </div>
             
             <div class="flex items-center justify-end space-x-3 pt-2">

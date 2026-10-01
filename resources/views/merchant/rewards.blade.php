@@ -29,13 +29,20 @@
                         <span class="bg-[#b00000] text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center leading-none">{{ $counts['pending'] }}</span>
                     @endif
                 </a>
-                <a href="?status=approved" class="flex-1 text-center py-2.5 rounded-xl text-[11px] font-bold transition {{ $status == 'approved' ? 'bg-[#900000] text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50' }}">
+                <a href="?status=approved" class="flex-1 text-center py-2.5 rounded-xl text-[11px] font-bold transition {{ $status == 'approved' ? 'bg-[#8a0000] text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50' }}">
                     Approved
                 </a>
-                <a href="?status=declined" class="flex-1 text-center py-2.5 rounded-xl text-[11px] font-bold transition {{ $status == 'declined' ? 'bg-[#900000] text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50' }}">
+                <a href="?status=declined" class="flex-1 text-center py-2.5 rounded-xl text-[11px] font-bold transition {{ $status == 'declined' ? 'bg-[#8a0000] text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50' }}">
                     Declined
                 </a>
             </div>
+
+            @if(session('success'))
+                <div class="mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-bold" role="status">{{ session('success') }}</div>
+            @endif
+            @if(session('error'))
+                <div class="mb-5 p-3.5 rounded-xl bg-red-50 border border-red-200 text-[#8a0000] text-sm font-bold" role="alert">{{ session('error') }}</div>
+            @endif
 
             @php
                 $items = $requests;
@@ -61,21 +68,21 @@
                     <div class="flex items-start space-x-4 mb-4">
                         <!-- Reward Icon/Image -->
                         <div class="w-20 h-24 rounded-xl flex-shrink-0 flex flex-col justify-center items-center text-white p-2 shadow-inner border border-black/10 {{ $request->reward_type == 'FREE' ? 'bg-slate-900' : ($request->reward_type == 'DISCOUNT' ? 'bg-gradient-to-br from-green-800 to-green-600' : 'bg-gradient-to-br from-[#b00000] to-red-700') }}">
-                            <span class="text-[8px] font-black opacity-80 mb-0.5 tracking-wider">{{ $request->reward_type }}</span>
-                            <span class="text-[15px] font-black leading-tight text-center">{!! nl2br(e($request->reward_title)) !!}</span>
+                            <span class="text-[8px] font-black opacity-80 mb-0.5 tracking-wider">{{ $request->coins_spent ? $request->coins_spent.' '.\Illuminate\Support\Str::plural('COIN', $request->coins_spent) : $request->reward_type }}</span>
+                            <span class="text-[13px] font-black leading-tight text-center line-clamp-3 break-words w-full">{!! nl2br(e($request->reward_title)) !!}</span>
                         </div>
                         
                         <!-- Info -->
-                        <div class="flex-1">
-                            <h4 class="font-black text-slate-900 text-[13px] leading-tight mb-0.5">{{ $request->customer?->name ?? $request->customer_name ?? 'Customer Name' }}</h4>
-                            <p class="text-[9px] font-semibold text-slate-500 mb-2">ID: {{ $request->customer?->customer_id ?? $request->code ?? 'LQR-8F4A29' }}</p>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-black text-slate-900 text-[13px] leading-tight mb-0.5 truncate">{{ $request->customer?->name ?? $request->customer_name ?? 'Customer' }}</h4>
+                            <p class="text-[9px] font-semibold text-slate-500 mb-2">Code: <span class="font-black text-slate-800 tracking-wide">{{ $request->code }}</span></p>
                             
                             <h5 class="text-[11px] font-bold text-slate-800 leading-tight mb-2">{{ $request->reward_description }}</h5>
                             
                             @if($status == 'pending')
                                 <div class="flex items-center space-x-1.5 text-[9px] font-semibold text-slate-500 mb-1">
                                     <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    <span>{{ now()->format('d M Y, g:i A') }}</span>
+                                    <span>Claimed {{ $request->created_at->setTimezone('Asia/Kolkata')->format('d M Y, g:i A') }}</span>
                                 </div>
                                 <div class="flex items-center space-x-1.5 text-[9px] font-bold text-orange-500">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>

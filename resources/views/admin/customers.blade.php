@@ -3,7 +3,7 @@
 @section('title', 'Claim Logs')
 
 @section('content')
-    <div class="flex-1 overflow-auto p-6 md:p-10">
+    <div class="flex-1 min-w-0 overflow-auto p-4 sm:p-6 lg:p-10">
 
         <!-- Page Header & Breadcrumbs -->
         <div class="mb-8">

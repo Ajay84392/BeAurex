@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    // "Continue with Google" for customers. Create an OAuth client in Google Cloud Console and add
+    // both callback URLs: https://beaurex.in/auth/google/customer/callback and
+    // http://127.0.0.1:8000/auth/google/customer/callback. Without these keys the button is hidden.
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+    ],
+
 ];

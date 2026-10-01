@@ -6,7 +6,7 @@
 <!-- Include Quill Stylesheet -->
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 
-<div class="flex-1 overflow-auto p-6 md:p-10">
+<div class="flex-1 min-w-0 overflow-auto p-4 sm:p-6 lg:p-10">
     
     <div class="mb-8">
         <h1 class="text-2xl font-bold text-[#0f172a] mb-1">Policy Editor</h1>

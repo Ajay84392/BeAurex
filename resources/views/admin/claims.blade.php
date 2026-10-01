@@ -3,7 +3,7 @@
 @section('title', 'Manage Deals')
 
 @section('content')
-<div class="flex-1 overflow-auto p-4 md:p-8">
+<div class="flex-1 min-w-0 overflow-auto p-4 sm:p-6 lg:p-10">
 
     <!-- Page Header & Breadcrumbs -->
     <div class="mb-6">
@@ -29,7 +29,7 @@
                 <!-- Plan Name -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Plan Name <span class="text-red-500">*</span></label>
-                    <select name="plan_name" class="w-full px-4 py-2.5 rounded-lg border border-[#e2e8f0] focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium text-slate-700 bg-white">
+                    <select name="plan_name" class="w-full px-4 py-2.5 rounded-lg border border-[#e2e8f0] focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 text-sm font-medium text-slate-700 bg-white">
                         <option value="">Select Plan</option>
                         <option value="Basic Plan" {{ (isset($editDeal) && $editDeal['plan_name'] == 'Basic Plan') ? 'selected' : '' }}>Basic Plan</option>
                         <option value="Premium Plan" {{ (isset($editDeal) && $editDeal['plan_name'] == 'Premium Plan') ? 'selected' : '' }}>Premium Plan</option>
@@ -40,7 +40,7 @@
                 <!-- State -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">State (Optional)</label>
-                    <select name="state" class="w-full px-4 py-2.5 rounded-lg border border-[#e2e8f0] focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium text-slate-700 bg-white mb-1">
+                    <select name="state" class="w-full px-4 py-2.5 rounded-lg border border-[#e2e8f0] focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 text-sm font-medium text-slate-700 bg-white mb-1">
                         <option value="">All States</option>
                         @foreach(['Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'] as $s)
                             <option value="{{ $s }}" {{ (isset($editDeal) && $editDeal['state'] == $s) ? 'selected' : '' }}>{{ $s }}</option>
@@ -52,45 +52,45 @@
                 <!-- Deal Name -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Deal Name <span class="text-red-500">*</span></label>
-                    <input type="text" name="deal_name" value="{{ $editDeal['deal_name'] ?? '' }}" placeholder="e.g., New Year Offer" class="w-full px-4 py-2.5 rounded-lg border border-[#e2e8f0] focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium text-slate-700">
+                    <input type="text" name="deal_name" value="{{ $editDeal['deal_name'] ?? '' }}" placeholder="e.g., New Year Offer" class="w-full px-4 py-2.5 rounded-lg border border-[#e2e8f0] focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 text-sm font-medium text-slate-700">
                 </div>
 
                 <!-- Coupon Code -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Coupon Code <span class="text-red-500">*</span></label>
-                    <input type="text" name="coupon_code" value="{{ $editDeal['coupon_code'] ?? '' }}" placeholder="E.G., NEWYEAR2024" class="w-full px-4 py-2.5 rounded-lg border border-[#e2e8f0] focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium text-slate-700">
+                    <input type="text" name="coupon_code" value="{{ $editDeal['coupon_code'] ?? '' }}" placeholder="E.G., NEWYEAR2024" class="w-full px-4 py-2.5 rounded-lg border border-[#e2e8f0] focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 text-sm font-medium text-slate-700">
                 </div>
 
                 <!-- Bonus Amount -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Bonus Amount (For Referrer)</label>
-                    <input type="number" name="bonus_amount" value="{{ $editDeal['bonus_amount'] ?? '0' }}" class="w-full px-4 py-2.5 rounded-lg border border-[#e2e8f0] focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium text-slate-700">
+                    <input type="number" name="bonus_amount" value="{{ $editDeal['bonus_amount'] ?? '0' }}" class="w-full px-4 py-2.5 rounded-lg border border-[#e2e8f0] focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 text-sm font-medium text-slate-700">
                 </div>
 
                 <!-- Discount Amount -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Discount Amount (For Referred)</label>
-                    <input type="number" id="discount_amount" name="discount_amount" value="{{ $editDeal['discount_amount'] ?? '0' }}" class="w-full px-4 py-2.5 rounded-lg border border-[#e2e8f0] focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium text-slate-700">
+                    <input type="number" id="discount_amount" name="discount_amount" value="{{ $editDeal['discount_amount'] ?? '0' }}" class="w-full px-4 py-2.5 rounded-lg border border-[#e2e8f0] focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 text-sm font-medium text-slate-700">
                     <p id="msg_discount_amount" class="text-[10px] text-amber-600 mt-1.5 font-semibold hidden"></p>
                 </div>
 
                 <!-- Discount Percentage -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Discount Percentage</label>
-                    <input type="number" id="discount_percentage" name="discount_percentage" value="{{ $editDeal['discount_percentage'] ?? '0' }}" class="w-full px-4 py-2.5 rounded-lg border border-[#e2e8f0] focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium text-slate-700">
+                    <input type="number" id="discount_percentage" name="discount_percentage" value="{{ $editDeal['discount_percentage'] ?? '0' }}" class="w-full px-4 py-2.5 rounded-lg border border-[#e2e8f0] focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 text-sm font-medium text-slate-700">
                     <p id="msg_discount_percentage" class="text-[10px] text-amber-600 mt-1.5 font-semibold hidden"></p>
                 </div>
 
                 <!-- Validity Date -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Valid Till <span class="text-red-500">*</span></label>
-                    <input type="date" name="validity_date" value="{{ $editDeal['validity_date'] ?? '' }}" class="w-full px-4 py-2.5 rounded-lg border border-[#e2e8f0] focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium text-slate-700">
+                    <input type="date" name="validity_date" value="{{ $editDeal['validity_date'] ?? '' }}" class="w-full px-4 py-2.5 rounded-lg border border-[#e2e8f0] focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 text-sm font-medium text-slate-700">
                 </div>
 
                 <!-- Maximum Usage -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Maximum Usage (0 = Unlimited)</label>
-                    <input type="number" name="maximum_usage" value="{{ $editDeal['maximum_usage'] ?? '0' }}" class="w-full px-4 py-2.5 rounded-lg border border-[#e2e8f0] focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium text-slate-700">
+                    <input type="number" name="maximum_usage" value="{{ $editDeal['maximum_usage'] ?? '0' }}" class="w-full px-4 py-2.5 rounded-lg border border-[#e2e8f0] focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 text-sm font-medium text-slate-700">
                 </div>
             </div>
 
@@ -102,7 +102,7 @@
                 @else
                     <div></div>
                 @endif
-                <button type="submit" class="px-10 py-3 bg-[#4285f4] text-white text-sm font-bold rounded-full hover:bg-blue-600 transition shadow-sm">
+                <button type="submit" class="px-10 py-3 bg-[#b00000] text-white text-sm font-bold rounded-full hover:bg-[#8a0000] transition shadow-sm">
                     {{ isset($editDeal) ? 'Update Deal' : 'Add Deal' }}
                 </button>
             </div>
@@ -150,14 +150,14 @@
                             <td class="px-4 py-3 text-right">
                                 <div class="flex items-center justify-end space-x-3">
                                     <!-- Edit Button -->
-                                    <a href="/admin/claims/{{ $index }}/edit" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-1.5 rounded transition" title="Edit">
+                                    <a href="/admin/claims/{{ $index }}/edit" class="text-slate-500 hover:text-[#b00000] bg-slate-100 hover:bg-red-50 p-1.5 rounded transition" title="Edit">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                     </a>
                                     
                                     <!-- Pause Toggle Switch -->
                                     <label class="relative inline-flex items-center cursor-pointer" title="Pause / Active">
                                       <input type="checkbox" class="sr-only peer" checked>
-                                      <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                                      <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
                                     </label>
 
                                     <!-- Delete Button -->

@@ -3,7 +3,7 @@
 @section('title', 'Settings')
 
 @section('content')
-    <div class="flex-1 overflow-auto p-6 md:p-10">
+    <div class="flex-1 min-w-0 overflow-auto p-4 sm:p-6 lg:p-10">
 
         <div class="mb-8">
             <h1 class="text-2xl font-bold text-[#0f172a] mb-1">Settings</h1>
@@ -28,7 +28,7 @@
                 <div class="border border-[#e2e8f0] rounded-xl p-6 flex flex-col hover:shadow-md transition bg-white">
                     <div class="flex items-start space-x-4 mb-6">
                         <div
-                            class="w-12 h-12 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                            class="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center shrink-0">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                     d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
@@ -118,7 +118,7 @@
                 <div class="border border-[#e2e8f0] rounded-xl p-6 flex flex-col hover:shadow-md transition bg-white">
                     <div class="flex items-start space-x-4 mb-6">
                         <div
-                            class="w-12 h-12 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center shrink-0">
+                            class="w-12 h-12 rounded-full bg-red-50 text-red-500 flex items-center justify-center shrink-0">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                     d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">

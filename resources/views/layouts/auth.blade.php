@@ -2,13 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @include('partials.theme')
     <title>@yield('title') - BeAurex</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/jpeg" href="/favicon.jpg">
     <style>
-        body { font-family: "Inter", sans-serif; }
         .btn-primary { background: #b00000; }
         .btn-primary:hover { background: #8a0000; }
         .auth-input { width: 100%; background: #fff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 0.625rem 0.875rem; font-size: 0.875rem; font-weight: 500; color: #0f172a; transition: border-color .15s, box-shadow .15s; }
@@ -50,24 +46,33 @@
                     <p class="text-sm text-amber-800 font-medium">{{ session('mail_error') }}</p>
                 </div>
                 @endif
-                @if($errors->any())
-                <div class="mb-5 bg-red-50 border border-red-200 rounded-xl p-3.5 flex items-start space-x-2.5">
+                @php
+                    // Field errors are shown under their field; only the rest go in this banner.
+                    $fieldKeys = ['name', 'email', 'phone', 'password', 'password_confirmation', 'terms', 'otp'];
+                    $formErrors = collect($errors->getMessages())->except($fieldKeys)->flatten()->unique();
+                @endphp
+                @if($formErrors->isNotEmpty())
+                <div class="mb-5 bg-red-50 border border-red-200 rounded-xl p-3.5 flex items-start space-x-2.5" role="alert">
                     <svg class="w-4 h-4 text-[#EF4444] shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    @if(count($errors->all()) === 1)
-                        <p class="text-sm text-[#8a0000] font-medium">{{ $errors->first() }}</p>
-                    @else
-                        <ul class="text-sm text-[#8a0000] font-medium list-disc pl-4 space-y-0.5">
-                            @foreach(array_unique($errors->all()) as $message)
-                                <li>{{ $message }}</li>
-                            @endforeach
-                        </ul>
-                    @endif
+                    <div class="text-sm text-[#8a0000] font-medium space-y-0.5">
+                        @foreach($formErrors as $message)
+                            <p>{{ $message }}</p>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
+
+                {{-- Came here by scanning a shop's QR code while logged out: say what happens next. --}}
+                @if((($googleRole ?? null) === 'customer' || ($customerAuthPage ?? false)) && ($scanShop = \App\Support\Loyalty::pendingScanBusiness()))
+                <div class="mb-5 bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex items-start space-x-2.5">
+                    <span class="text-lg leading-none" aria-hidden="true">🪙</span>
+                    <p class="text-sm text-amber-900 font-medium">Log in or create your BeAurex account to collect your coin at <span class="font-bold">{{ $scanShop->name }}</span>. You'll go straight to your coin after that.</p>
                 </div>
                 @endif
 
                 @yield('content')
 
-                @if($googleRole ?? false)
+                @if(($googleRole ?? false) && \App\Http\Controllers\GoogleAuthController::enabled())
                     <div class="flex items-center my-5">
                         <div class="flex-1 border-t border-[#e2e8f0]"></div>
                         <span class="px-3 text-xs font-semibold text-slate-400">or</span>
@@ -88,39 +93,62 @@
             @endif
         </div>
 
-        <p class="mt-4 text-center text-xs font-medium text-slate-500">By continuing, you agree to our <a href="#" class="text-[#b00000] hover:underline font-bold">Terms &amp; Conditions</a> and <a href="#" class="text-[#b00000] hover:underline font-bold">Privacy Policy</a>.</p>
+        @unless($hasTermsCheckbox ?? false)
+            <p class="mt-4 text-center text-xs font-medium text-slate-500">By continuing, you agree to our <a href="#" class="text-[#b00000] hover:underline font-bold">Terms &amp; Conditions</a> and <a href="#" class="text-[#b00000] hover:underline font-bold">Privacy Policy</a>.</p>
+        @endunless
     </div>
 
     <script>
-        function togglePwd(inputId) {
+        // Eye button: show/hide the password and swap the eye / eye-off icon.
+        function togglePwd(inputId, btn) {
             const input = document.getElementById(inputId);
-            input.type = input.type === 'password' ? 'text' : 'password';
+            const show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            if (!btn) return;
+            btn.querySelector('[data-eye="show"]').classList.toggle('hidden', show);
+            btn.querySelector('[data-eye="hide"]').classList.toggle('hidden', !show);
+            const label = show ? 'Hide password' : 'Show password';
+            btn.setAttribute('aria-label', label);
+            btn.setAttribute('title', label);
+            btn.setAttribute('aria-pressed', show ? 'true' : 'false');
         }
 
-        // Live password rules: 8+ characters with a letter, a number and a symbol.
-        const pwRules = {
-            length: v => v.length >= 8,
-            letter: v => /[A-Za-z]/.test(v),
-            number: v => /\d/.test(v),
-            symbol: v => /[^A-Za-z0-9\s]/.test(v),
-        };
-        document.querySelectorAll('input[data-strength]').forEach(input => {
-            const list = document.querySelector('.pw-rules[data-for="' + input.id + '"]');
-            const check = () => {
-                let ok = true;
-                for (const [rule, test] of Object.entries(pwRules)) {
-                    const pass = test(input.value);
-                    ok = ok && pass;
-                    const li = list.querySelector('[data-rule="' + rule + '"]');
-                    li.classList.toggle('text-emerald-600', pass);
-                    li.classList.toggle('text-slate-400', !pass);
-                    li.innerHTML = (pass ? '&#10003; ' : '&#9675; ') + li.textContent.slice(2);
-                }
-                input.setCustomValidity(ok ? '' : 'Use 8+ characters with a letter, a number and a symbol.');
-            };
-            input.addEventListener('input', check);
-            check();
+        // Submit buttons: show a loading state and block double submissions.
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', e => {
+                if (form.dataset.submitting) { e.preventDefault(); return; }
+                form.dataset.submitting = '1';
+                form.querySelectorAll('button[type="submit"]').forEach(btn => {
+                    btn.dataset.label = btn.innerHTML;
+                    btn.disabled = true;
+                    btn.classList.add('opacity-75', 'cursor-wait');
+                    btn.innerHTML = '<span class="inline-flex items-center justify-center gap-2"><svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity=".25"/><path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>Please wait…</span>';
+                });
+            });
         });
+        // Coming back with the Back button restores the page from cache: re-enable its buttons.
+        window.addEventListener('pageshow', () => {
+            document.querySelectorAll('form[data-submitting]').forEach(form => {
+                delete form.dataset.submitting;
+                form.querySelectorAll('button[type="submit"]').forEach(btn => {
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-75', 'cursor-wait');
+                    if (btn.dataset.label) btn.innerHTML = btn.dataset.label;
+                });
+            });
+        });
+
+        // Clear a field's server error as soon as the user edits it.
+        document.querySelectorAll('input[aria-invalid="true"]').forEach(input => {
+            input.addEventListener('input', () => {
+                input.classList.remove('border-red-400');
+                input.removeAttribute('aria-invalid');
+                const err = document.getElementById(input.name + '-error');
+                if (err) err.remove();
+            }, { once: true });
+        });
+
+        // Password rules are checked live by the password-hint component.
 
         // Confirm-password fields must match their source field.
         document.querySelectorAll('input[data-confirms]').forEach(input => {
@@ -135,13 +163,17 @@
             source.addEventListener('input', check);
         });
 
-        // Mobile numbers: digits only, exactly 10, starting 6-9.
-        document.querySelectorAll('input[data-mobile]').forEach(input => {
-            input.addEventListener('input', () => {
-                input.value = input.value.replace(/\D/g, '').slice(0, 10);
-                input.setCustomValidity(/^[6-9]\d{9}$/.test(input.value) || input.value === '' ? '' : 'Enter a valid 10-digit mobile number.');
-            });
+    // Mobile numbers: digits only, exactly 10, starting 6-9.
+    document.querySelectorAll('input[data-mobile]').forEach(input => {
+        input.addEventListener('input', () => {
+            let v = input.value.replace(/\D/g, '');
+            if ((v.startsWith('91') || v.startsWith('0')) && v.length > 10) {
+                v = v.replace(/^(91|0)/, '');
+            }
+            input.value = v.slice(0, 10);
+            input.setCustomValidity(/^[6-9]\d{9}$/.test(input.value) || input.value === '' ? '' : 'Enter a valid 10-digit mobile number.');
         });
+    });
     </script>
     @stack('scripts')
 </body>

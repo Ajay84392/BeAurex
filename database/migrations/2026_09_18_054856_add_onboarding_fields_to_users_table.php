@@ -8,9 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('onboarding_step')->default('account_registration');
-            $table->timestamp('onboarding_completed_at')->nullable();
+        if (Schema::hasTable('users')) Schema::table('users', function (Blueprint $table) {
+            if (! Schema::hasColumn('users', 'onboarding_step')) { $table->string('onboarding_step')->default('account_registration'); }
+            if (! Schema::hasColumn('users', 'onboarding_completed_at')) { $table->timestamp('onboarding_completed_at')->nullable(); }
         });
     }
 

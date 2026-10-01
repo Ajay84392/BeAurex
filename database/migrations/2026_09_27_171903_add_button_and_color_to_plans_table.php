@@ -8,10 +8,10 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::table('plans', function (Blueprint $table) {
-            $table->string('button_text')->default('Start 2-Day Trial')->after('type');
-            $table->string('button_link')->default('/merchant/register')->after('button_text');
-            $table->string('color')->nullable()->after('button_link');
+        if (Schema::hasTable('plans')) Schema::table('plans', function (Blueprint $table) {
+            if (! Schema::hasColumn('plans', 'button_text')) { $table->string('button_text')->default('Start 2-Day Trial')->after('type'); }
+            if (! Schema::hasColumn('plans', 'button_link')) { $table->string('button_link')->default('/merchant/register')->after('button_text'); }
+            if (! Schema::hasColumn('plans', 'color')) { $table->string('color')->nullable()->after('button_link'); }
         });
     }
 

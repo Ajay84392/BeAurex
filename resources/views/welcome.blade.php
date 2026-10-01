@@ -2,12 +2,9 @@
 <html lang="en">
 
 <head>
-    <link rel="icon" type="image/jpeg" href="{{ asset('favicon.jpg') }}">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    @include('partials.theme')
     <title>BeAurex - Turn Every Visit Into A Repeat Customer</title>
-    <!-- Tailwind CSS for modern responsive aesthetics -->
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .modal {
             display: none;

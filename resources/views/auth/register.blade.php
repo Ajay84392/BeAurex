@@ -1,4 +1,5 @@
 @php($googleRole = 'customer')
+@php($hasTermsCheckbox = true)
 
 @extends('layouts.auth')
 
@@ -11,18 +12,13 @@
     <form action="{{ url('/customer/register') }}" method="POST" class="space-y-4">
         @csrf
 
-        <div>
-            <label class="auth-label">Full Name</label>
-            <input type="text" name="name" value="{{ old('name') }}" placeholder="Enter your full name" required minlength="2" maxlength="100" autocomplete="name" class="auth-input @error('name') border-red-400 @enderror">
-        </div>
-
-        <div>
-            <label class="auth-label">Email Address</label>
-            <input type="email" name="email" value="{{ old('email') }}" placeholder="Enter your email" required maxlength="255" autocomplete="email" class="auth-input @error('email') border-red-400 @enderror">
-        </div>
+        <x-auth.input name="name" label="Full Name" placeholder="Enter your full name" autocomplete="name" required minlength="2" maxlength="100" />
+        <x-auth.input name="email" type="email" label="Email Address" placeholder="Enter your email" autocomplete="email" required maxlength="255" />
 
         <x-auth.password id="registerPassword" placeholder="Create a strong password" strength />
         <x-auth.password name="password_confirmation" id="registerPasswordConfirm" label="Confirm Password" placeholder="Re-enter your password" confirms="registerPassword" />
+
+        <x-auth.terms />
 
         <button type="submit" class="btn-primary w-full text-white font-bold py-3.5 rounded-xl text-sm transition">Create Account</button>
         <p class="text-[11px] font-medium text-slate-500 text-center">We'll email you a 4-digit code to verify your account.</p>

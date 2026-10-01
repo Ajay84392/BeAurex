@@ -20,6 +20,6 @@ class CheckCustomerSession
             return redirect()->guest('/customer/login');
         }
 
-        return $next($request);
+        return NoStore::apply($next($request));
     }
 }

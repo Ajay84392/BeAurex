@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\SendsOtp;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\OtpRequest;
+use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\Business;
 use App\Models\User;
 use App\Rules\MobileNumber;
@@ -14,17 +17,9 @@ class MerchantAuthController extends Controller
 {
     use SendsOtp;
 
-    public function processLogin(Request $request)
+    public function processLogin(LoginRequest $request)
     {
-        $request->validate([
-            'email' => 'required|email:rfc|max:255',
-            'password' => 'required|string|max:64',
-        ]);
-
-        $user = User::where('email', $request->email)->where('role', 'merchant')->first();
-        if (! $user || ! Hash::check($request->password, $user->password)) {
-            return back()->withErrors(['email' => 'These credentials do not match our records.'])->withInput();
-        }
+        $user = $request->authenticate('merchant');
 
         $this->loginAs($user, $request->boolean('remember'));
 
@@ -41,37 +36,39 @@ class MerchantAuthController extends Controller
         return view('merchant.auth.register');
     }
 
-    public function processRegister(Request $request)
+    public function processRegister(RegisterRequest $request)
     {
-        $request->validate(
-            OtpAuthController::registrationRules(['phone' => ['required', new MobileNumber]]),
-            OtpAuthController::registrationMessages()
-        );
+        $email = $request->validated('email');
 
         // The same email may also hold a customer or admin account; only merchant accounts matter here.
-        $user = User::where('email', $request->email)->where('role', 'merchant')->first();
+        $user = User::where('email', $email)->where('role', 'merchant')->first();
 
         if ($user && $user->email_verified_at) {
-            return OtpAuthController::alreadyRegistered('merchant', $request->email);
+            return OtpAuthController::alreadyRegistered('merchant', $email);
         }
 
-        $phone = MobileNumber::format($request->phone);
+        $phone = MobileNumber::format($request->validated('phone'));
+        $password = Hash::make($request->validated('password'));
 
         if ($user) {
-            $user->name = $request->name;
+            $user->name = $request->validated('name');
             $user->phone = $phone;
-            $user->password = Hash::make($request->password);
+            $user->password = $password;
             $user->onboarding_step = 'email_verification';
             $user->save();
         } else {
-            $user = User::create([
-                'name' => $request->name,
-                'email' => $request->email,
-                'phone' => $phone,
-                'password' => Hash::make($request->password),
-                'role' => 'merchant',
-                'onboarding_step' => 'email_verification',
-            ]);
+            try {
+                $user = User::create([
+                    'name' => $request->validated('name'),
+                    'email' => $email,
+                    'phone' => $phone,
+                    'password' => $password,
+                    'role' => 'merchant',
+                    'onboarding_step' => 'email_verification',
+                ]);
+            } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+                return OtpAuthController::emailUsedElsewhere($e);
+            }
         }
 
         $this->issueOtp($user);
@@ -105,20 +102,16 @@ class MerchantAuthController extends Controller
         ]);
     }
 
-    public function processVerify(Request $request)
+    public function processVerify(OtpRequest $request)
     {
-        $request->validate([
-            'otp' => 'required|digits:4',
-        ]);
-
         $user = Auth::user();
 
         if (! $user || $user->role !== 'merchant') {
             return redirect()->route('merchant.login');
         }
 
-        if (! $this->consumeOtp($user, $request->otp)) {
-            return back()->withErrors(['otp' => 'Invalid or expired OTP. Please try again.']);
+        if (! $this->consumeOtp($user, $request->validated('otp'))) {
+            return back()->withErrors(['otp' => 'Invalid or expired code. Please try again or request a new code.']);
         }
 
         $user->email_verified_at = now();
@@ -185,8 +178,9 @@ class MerchantAuthController extends Controller
         $business->category = $request->business_category;
 
         if ($request->hasFile('logo')) {
-            $logoPath = $request->file('logo')->store('merchant_logos', 'public');
-            $business->logo = $logoPath;
+            $old = $business->logo;
+            $business->logo = \App\Support\Media::store($request->file('logo'), 'merchant_logos');
+            \App\Support\Media::delete($old);
         }
         $business->save();
 

@@ -16,9 +16,9 @@ class CheckAdminSession
     public function handle(Request $request, Closure $next): Response
     {
         if (! session('admin_logged_in') || auth()->user()?->role !== 'admin') {
-            return redirect('/admin');
+            return redirect()->guest('/admin');
         }
 
-        return $next($request);
+        return NoStore::apply($next($request));
     }
 }

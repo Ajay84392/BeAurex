@@ -3,7 +3,7 @@
 @section('title', 'Manage Coupons')
 
 @section('content')
-<div class="flex-1 overflow-auto p-6 md:p-10">
+<div class="flex-1 min-w-0 overflow-auto p-4 sm:p-6 lg:p-10">
     <div class="mb-6 flex justify-between items-end">
         <div>
             <h1 class="text-2xl font-bold text-[#0f172a] mb-1">Coupons</h1>
@@ -62,7 +62,7 @@
                             {{ $coupon->expires_at ? \Carbon\Carbon::parse($coupon->expires_at)->format('M d, Y') : 'N/A' }}
                         </td>
                         <td class="px-6 py-4 text-right">
-                            <a href="{{ route('coupons.edit', $coupon->id) }}" class="text-blue-500 hover:text-blue-700 transition mr-3 inline-block">
+                            <a href="{{ route('coupons.edit', $coupon->id) }}" class="text-slate-500 hover:text-[#b00000] transition mr-3 inline-block">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                             </a>
                             <form action="{{ route('coupons.destroy', $coupon->id) }}" method="POST" class="inline-block">

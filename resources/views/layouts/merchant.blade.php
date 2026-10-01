@@ -2,18 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>BeAurex Admin - @yield('title', 'Panel')</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/jpeg" href="/favicon.jpg">
+    @include('partials.theme')
+    <title>@yield('title', 'Merchant') - BeAurex</title>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
-        body { font-family: "Inter", sans-serif; }
-        .table-container::-webkit-scrollbar { height: 8px; }
-        .table-container::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
-        .table-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .table-container::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         @yield('styles')
     </style>
 </head>
@@ -23,7 +15,7 @@
     <div x-show="sidebarOpen" class="fixed inset-0 z-40 bg-black/50 md:hidden" style="display:none;" @click="sidebarOpen = false"></div>
 
     <!-- Sidebar -->
-    <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed md:static inset-y-0 left-0 w-[240px] bg-[#b00000] text-white flex flex-col flex-shrink-0 h-full overflow-y-auto shadow-2xl z-50 transform md:translate-x-0 transition-transform duration-200 ease-in-out">
+    <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed md:static inset-y-0 left-0 w-[240px] max-w-[85vw] bg-[#b00000] text-white flex flex-col flex-shrink-0 h-full overflow-y-auto shadow-2xl z-50 transform md:translate-x-0 transition-transform duration-200 ease-in-out">
         <!-- Logo -->
         <div class="h-[72px] flex items-center px-6">
             <div class="flex items-center space-x-3">
@@ -75,7 +67,7 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 flex flex-col h-full bg-[#f1f5f9] overflow-hidden w-full relative">
+    <main class="flex-1 min-w-0 flex flex-col h-full bg-[#f1f5f9] overflow-hidden w-full relative">
         
         <!-- Topbar -->
         
@@ -149,7 +141,10 @@
             </p>
             <div class="flex space-x-3">
                 <button @click="logoutModal = false" class="flex-1 py-2.5 bg-white border border-[#8a0000] text-[#8a0000] font-bold rounded-xl hover:bg-red-50 transition">Cancel</button>
-                <a href="/merchant/logout" class="flex-1 py-2.5 bg-[#b00000] text-white font-bold rounded-xl hover:bg-[#8a0000] transition block text-center">Log Out</a>
+                <form method="POST" action="{{ route('merchant.logout') }}" class="flex-1">
+                    @csrf
+                    <button type="submit" class="w-full py-2.5 bg-[#b00000] text-white font-bold rounded-xl hover:bg-[#8a0000] transition">Log Out</button>
+                </form>
             </div>
         </div>
     </div>

@@ -3,8 +3,16 @@
 @section('title', 'My Profile')
 
 @section('content')
+@php
+    $user = auth()->user();
+    $nameParts = explode(' ', $user->name ?? 'User');
+    $initials = strtoupper(substr($nameParts[0], 0, 1)).(count($nameParts) > 1 ? strtoupper(substr($nameParts[1], 0, 1)) : '');
+    $label = 'block text-[13px] font-bold text-slate-700 mb-2';
+    $input = 'w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-slate-900 placeholder-slate-300 focus:outline-none focus:border-[#b00000] focus:ring-2 focus:ring-red-600/10 transition';
+    $invalid = '!border-red-400';
+@endphp
 <div class="bg-white min-h-[100dvh] md:min-h-0 relative pb-24 md:pb-10">
-    
+
     <!-- Red Header Section -->
     <div class="bg-[#8a0000] px-6 pt-10 pb-20 md:pb-24 text-white relative md:rounded-3xl md:shadow-md">
         <div class="flex justify-between items-center mb-6 max-w-4xl mx-auto">
@@ -17,171 +25,80 @@
     </div>
 
     <!-- Main Content Wrapper (Overlapping the red header) -->
-    <div class="bg-white md:bg-white rounded-t-[30px] md:rounded-3xl -mt-8 md:-mt-12 relative z-20 px-5 md:px-8 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.05)] md:shadow-lg min-h-[500px] max-w-4xl mx-auto md:border md:border-slate-100 pb-10 pt-8">
-        
-        @if(session('success'))
-            <div class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-bold flex items-center">
-                <svg class="w-5 h-5 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                {{ session('success') }}
-            </div>
-        @endif
-        @if($errors->any())
-            <div class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-[#8a0000] text-sm font-bold">
-                <ul class="list-disc pl-5">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
+    <div class="bg-white rounded-t-[30px] md:rounded-3xl -mt-8 md:-mt-12 relative z-20 px-5 md:px-8 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.05)] md:shadow-lg min-h-[500px] max-w-4xl mx-auto md:border md:border-slate-100 pb-10 pt-8">
 
-        <form action="{{ route('customer.profile.update') }}" method="POST" enctype="multipart/form-data">
+        @include('partials.profile-alerts')
+
+        <form action="{{ route('customer.profile.update') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
             @csrf
 
-            <!-- Top: Avatar & Full Name -->
-            <div class="flex flex-col md:flex-row md:items-center mb-8 gap-5">
-                @php
-                    $nameParts = explode(' ', auth()->user()->name ?? 'User');
-                    $initials = strtoupper(substr($nameParts[0], 0, 1));
-                    if (count($nameParts) > 1) {
-                        $initials .= strtoupper(substr($nameParts[1], 0, 1));
-                    }
-                @endphp
-                <!-- Avatar -->
-                <div class="flex-shrink-0">
-                    <h3 class="text-[13px] font-black text-slate-900 mb-3 text-left">Profile Photo</h3>
-                    <div class="relative inline-block group">
-                         <!-- Avatar image -->
-                         <div class="w-20 h-20 rounded-full border border-slate-200 shadow-sm overflow-hidden bg-slate-50 flex items-center justify-center">
-                              @if(auth()->user()->photo)
-                                  <img src="{{ asset(auth()->user()->photo) }}" class="w-full h-full object-cover group-hover:opacity-80 transition">
-                              @else
-                                  <div class="w-full h-full bg-red-50 text-[#b00000] flex items-center justify-center text-3xl font-black group-hover:opacity-80 transition">{{ $initials }}</div>
-                              @endif
-                         </div>
-                         <!-- Camera icon -->
-                         <label class="absolute bottom-0 right-0 w-7 h-7 bg-[#b00000] text-white rounded-full flex items-center justify-center border-2 border-white shadow-sm cursor-pointer hover:bg-[#8a0000] transition">
-                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                             <input type="file" name="photo" class="hidden" accept="image/*">
-                         </label>
+            <!-- Personal Information -->
+            <section>
+                <h2 class="text-[15px] font-black text-slate-900 mb-5">Personal Information</h2>
+
+                <div class="flex flex-col md:flex-row gap-6">
+                    <!-- Photo -->
+                    <div class="flex-shrink-0">
+                        <span class="{{ $label }}">Profile Photo</span>
+                        <div class="relative inline-block group">
+                            <div id="photoPreview" class="w-20 h-20 rounded-full border border-slate-200 shadow-sm overflow-hidden bg-slate-50 flex items-center justify-center">
+                                @if($user->photo)
+                                    <img src="{{ \App\Support\Media::url($user->photo) }}" alt="Profile photo" class="w-full h-full object-cover">
+                                @else
+                                    <div class="w-full h-full bg-red-50 text-[#b00000] flex items-center justify-center text-3xl font-black">{{ $initials }}</div>
+                                @endif
+                            </div>
+                            <label class="absolute bottom-0 right-0 w-7 h-7 bg-[#b00000] text-white rounded-full flex items-center justify-center border-2 border-white shadow-sm cursor-pointer hover:bg-[#8a0000] transition" title="Change photo">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                <input type="file" name="photo" class="hidden" accept="image/jpeg,image/png,image/gif,image/webp" data-preview="photoPreview">
+                            </label>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2">JPG, PNG, GIF or WEBP. Max 2 MB.</p>
+                        <x-auth.error name="photo" />
+                    </div>
+
+                    <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="md:col-span-2">
+                            <label for="name" class="{{ $label }}">Full Name <span class="text-[#EF4444]">*</span></label>
+                            <input type="text" id="name" name="name" value="{{ old('name', $user->name) }}" required minlength="2" maxlength="100" autocomplete="name" placeholder="Enter full name"
+                                class="{{ $input }} @error('name') {{ $invalid }} @enderror">
+                            <x-auth.error name="name" />
+                        </div>
+
+                        <div>
+                            <label for="phone" class="{{ $label }}">Phone Number</label>
+                            <div class="flex">
+                                <span class="bg-slate-50 border border-slate-200 border-r-0 rounded-l-xl px-3.5 flex items-center font-bold text-slate-700 text-sm">+91</span>
+                                <input type="tel" id="phone" name="phone" value="{{ old('phone', \App\Rules\MobileNumber::normalize($user->phone)) }}" inputmode="numeric" maxlength="10" pattern="[6-9][0-9]{9}" title="10-digit mobile number starting with 6-9" placeholder="9876543210" autocomplete="tel-national" data-mobile
+                                    class="{{ $input }} rounded-l-none @error('phone') {{ $invalid }} @enderror">
+                            </div>
+                            <x-auth.error name="phone" />
+                        </div>
+
+                        <div>
+                            <label for="email" class="{{ $label }}">Email Address <span class="text-[#EF4444]">*</span></label>
+                            <input type="email" id="email" name="email" value="{{ old('email', $user->email) }}" data-original="{{ $user->email }}" required maxlength="255" autocomplete="email"
+                                class="{{ $input }} @error('email') {{ $invalid }} @enderror">
+                            <p class="text-[11px] text-slate-400 mt-1.5">Changing your email needs your current password.</p>
+                            <x-auth.error name="email" />
+                        </div>
                     </div>
                 </div>
+            </section>
 
-                <!-- Full Name -->
-                <div class="flex-1 w-full md:mt-7">
-                     <label class="text-[13px] font-black text-slate-900 mb-3 block">Full Name</label>
-                     <div class="bg-white rounded-xl border border-slate-200 px-4 py-3.5 shadow-sm">
-                          <input type="text" name="name" value="{{ old('name', auth()->user()->name) }}" class="w-full bg-transparent text-sm font-bold text-slate-900 border-none outline-none p-0 focus:ring-0 placeholder-slate-400" required placeholder="Enter Full Name">
-                     </div>
-                </div>
-            </div>
+            <!-- Preferences -->
+            @include('partials.profile-preferences', ['user' => $user, 'label' => $label, 'input' => $input, 'invalid' => $invalid])
 
-            <!-- Inputs List -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <!-- Change Password -->
+            @include('partials.profile-password', ['label' => $label, 'input' => $input])
 
-                <!-- Phone Number -->
-                <div class="bg-white rounded-2xl border border-slate-200 p-3 flex items-center space-x-4 shadow-sm group hover:border-purple-200 transition">
-                     <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center shrink-0">
-                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-                     </div>
-                     <div class="flex-1 min-w-0">
-                         <label class="text-[11px] font-bold text-slate-500 mb-0.5 block">Phone Number</label>
-                         <input type="tel" name="phone" value="{{ old('phone', \App\Rules\MobileNumber::normalize(auth()->user()->phone)) }}" inputmode="numeric" maxlength="10" pattern="[6-9][0-9]{9}" title="10-digit mobile number starting with 6-9" placeholder="9876543210" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)" class="w-full bg-transparent text-[13px] font-bold text-slate-900 border-none outline-none p-0 focus:ring-0 placeholder-slate-300">
-                     </div>
-                     <div class="text-slate-300 shrink-0 pr-1 group-focus-within:text-purple-600 transition">
-                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                     </div>
-                </div>
-
-                <!-- Email Address (Readonly) -->
-                <div class="bg-white rounded-2xl border border-slate-200 p-3 flex items-center space-x-4 shadow-sm group hover:border-blue-200 transition">
-                     <div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center shrink-0">
-                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                     </div>
-                     <div class="flex-1 min-w-0">
-                         <label class="text-[11px] font-bold text-slate-500 mb-0.5 block">Email Address</label>
-                         <input type="email" name="email" value="{{ auth()->user()->email }}" class="w-full bg-transparent text-[13px] font-bold text-slate-500 border-none outline-none p-0 focus:ring-0 cursor-not-allowed" readonly title="Email cannot be changed here">
-                     </div>
-                     <div class="text-slate-300 shrink-0 pr-1">
-                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                     </div>
-                </div>
-
-                <!-- Language -->
-                <div class="bg-white rounded-2xl border border-slate-200 p-3 flex items-center space-x-4 shadow-sm group hover:border-emerald-200 transition">
-                     <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center shrink-0">
-                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
-                     </div>
-                     <div class="flex-1 min-w-0">
-                         <label class="text-[11px] font-bold text-slate-500 mb-0.5 block">Language</label>
-                         <select name="language" class="w-full bg-transparent text-[13px] font-bold text-slate-900 border-none outline-none p-0 focus:ring-0 appearance-none cursor-pointer">
-                             <option value="en" {{ old('language', auth()->user()->language ?? 'en') == 'en' ? 'selected' : '' }}>English</option>
-                             <option value="hi" {{ old('language', auth()->user()->language ?? 'en') == 'hi' ? 'selected' : '' }}>Hindi</option>
-                         </select>
-                     </div>
-                     <div class="text-slate-300 shrink-0 pr-1 group-focus-within:text-emerald-600 transition">
-                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
-                     </div>
-                </div>
-
-                <!-- Timezone -->
-                <div class="bg-white rounded-2xl border border-slate-200 p-3 flex items-center space-x-4 shadow-sm group hover:border-orange-200 transition">
-                     <div class="w-12 h-12 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center shrink-0">
-                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                     </div>
-                     <div class="flex-1 min-w-0">
-                         <label class="text-[11px] font-bold text-slate-500 mb-0.5 block">Timezone</label>
-                         <select name="timezone" class="w-full bg-transparent text-[13px] font-bold text-slate-900 border-none outline-none p-0 focus:ring-0 appearance-none cursor-pointer">
-                             <option value="Asia/Kolkata" {{ old('timezone', auth()->user()->timezone ?? 'Asia/Kolkata') == 'Asia/Kolkata' ? 'selected' : '' }}>Asia/Kolkata (IST)</option>
-                             <option value="UTC" {{ old('timezone', auth()->user()->timezone ?? '') == 'UTC' ? 'selected' : '' }}>UTC</option>
-                         </select>
-                     </div>
-                     <div class="text-slate-300 shrink-0 pr-1 group-focus-within:text-orange-600 transition">
-                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
-                     </div>
-                </div>
-
-                <!-- Date Format -->
-                <div class="bg-white rounded-2xl border border-slate-200 p-3 flex items-center space-x-4 shadow-sm group hover:border-indigo-200 transition md:col-span-2">
-                     <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shrink-0">
-                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                     </div>
-                     <div class="flex-1 min-w-0">
-                         <label class="text-[11px] font-bold text-slate-500 mb-0.5 block">Date Format</label>
-                         <select name="date_format" class="w-full bg-transparent text-[13px] font-bold text-slate-900 border-none outline-none p-0 focus:ring-0 appearance-none cursor-pointer">
-                             <option value="Y-m-d" {{ old('date_format', auth()->user()->date_format ?? 'Y-m-d') == 'Y-m-d' ? 'selected' : '' }}>YYYY-MM-DD (e.g. 2026-08-20)</option>
-                             <option value="d/m/Y" {{ old('date_format', auth()->user()->date_format ?? '') == 'd/m/Y' ? 'selected' : '' }}>DD/MM/YYYY (e.g. 20/08/2026)</option>
-                         </select>
-                     </div>
-                     <div class="text-slate-300 shrink-0 pr-1 group-focus-within:text-indigo-600 transition">
-                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
-                     </div>
-                </div>
-
-                <!-- Password -->
-                <div class="bg-white rounded-2xl border border-slate-200 p-3 flex items-center space-x-4 shadow-sm group hover:border-red-200 transition md:col-span-2">
-                     <div class="w-12 h-12 bg-red-50 text-[#b00000] rounded-xl flex items-center justify-center shrink-0">
-                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                     </div>
-                     <div class="flex-1 min-w-0">
-                         <label class="text-[11px] font-bold text-slate-500 mb-0.5 block">New Password</label>
-                         <input type="password" name="password" class="w-full bg-transparent text-[13px] font-bold text-slate-900 border-none outline-none p-0 focus:ring-0 placeholder-slate-300" placeholder="Leave blank to keep current">
-                     </div>
-                     <div class="text-slate-300 shrink-0 pr-1 group-focus-within:text-[#b00000] transition">
-                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                     </div>
-                </div>
-
-            </div>
-            
-            <div class="flex justify-end mb-8">
-                <button type="submit" class="w-full md:w-auto px-8 py-3.5 bg-[#b00000] text-white text-sm font-bold rounded-xl hover:bg-[#8a0000] transition shadow-md">
-                    Save Changes
-                </button>
+            <div class="flex flex-col-reverse md:flex-row md:justify-end gap-3">
+                <a href="{{ route('customer.profile') }}" class="w-full md:w-auto px-8 py-3.5 bg-white border border-red-200 text-[#b00000] text-sm font-bold rounded-xl hover:bg-red-50 transition text-center">Cancel</a>
+                <button type="submit" class="w-full md:w-auto px-8 py-3.5 bg-[#b00000] text-white text-sm font-bold rounded-xl hover:bg-[#8a0000] transition shadow-md">Save Changes</button>
             </div>
         </form>
 
-        <a href="{{ route('customer.logout') }}" @click.prevent="logoutModal = true" class="w-full bg-red-50/50 border border-red-100 text-[#b00000] font-bold py-3.5 rounded-2xl flex items-center justify-center space-x-2 hover:bg-red-50 transition shadow-sm">
+        <a href="#" role="button" @click.prevent="logoutModal = true" class="mt-8 w-full bg-red-50/50 border border-red-100 text-[#b00000] font-bold py-3.5 rounded-2xl flex items-center justify-center space-x-2 hover:bg-red-50 transition shadow-sm">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
             <span>Logout</span>
         </a>
@@ -189,28 +106,5 @@
     </div>
 </div>
 
-<script>
-    document.querySelector('input[name="photo"]').addEventListener('change', function(e) {
-        if(e.target.files && e.target.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const container = document.querySelector('.relative.inline-block.group > div');
-                const existingImg = container.querySelector('img');
-                if (existingImg) {
-                    existingImg.src = e.target.result;
-                } else {
-                    const initialsDiv = container.querySelector('div');
-                    if (initialsDiv) {
-                        const newImg = document.createElement('img');
-                        newImg.src = e.target.result;
-                        newImg.className = 'w-full h-full object-cover group-hover:opacity-80 transition';
-                        container.insertBefore(newImg, initialsDiv);
-                        initialsDiv.remove();
-                    }
-                }
-            }
-            reader.readAsDataURL(e.target.files[0]);
-        }
-    });
-</script>
+@include('partials.profile-scripts')
 @endsection

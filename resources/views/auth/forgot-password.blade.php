@@ -10,12 +10,9 @@
         @csrf
         <input type="hidden" name="role" value="{{ $role }}">
 
-        <div>
-            <label class="auth-label">Email Address</label>
-            <input type="email" name="email" value="{{ old('email') }}" placeholder="Enter your account email" required class="auth-input">
-        </div>
+        <x-auth.input name="email" type="email" label="Email Address" placeholder="Enter your account email" autocomplete="email" required maxlength="255" />
 
-        <button type="submit" class="btn-primary w-full text-white font-bold py-3.5 rounded-xl text-sm transition">Send OTP</button>
+        <button type="submit" class="btn-primary w-full text-white font-bold py-3.5 rounded-xl text-sm transition">Send Reset Code</button>
     </form>
 @endsection
 

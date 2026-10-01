@@ -18,7 +18,7 @@ class RedirectIfPortalAuthenticated
 
         // A merchant still waiting on email verification may go back and fix their sign-up details.
         if (! $user || $user->role !== $role || ! session($role.'_logged_in') || ($role === 'merchant' && ! $user->email_verified_at)) {
-            return $next($request);
+            return NoStore::apply($next($request));
         }
 
         return match ($role) {

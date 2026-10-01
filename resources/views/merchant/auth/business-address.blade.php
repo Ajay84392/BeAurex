@@ -2,13 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Business Address - LoyalQR</title>
-    <link rel="icon" type="image/jpeg" href="/favicon.jpg">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    @include('partials.theme')
+    <title>Business Address - BeAurex</title>
     <style>
-        body { font-family: "Inter", sans-serif; }
         input:focus, select:focus { outline: none; border-color: #b00000; box-shadow: 0 0 0 3px rgba(176, 0, 0, 0.08); }
     </style>
 </head>
@@ -16,7 +12,7 @@
     <div class="w-full max-w-sm">
         
                 <div class="bg-white rounded-2xl border border-[#e2e8f0] shadow-sm overflow-hidden">
-                    <div class="flex flex-col items-center pt-8 pb-6 px-8" style="background:#fff5f5">
+                    <div class="flex flex-col items-center pt-8 pb-6 px-5 sm:px-8 bg-red-50">
                         <div
                             class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center text-[#EF4444] shadow-sm mb-4">
                             <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -8,10 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('plans', function (Blueprint $table) {
-            $table->string('type')->nullable()->after('billing_cycle');
-            $table->string('short_description', 150)->nullable()->after('type');
-            $table->text('detailed_description')->nullable()->after('short_description');
+        if (Schema::hasTable('plans')) Schema::table('plans', function (Blueprint $table) {
+            if (! Schema::hasColumn('plans', 'type')) { $table->string('type')->nullable()->after('billing_cycle'); }
+            if (! Schema::hasColumn('plans', 'short_description')) { $table->string('short_description', 150)->nullable()->after('type'); }
+            if (! Schema::hasColumn('plans', 'detailed_description')) { $table->text('detailed_description')->nullable()->after('short_description'); }
         });
     }
 

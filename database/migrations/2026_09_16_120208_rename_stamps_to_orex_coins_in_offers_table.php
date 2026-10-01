@@ -8,8 +8,8 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('offers', function (Blueprint $table) {
-            $table->renameColumn('stamps', 'aurex_coins');
+        if (Schema::hasTable('offers')) Schema::table('offers', function (Blueprint $table) {
+            if (Schema::hasColumn('offers', 'stamps') && ! Schema::hasColumn('offers', 'aurex_coins')) { $table->renameColumn('stamps', 'aurex_coins'); }
         });
     }
 

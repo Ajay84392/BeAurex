@@ -3,7 +3,7 @@
 @section('title', 'Customers')
 
 @section('content')
-<div class="flex-1 overflow-auto p-4 md:p-8 bg-[#f1f5f9]" x-data="{
+<div class="flex-1 min-w-0 overflow-auto p-4 sm:p-6 lg:p-10 bg-[#f1f5f9]" x-data="{
     search: '',
     statusFilter: '',
     confirmStatusModal: false,
@@ -13,38 +13,48 @@
     pendingStatus: '',
     activeStatus: 'Active',
     
-    initiateStatusChange(customerName, customerId, customerDbId, newStatus, currentStatus) {
+    saving: false,
+    errorMessage: '',
+    revert: null,
+
+    // Called when a row's dropdown changes; revertFn puts that dropdown back if the change is not saved.
+    initiateStatusChange(customerName, customerId, customerDbId, newStatus, currentStatus, revertFn) {
         if(newStatus === currentStatus) return;
         this.selectedCustomer = customerName;
         this.selectedCustomerId = customerId;
         this.selectedCustomerDbId = customerDbId;
         this.pendingStatus = newStatus;
         this.activeStatus = currentStatus;
+        this.revert = revertFn;
+        this.errorMessage = '';
         this.confirmStatusModal = true;
     },
-    
+
     confirmStatus() {
+        this.saving = true;
+        this.errorMessage = '';
         fetch(`/admin/customers/${this.selectedCustomerDbId}/status`, {
             method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
             body: JSON.stringify({ status: this.pendingStatus })
-        }).then(response => response.json())
-        .then(data => {
-            if(data.success) {
-                window.location.reload();
-            }
+        }).then(async response => {
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || !data.success) throw new Error(data.message || 'Could not save the change. Please try again.');
+            window.location.reload();
+        }).catch(err => {
+            this.saving = false;
+            this.errorMessage = err.message || 'Could not save the change. Please try again.';
         });
-        this.confirmStatusModal = false;
     },
-    
-        cancelStatus(selectElement) {
+
+    cancelStatus() {
+        if (this.saving) return;
+        if (this.revert) this.revert();
+        this.revert = null;
+        this.errorMessage = '';
         this.confirmStatusModal = false;
-        window.location.reload();
     }
-}">
+}" @keydown.escape.window="confirmStatusModal && cancelStatus()">
     <!-- Page Header & Breadcrumbs -->
     <div class="mb-8">
         <h1 class="text-3xl font-black text-[#0f172a] tracking-tight mb-2">Customers</h1>
@@ -60,38 +70,38 @@
     <!-- Stats Cards -->
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         <div @click="search = ''; statusFilter = ''" class="bg-white p-6 rounded-2xl shadow-sm border border-[#e2e8f0] flex flex-col items-center justify-center text-center hover:shadow-md transition cursor-pointer">
-            <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-3">
+            <div class="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center mb-3">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
             </div>
-            <div class="text-2xl font-black text-[#0f172a] leading-tight">5,248</div>
+            <div class="text-2xl font-black text-[#0f172a] leading-tight">{{ number_format($totalCustomers) }}</div>
             <div class="text-[11px] font-bold text-[#475569] mt-1 uppercase tracking-wide">Total Customers</div>
         </div>
         <div @click="statusFilter = 'Active'" class="bg-white p-6 rounded-2xl shadow-sm border border-[#e2e8f0] flex flex-col items-center justify-center text-center hover:shadow-md transition cursor-pointer">
             <div class="w-12 h-12 rounded-full bg-emerald-50 text-[#22C55E] flex items-center justify-center mb-3">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </div>
-            <div class="text-2xl font-black text-[#0f172a] leading-tight">4,890</div>
+            <div class="text-2xl font-black text-[#0f172a] leading-tight">{{ number_format($activeCustomers) }}</div>
             <div class="text-[11px] font-bold text-[#475569] mt-1 uppercase tracking-wide">Active Customers</div>
         </div>
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#e2e8f0] flex flex-col items-center justify-center text-center hover:shadow-md transition cursor-pointer">
             <div class="w-12 h-12 rounded-full bg-amber-50 text-[#F59E0B] flex items-center justify-center mb-3">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
             </div>
-            <div class="text-2xl font-black text-[#0f172a] leading-tight">124</div>
+            <div class="text-2xl font-black text-[#0f172a] leading-tight">{{ number_format($newToday) }}</div>
             <div class="text-[11px] font-bold text-[#475569] mt-1 uppercase tracking-wide">New Today</div>
         </div>
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#e2e8f0] flex flex-col items-center justify-center text-center hover:shadow-md transition">
-            <div class="w-12 h-12 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center mb-3">
+            <div class="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center mb-3">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
             </div>
-            <div class="text-2xl font-black text-[#0f172a] leading-tight">24,592</div>
+            <div class="text-2xl font-black text-[#0f172a] leading-tight">{{ number_format($totalStamps) }}</div>
             <div class="text-[11px] font-bold text-[#475569] mt-1 uppercase tracking-wide">Total Aurex Coins</div>
         </div>
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#e2e8f0] flex flex-col items-center justify-center text-center hover:shadow-md transition">
             <div class="w-12 h-12 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center mb-3">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path></svg>
             </div>
-            <div class="text-2xl font-black text-[#0f172a] leading-tight">1,830</div>
+            <div class="text-2xl font-black text-[#0f172a] leading-tight">{{ number_format($totalRewards) }}</div>
             <div class="text-[11px] font-bold text-[#475569] mt-1 uppercase tracking-wide">Total Rewards</div>
         </div>
     </div>
@@ -167,7 +177,7 @@
                         <td class="px-6 py-5 text-[#475569] text-xs">{{ $customer->created_at->format('M d, Y') }}</td>
                                                 <td class="px-6 py-5" x-data="{ rowStatus: '{{ $customer->status }}' }">
                             <div class="relative">
-                                <select x-model="rowStatus" @change="initiateStatusChange('{{ addslashes($customer->name) }}', 'CU-{{ strtoupper(substr(md5($customer->id), 0, 8)) }}', '{{ $customer->id }}', rowStatus, '{{ $customer->status }}')" :class="{'text-[#22C55E]': rowStatus === 'Active', 'text-red-600': rowStatus === 'Inactive', 'text-black': rowStatus === 'Blocked'}" class="appearance-none bg-transparent border border-[#e2e8f0] rounded-xl px-3 py-1.5 pr-8 text-xs font-bold focus:outline-none focus:border-[#b00000] focus:ring-1 focus:ring-[#b00000] cursor-pointer transition-colors">
+                                <select x-model="rowStatus" @change="initiateStatusChange('{{ addslashes($customer->name) }}', 'CU-{{ strtoupper(substr(md5($customer->id), 0, 8)) }}', '{{ $customer->id }}', rowStatus, '{{ $customer->status }}', () => rowStatus = '{{ $customer->status }}')" aria-label="Customer status" :class="{'text-[#22C55E]': rowStatus === 'Active', 'text-red-600': rowStatus === 'Inactive', 'text-black': rowStatus === 'Blocked'}" class="appearance-none bg-transparent border border-[#e2e8f0] rounded-xl px-3 py-1.5 pr-8 text-xs font-bold focus:outline-none focus:border-[#b00000] focus:ring-1 focus:ring-[#b00000] cursor-pointer transition-colors">
                                     <option value="Active" class="text-[#22C55E]">Active</option>
                                     <option value="Inactive" class="text-red-600 font-bold">Inactive</option>
                                     <option value="Blocked" class="text-black font-bold">Blocked</option>
@@ -219,15 +229,15 @@
         </div>
 
         <!-- Horizontal scroll hint -->
-        <div class="bg-blue-50 border-t border-blue-100 p-3 flex items-center justify-center space-x-2 text-blue-700 text-xs font-semibold w-full">
+        <div class="bg-slate-50 border-t border-slate-200 p-3 flex items-center justify-center space-x-2 text-slate-600 text-xs font-semibold w-full">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             <span>Scroll horizontally to view more details about the customers.</span>
         </div>
         
         <!-- Confirmation Modal Overlay -->
         <div x-show="confirmStatusModal" style="display: none;" class="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
-            <div class="bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] max-w-sm w-full p-6 text-center border border-slate-100 relative" @click.away="confirmStatusModal = false">
-                <button @click="confirmStatusModal = false" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 transition">
+            <div class="bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] max-w-sm w-full p-6 text-center border border-slate-100 relative" @click.outside="cancelStatus()">
+                <button type="button" @click="cancelStatus()" aria-label="Close" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 transition">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
                 <div class="w-12 h-12 rounded-full bg-orange-50 text-orange-500 mx-auto flex items-center justify-center mb-4">
@@ -237,9 +247,10 @@
                 <p class="text-sm text-[#475569] mb-6 leading-relaxed">
                     Are you sure you want to change the status of customer &quot;<span x-text="selectedCustomer" class="font-bold text-slate-700"></span>&quot; (<span x-text="selectedCustomerId"></span>) to <br><span x-text="pendingStatus" class="font-bold text-[#b00000] text-base"></span>?
                 </p>
+                <p x-show="errorMessage" x-text="errorMessage" class="mb-4 text-xs font-semibold text-[#EF4444]" role="alert"></p>
                 <div class="flex space-x-3">
-                    <button @click="cancelStatus($el.closest('.relative').querySelector('select'))" class="flex-1 py-2.5 border border-[#e2e8f0] text-slate-700 font-bold rounded-xl hover:bg-[#f1f5f9] transition">Cancel</button>
-                    <button @click="confirmStatus" class="flex-1 py-2.5 bg-[#b00000] text-white font-bold rounded-xl hover:bg-[#8a0000] transition">Confirm</button>
+                    <button type="button" @click="cancelStatus()" :disabled="saving" class="flex-1 py-2.5 border border-[#e2e8f0] text-slate-700 font-bold rounded-xl hover:bg-[#f1f5f9] transition disabled:opacity-50">Cancel</button>
+                    <button type="button" @click="confirmStatus()" :disabled="saving" class="flex-1 py-2.5 bg-[#b00000] text-white font-bold rounded-xl hover:bg-[#8a0000] transition disabled:opacity-75" x-text="saving ? 'Saving…' : 'Confirm'">Confirm</button>
                 </div>
                 <p class="text-[10px] text-slate-400 mt-4 leading-tight">This action will affect the customer's ability to log in and claim rewards.</p>
             </div>

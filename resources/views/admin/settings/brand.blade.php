@@ -3,7 +3,7 @@
 @section('title', 'Brand Management')
 
 @section('content')
-<div class="flex-1 overflow-auto p-6 md:p-10">
+<div class="flex-1 min-w-0 overflow-auto p-4 sm:p-6 lg:p-10">
     
     <div class="mb-8">
         <h1 class="text-2xl font-bold text-[#0f172a] mb-1">Brand Management</h1>
@@ -52,7 +52,7 @@
                     <div class="flex flex-col md:flex-row md:items-center gap-2 md:gap-6">
                         <label for="brand_name_input" class="w-full md:w-1/3 text-sm font-bold text-slate-700">Brand Name <span class="text-[#EF4444]">*</span></label>
                         <div class="flex-1">
-                            <input type="text" id="brand_name_input" name="brand_name" required class="w-full px-4 py-2.5 rounded-xl border border-[#e2e8f0] focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 text-sm font-semibold text-[#0f172a]" value="{{ $settings['brand_name'] ?? 'LoyalQR' }}" oninput="updatePreviews()">
+                            <input type="text" id="brand_name_input" name="brand_name" required class="w-full px-4 py-2.5 rounded-xl border border-[#e2e8f0] focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 text-sm font-semibold text-[#0f172a]" value="{{ $settings['brand_name'] ?? 'BeAurex' }}" oninput="updatePreviews()">
                         </div>
                     </div>
 
@@ -64,7 +64,7 @@
                                 <div class="flex items-center space-x-3">
                                     <div class="w-10 h-10 bg-white rounded border border-[#e2e8f0] flex items-center justify-center overflow-hidden" id="logo_thumb_container">
                                         @if(isset($settings['logo']))
-                                            <img src="{{ $settings['logo'] }}" alt="Logo" class="w-full h-full object-contain p-1" id="logo_preview_img">
+                                            <img src="{{ \App\Support\Media::url($settings['logo']) }}" alt="Logo" class="w-full h-full object-contain p-1" id="logo_preview_img">
                                         @else
                                             <svg class="w-6 h-6 text-[#b00000]" id="default_logo_svg" fill="currentColor" viewBox="0 0 24 24"><path d="M4 4h4v4H4V4zm6 0h4v4h-4V4zm6 0h4v4h-4V4zM4 10h4v4H4v-4zm12 0h4v4h-4v-4zM4 16h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4zm-6-6h4v4h-4v-4z"/></svg>
                                         @endif
@@ -75,7 +75,7 @@
                                     </div>
                                 </div>
                                 <input type="file" id="logo_input" name="logo" accept="image/png,image/jpeg,image/svg+xml" class="hidden" onchange="handleLogoChange(this)">
-                                <button type="button" onclick="document.getElementById('logo_input').click()" class="px-4 py-1.5 border border-red-200 text-[#b00000] font-bold text-xs rounded hover:bg-red-50 transition">Change</button>
+                                <button type="button" onclick="document.getElementById('logo_input').click()" class="px-4 py-1.5 border border-red-200 text-[#b00000] font-bold text-xs whitespace-nowrap shrink-0 rounded hover:bg-red-50 transition">Change</button>
                             </div>
                         </div>
                     </div>
@@ -88,7 +88,7 @@
                                 <div class="flex items-center space-x-3">
                                     <div class="w-10 h-10 rounded border border-[#e2e8f0] flex items-center justify-center overflow-hidden" style="background-color: {{ $settings['primary_color'] ?? '#b00000' }}" id="favicon_bg_preview">
                                         @if(isset($settings['favicon']))
-                                            <img src="{{ $settings['favicon'] }}" alt="Favicon" class="w-full h-full object-contain p-1" id="favicon_preview_img">
+                                            <img src="{{ \App\Support\Media::url($settings['favicon']) }}" alt="Favicon" class="w-full h-full object-contain p-1" id="favicon_preview_img">
                                         @else
                                             <span class="text-white font-black text-sm" id="favicon_text_preview">{{ strtoupper(substr($settings['brand_name'] ?? 'LQ', 0, 2)) }}</span>
                                         @endif
@@ -99,7 +99,7 @@
                                     </div>
                                 </div>
                                 <input type="file" id="favicon_input" name="favicon" accept="image/x-icon,image/png" class="hidden" onchange="handleFaviconChange(this)">
-                                <button type="button" onclick="document.getElementById('favicon_input').click()" class="px-4 py-1.5 border border-red-200 text-[#b00000] font-bold text-xs rounded hover:bg-red-50 transition">Change</button>
+                                <button type="button" onclick="document.getElementById('favicon_input').click()" class="px-4 py-1.5 border border-red-200 text-[#b00000] font-bold text-xs whitespace-nowrap shrink-0 rounded hover:bg-red-50 transition">Change</button>
                             </div>
                         </div>
                     </div>
@@ -159,19 +159,19 @@
                         <div class="flex items-center space-x-2">
                             <div class="w-6 h-6 flex items-center justify-center" id="preview_logo_container">
                                 @if(isset($settings['logo']))
-                                    <img src="{{ $settings['logo'] }}" alt="Logo" class="w-full h-full object-contain preview-logo-img">
+                                    <img src="{{ \App\Support\Media::url($settings['logo']) }}" alt="Logo" class="w-full h-full object-contain preview-logo-img">
                                 @else
                                     <svg class="w-full h-full preview-primary-text" fill="currentColor" viewBox="0 0 24 24" style="color: {{ $settings['primary_color'] ?? '#b00000' }}"><path d="M4 4h4v4H4V4zm6 0h4v4h-4V4zm6 0h4v4h-4V4zM4 10h4v4H4v-4zm12 0h4v4h-4v-4zM4 16h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4zm-6-6h4v4h-4v-4z"/></svg>
                                 @endif
                             </div>
-                            <span class="font-bold text-xs text-[#0f172a] preview-brand-name">{{ $settings['brand_name'] ?? 'LoyalQR' }}</span>
+                            <span class="font-bold text-xs text-[#0f172a] preview-brand-name">{{ $settings['brand_name'] ?? 'BeAurex' }}</span>
                         </div>
                         <div class="px-3 py-1.5 rounded text-[9px] font-bold text-white preview-primary-bg" style="background-color: {{ $settings['primary_color'] ?? '#b00000' }}">Primary Button</div>
                     </div>
                     
                     <!-- Fake Hero -->
                     <div class="text-center py-6 mb-4">
-                        <h4 class="font-black text-xl text-[#0f172a] mb-1 preview-brand-name">{{ $settings['brand_name'] ?? 'LoyalQR' }}</h4>
+                        <h4 class="font-black text-xl text-[#0f172a] mb-1 preview-brand-name">{{ $settings['brand_name'] ?? 'BeAurex' }}</h4>
                         <p class="text-[10px] text-[#475569] mb-5">Rewards Made Simple</p>
                         <button type="button" class="px-6 py-2 rounded-xl text-xs font-bold text-white shadow-sm preview-primary-bg inline-block" style="background-color: {{ $settings['primary_color'] ?? '#b00000' }}">Get Started</button>
                     </div>
@@ -284,7 +284,7 @@
 
         // Update brand name texts in preview
         document.querySelectorAll('.preview-brand-name').forEach(function(el) {
-            el.innerText = brandName || 'LoyalQR';
+            el.innerText = brandName || 'BeAurex';
         });
 
         // Update primary color backgrounds in preview

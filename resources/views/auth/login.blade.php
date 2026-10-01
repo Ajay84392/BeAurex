@@ -26,10 +26,7 @@
     <!-- Password login -->
     <form id="panel-password" action="{{ $portal['action'] }}" method="POST" class="space-y-4">
         @csrf
-        <div>
-            <label class="auth-label">Email Address</label>
-            <input type="email" name="email" value="{{ old('email') }}" placeholder="Enter your email" required class="auth-input">
-        </div>
+        <x-auth.input name="email" id="loginEmail" type="email" label="Email Address" placeholder="Enter your email" autocomplete="email" required maxlength="255" />
 
         <x-auth.password id="loginPassword" />
 
@@ -47,11 +44,9 @@
     <!-- OTP login -->
     <form id="panel-otp" action="{{ route('otp.login', ['role' => $role]) }}" method="POST" class="space-y-4 hidden">
         @csrf
-        <div>
-            <label class="auth-label">Email Address</label>
-            <input type="email" name="email" value="{{ old('email') }}" placeholder="Enter your email" required class="auth-input">
+        <x-auth.input name="email" id="otpEmail" type="email" label="Email Address" placeholder="Enter your email" autocomplete="email" required maxlength="255">
             <p class="text-[11px] font-medium text-slate-500 mt-1.5">We'll email you a 4-digit code to sign in. No password needed.</p>
-        </div>
+        </x-auth.input>
 
         <label class="flex items-center space-x-2 cursor-pointer">
             <input type="checkbox" name="remember" value="1" class="w-3.5 h-3.5 rounded border-[#e2e8f0] focus:ring-0" style="accent-color:#b00000">

@@ -4,7 +4,7 @@
 
 @section('content')
     <!-- Page Content -->
-    <div class="flex-1 overflow-auto p-6 md:p-10">
+    <div class="flex-1 min-w-0 overflow-auto p-4 sm:p-6 lg:p-10">
 
         <!-- Page Header & Breadcrumbs -->
         <div class="mb-6">
@@ -146,7 +146,7 @@
                                 <td class="px-5 py-4 text-center">
                                     <div class="flex items-center justify-center space-x-2">
                                         <a href="{{ route('plans.edit', $plan->id) }}"
-                                            class="text-slate-400 hover:text-blue-600 transition">
+                                            class="text-slate-400 hover:text-red-600 transition">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor"
                                                 viewBox="0 0 24 24" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round"

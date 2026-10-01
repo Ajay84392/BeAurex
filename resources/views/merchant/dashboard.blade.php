@@ -18,14 +18,15 @@
                         </svg>
                     </div>
                     <div>
-                        <h2 class="text-xl font-black tracking-tight">Ka-feen Café</h2>
-                        <div class="flex items-center space-x-2 mt-1">
+                        <h2 class="text-xl font-black tracking-tight">{{ $business->name ?? auth()->user()->name }}</h2>
+                        @php
+                            $planActive = $business->complimentary || ($planValidTill && $planValidTill->isFuture()) || $business->status === 'Active';
+                        @endphp
+                        <div class="flex items-center flex-wrap gap-2 mt-1">
                             <span
-                                class="bg-white text-green-600 text-[9px] font-black uppercase px-2 py-0.5 rounded-full shadow-sm tracking-wide">Active
-                                Plan</span>
+                                class="bg-white {{ $planActive ? 'text-green-600' : 'text-amber-600' }} text-[9px] font-black uppercase px-2 py-0.5 rounded-full shadow-sm tracking-wide">{{ $business->status ?: 'Trial' }}</span>
                             <span
-                                class="bg-[#710000] text-white border border-red-500 text-[9px] font-black uppercase px-2 py-0.5 rounded-full tracking-wide">Pro
-                                Plan</span>
+                                class="bg-[#700000] text-white border border-red-500 text-[9px] font-black uppercase px-2 py-0.5 rounded-full tracking-wide">{{ $business->complimentary ? 'Complimentary' : ($business->plan ?: 'Trial Plan') }}</span>
                         </div>
                     </div>
                 </div>
@@ -51,12 +52,8 @@
 
                 <div class="flex justify-between items-center mb-5 px-2">
                     <h2 class="text-lg font-black text-slate-900 tracking-tight">Overview</h2>
-                    <div class="flex items-center text-[11px] font-bold text-slate-500 cursor-pointer">
-                        This Month
-                        <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
-                        </svg>
+                    <div class="flex items-center text-[11px] font-bold text-slate-500">
+                        All time
                     </div>
                 </div>
 
@@ -67,7 +64,7 @@
                         class="bg-white rounded-2xl p-4 shadow-sm border border-[#e2e8f0] flex flex-col items-center text-center justify-center py-6 transition">
                         <div class="flex justify-center items-center w-full space-x-3 mb-2">
                             <div
-                                class="w-8 h-8 rounded-lg bg-red-50 text-[#dc2626] flex items-center justify-center shrink-0">
+                                class="w-8 h-8 rounded-lg bg-red-50 text-[#b00000] flex items-center justify-center shrink-0">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                                     stroke-width="2.5">
                                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -79,13 +76,7 @@
                         </div>
                         <div class="text-2xl font-black text-[#0f172a] leading-none mb-1.5">{{ number_format($totalScans) }}
                         </div>
-                        <div class="text-[10px] font-bold text-[#16a34a] flex items-center justify-center gap-0.5">
-                            +18.5%
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"></path>
-                            </svg>
-                        </div>
+                        <div class="text-[10px] font-bold text-slate-500 text-center">{{ $scansThisMonth > 0 ? '+'.number_format($scansThisMonth).' this month' : 'None this month' }}</div>
                     </div>
 
                     <!-- Total Customers -->
@@ -93,7 +84,7 @@
                         class="bg-white rounded-2xl p-4 shadow-sm border border-[#e2e8f0] flex flex-col items-center text-center justify-center py-6 transition">
                         <div class="flex justify-center items-center w-full space-x-3 mb-2">
                             <div
-                                class="w-8 h-8 rounded-lg bg-purple-50 text-[#9333ea] flex items-center justify-center shrink-0">
+                                class="w-8 h-8 rounded-lg bg-red-50 text-[#b00000] flex items-center justify-center shrink-0">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                                     stroke-width="2.5">
                                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -104,13 +95,7 @@
                         </div>
                         <div class="text-2xl font-black text-[#0f172a] leading-none mb-1.5">
                             {{ number_format($totalCustomers) }}</div>
-                        <div class="text-[10px] font-bold text-[#16a34a] flex items-center justify-center gap-0.5">
-                            +12.3%
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"></path>
-                            </svg>
-                        </div>
+                        <div class="text-[10px] font-bold text-slate-500 text-center">{{ $newCustomersThisMonth > 0 ? '+'.number_format($newCustomersThisMonth).' new this month' : 'No new this month' }}</div>
                     </div>
 
                     <!-- Rewards Redeemed -->
@@ -130,13 +115,7 @@
                         </div>
                         <div class="text-2xl font-black text-[#0f172a] leading-none mb-1.5">
                             {{ number_format($rewardsRedeemed) }}</div>
-                        <div class="text-[10px] font-bold text-[#16a34a] flex items-center justify-center gap-0.5">
-                            +15.7%
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"></path>
-                            </svg>
-                        </div>
+                        <div class="text-[10px] font-bold text-slate-500 text-center">{{ $pendingRewards > 0 ? number_format($pendingRewards).' waiting for approval' : ($redeemedThisMonth > 0 ? '+'.$redeemedThisMonth.' this month' : 'None this month') }}</div>
                     </div>
 
                     <!-- Repeat Rate -->
@@ -155,14 +134,7 @@
                             <span class="text-[11px] font-semibold text-[#64748b]">Repeat Rate</span>
                         </div>
                         <div class="text-2xl font-black text-[#0f172a] leading-none mb-1.5">{{ round($repeatRate) }}%</div>
-                        <div class="text-[10px] font-bold text-[#16a34a] flex items-center justify-center gap-0.5">
-                            +8.2%
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                stroke-width="3">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"></path>
-                            </svg>
-                        </div>
+                        <div class="text-[10px] font-bold text-slate-500 text-center">{{ number_format($repeatCustomers) }} returning {{ \Illuminate\Support\Str::plural('customer', $repeatCustomers) }}</div>
                     </div>
                 </div>
 
@@ -176,13 +148,13 @@
 
                         <div class="flex items-center space-x-5">
                             <!-- QR Box -->
-                            <div
-                                class="w-[110px] h-[110px] bg-slate-50 rounded-xl flex items-center justify-center relative overflow-hidden border border-slate-200 shrink-0">
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ urlencode($qrUrl) }}"
-                                    alt="QR Code" class="w-full h-full object-contain mix-blend-multiply opacity-80" />
-                                <!-- Inner Red Icon (Gift) -->
+                            <div id="merchantQr"
+                                class="w-[132px] h-[132px] bg-white rounded-xl flex items-center justify-center relative overflow-hidden border border-slate-200 shrink-0">
+                                <img src="{{ $qrImage }}" alt="QR code for {{ $business->name }}" width="132" height="132"
+                                    class="w-full h-full object-contain" style="image-rendering: pixelated" />
+                                <!-- Inner Red Icon (Gift): small enough for the QR's error correction to cover -->
                                 <div
-                                    class="absolute inset-0 m-auto w-8 h-8 bg-[#b00000] rounded-md flex items-center justify-center shadow-md border-2 border-white">
+                                    class="absolute inset-0 m-auto w-7 h-7 bg-[#b00000] rounded-md flex items-center justify-center shadow-md border-2 border-white">
                                     <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -203,7 +175,7 @@
                                     </svg>
                                     <span>Download QR</span>
                                 </a>
-                                <button type="button" onclick="printQR()"
+                                {{-- <button type="button" onclick="printQR()"
                                     class="w-full bg-white hover:bg-slate-50 border border-[#fca5a5] text-[#b00000] font-bold py-2.5 rounded-xl transition flex justify-center items-center space-x-2 text-xs shadow-sm">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                                         stroke-width="2.5">
@@ -212,7 +184,7 @@
                                         </path>
                                     </svg>
                                     <span>Print QR</span>
-                                </button>
+                                </button> --}}
                             </div>
                         </div>
                     </div>
@@ -220,42 +192,49 @@
                     <script>
                         function printQR() {
                             const qrUrl =
-                                "https://api.qrserver.com/v1/create-qr-code/?size=500x500&data={{ urlencode($qrUrl) }}";
+                                @json(\App\Http\Controllers\MerchantDashboardController::qrImageUrl(800));
                             var printWindow = window.open('', '_blank');
                             printWindow.document.write(`
-                                                                        <html>
-                                                                            <head>
-                                            <link rel="icon" type="image/jpeg" href="{{ asset('favicon.jpg') }}">
-                                                                                <title>Print QR Code</title>
-                                                                                <style>
-                                                                                    body { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: sans-serif; }
-                                                                                    img { width: 400px; height: 400px; }
-                                                                                    h2 { margin-top: 20px; font-size: 28px; font-weight: bold; text-align: center; }
-                                                                                    p { margin-top: 10px; font-size: 18px; color: #555; text-align: center; }
-                                                                                </style>
-                                                                            </head>
-                                                                        </html>
+                                                                                            <html>
+                                                                                                <head>
+                                                                <link rel="icon" type="image/jpeg" href="{{ asset('favicon.jpg') }}">
+                                                                                                    <title>Print QR Code</title>
+                                                                                                    <style>
+                                                                                                        body { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: sans-serif; }
+                                                                                                        img { width: 400px; height: 400px; }
+                                                                                                        h2 { margin-top: 20px; font-size: 28px; font-weight: bold; text-align: center; }
+                                                                                                        p { margin-top: 10px; font-size: 18px; color: #555; text-align: center; }
+                                                                                                    </style>
+                                                                                                </head>
+                                                                                            </html>
                     </script>
 
                     <!-- Pro Plan Banner -->
                     <div
-                        class="bg-[#fff8f6] rounded-2xl p-4 shadow-sm border border-[#ffedd5] flex items-center justify-between mb-8">
+                        class="bg-red-50 rounded-2xl p-4 shadow-sm border border-red-100 flex items-center justify-between mb-8">
                         <div class="flex items-center space-x-3">
                             <div class="text-2xl drop-shadow-sm">👑</div>
                             <div>
-                                <div class="text-[13px] font-black text-slate-900 leading-tight">You're on Pro Plan</div>
-                                <div class="text-[9px] font-semibold text-slate-500 mt-0.5">Plan valid until 20 Aug 2026
+                                <div class="text-[13px] font-black text-slate-900 leading-tight">
+                                    You're on {{ $business->complimentary ? 'a Complimentary Plan' : ($business->plan ?: 'the Trial Plan') }}
+                                </div>
+                                <div class="text-[9px] font-semibold text-slate-500 mt-0.5">
+                                    @if($business->complimentary)
+                                        Free access granted by BeAurex
+                                    @elseif($planValidTill)
+                                        {{ $planValidTill->isPast() ? 'Plan expired on' : 'Plan valid until' }} {{ $planValidTill->format('d M Y') }}
+                                    @else
+                                        No expiry date set yet
+                                    @endif
                                 </div>
                             </div>
                         </div>
-                        <div
-                            class="bg-white border border-[#fca5a5] text-[#b00000] text-[10px] font-bold px-2.5 py-1.5 rounded-lg flex items-center space-x-1 shadow-sm hover:bg-red-50 transition cursor-pointer">
-                            <span>₹999 / year</span>
-                            <svg class="w-3 h-3 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                stroke-width="3">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </div>
+                        @if($plan && ! $business->complimentary)
+                            <div
+                                class="bg-white border border-[#fca5a5] text-[#b00000] text-[10px] font-bold px-2.5 py-1.5 rounded-lg shadow-sm whitespace-nowrap">
+                                ₹{{ number_format((float) $plan->price) }}{{ $plan->billing_cycle ? ' / '.strtolower($plan->billing_cycle) : '' }}
+                            </div>
+                        @endif
                     </div>
 
                 </div>

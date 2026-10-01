@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('reward_requests', function (Blueprint $table) {
+        if (! Schema::hasTable('reward_requests')) Schema::create('reward_requests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('business_id')->nullable();
             $table->string('customer_name')->nullable();

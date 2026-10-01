@@ -4,8 +4,8 @@
 
 @section('content')
 <div class="min-h-[100dvh] md:min-h-0 bg-slate-50 md:bg-transparent pb-24 md:pb-0"
-    x-data="{ open: true, seconds: 4 }"
-    x-init="const t = setInterval(() => { if (--seconds <= 0) { clearInterval(t); window.location.href = @js($redirectTo); } }, 1000)">
+    x-data="{ open: true, seconds: 4, startTimer() { const t = setInterval(() => { this.seconds--; if (this.seconds <= 0) { clearInterval(t); window.location.href = '{{ $redirectTo }}'; } }, 1000); } }"
+    x-init="startTimer()">
 
     <!-- Popup -->
     <div x-show="open" class="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4"
@@ -22,7 +22,13 @@
                 </div>
             </div>
 
-            @if($awarded)
+            @if($blocked ?? false)
+                <p class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-1">No Coin Added</p>
+                <h2 class="text-xl font-black text-[#0f172a] mb-2">Account restricted</h2>
+                <p class="text-sm font-medium text-[#475569] mb-5">
+                    Your account can't collect coins right now. Please contact support.
+                </p>
+            @elseif($awarded)
                 <p class="text-xs font-bold uppercase tracking-widest text-[#b00000] mb-1">Coin Collected!</p>
                 <h2 class="text-2xl font-black text-[#0f172a] mb-2">+1 Aurex Coin</h2>
                 <p class="text-sm font-medium text-[#475569] mb-5">

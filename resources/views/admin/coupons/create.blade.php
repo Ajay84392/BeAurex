@@ -3,7 +3,7 @@
 @section('title', 'Create Coupon')
 
 @section('content')
-<div class="flex-1 overflow-auto p-6 md:p-10">
+<div class="flex-1 min-w-0 overflow-auto p-4 sm:p-6 lg:p-10">
     <div class="mb-6">
         <h1 class="text-2xl font-bold text-[#0f172a] mb-1">Create Coupon</h1>
         <div class="text-xs text-[#475569] font-medium flex items-center space-x-1">

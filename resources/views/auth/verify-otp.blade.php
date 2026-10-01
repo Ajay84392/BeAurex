@@ -20,8 +20,12 @@
 
         <div class="flex justify-center gap-3">
             @for($i = 0; $i < 4; $i++)
-                <input type="text" inputmode="numeric" maxlength="1" autocomplete="{{ $i === 0 ? 'one-time-code' : 'off' }}" class="otp-input w-12 h-14 text-center text-xl font-black text-[#0f172a] bg-white border border-[#e2e8f0] rounded-xl transition">
+                <input type="text" inputmode="numeric" maxlength="1" aria-label="Digit {{ $i + 1 }}" autocomplete="{{ $i === 0 ? 'one-time-code' : 'off' }}" class="otp-input w-12 h-14 text-center text-xl font-black text-[#0f172a] bg-white border {{ $errors->has('otp') ? 'border-red-400' : 'border-[#e2e8f0]' }} rounded-xl transition">
             @endfor
+        </div>
+        <div class="flex justify-center -mt-2">
+            <x-auth.error name="otp" />
+            <p id="otpClientError" class="hidden mt-1.5 text-[11px] font-semibold text-[#EF4444]">Please enter the 4-digit code.</p>
         </div>
 
         <button type="submit" class="btn-primary w-full text-white font-bold py-3.5 rounded-xl text-sm transition">Verify &amp; Continue</button>
@@ -64,9 +68,18 @@
             });
         });
 
-        document.getElementById('otpForm').addEventListener('submit', () => {
-            document.getElementById('otpValue').value = inputs.map(x => x.value).join('');
-        });
+        // Capture phase, so this runs before the layout's loading-state handler.
+        document.getElementById('otpForm').addEventListener('submit', e => {
+            const code = inputs.map(x => x.value).join('');
+            document.getElementById('otpValue').value = code;
+            if (!/^\d{4}$/.test(code)) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                document.getElementById('otpClientError').classList.remove('hidden');
+                inputs.forEach(x => x.classList.toggle('border-red-400', !x.value));
+                (inputs.find(x => !x.value) || inputs[0]).focus();
+            }
+        }, true);
 
         const btn = document.getElementById('resendBtn');
         const timer = document.getElementById('resendTimer');

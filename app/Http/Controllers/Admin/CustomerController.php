@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\CustomerVisit;
+use App\Models\RewardRequest;
 use Illuminate\Http\Request;
 
 class CustomerController extends Controller
@@ -16,19 +18,21 @@ class CustomerController extends Controller
         $activeCustomers = Customer::where('status', 'Active')->count();
         $newToday = Customer::whereDate('created_at', today())->count();
 
-        // Mock totals for demonstration, since aurex coins/rewards aren't in table yet
-        $totalStamps = $totalCustomers * 15;
-        $totalRewards = $totalCustomers * 2;
+        // Coins collected by all customers, and rewards merchants have approved.
+        $totalStamps = CustomerVisit::where('stamp_awarded', true)->count();
+        $totalRewards = RewardRequest::where('status', 'approved')->count();
 
         return view('admin.customers.index', compact('customers', 'totalCustomers', 'activeCustomers', 'newToday', 'totalStamps', 'totalRewards'));
     }
 
     public function updateStatus(Request $request, string $id)
     {
-        $customer = Customer::findOrFail($id);
-        $customer->update(['status' => $request->status]);
+        $validated = $request->validate(['status' => ['required', 'in:Active,Inactive,Blocked']]);
 
-        return response()->json(['success' => true]);
+        $customer = Customer::findOrFail($id);
+        $customer->update(['status' => $validated['status']]);
+
+        return response()->json(['success' => true, 'status' => $customer->status]);
     }
 
     public function show(string $id)

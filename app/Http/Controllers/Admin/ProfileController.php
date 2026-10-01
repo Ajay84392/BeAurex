@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\UpdatesProfile;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Rules\MobileNumber;
-use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
 {
-    //
+    use UpdatesProfile;
+
     public function index()
     {
         return view('admin.profile');
@@ -18,57 +19,28 @@ class ProfileController extends Controller
     public function update(Request $request)
     {
         $user = auth()->user();
-
-        $rules = [
-            'name' => 'nullable|string|max:255',
-            'phone' => ['nullable', new MobileNumber],
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'language' => 'nullable|string',
-            'timezone' => 'nullable|string',
-            'date_format' => 'nullable|string',
-        ];
-
-        // Conditional password validation
-        if ($request->filled('password') && $request->filled('current_password')) {
-            $rules['current_password'] = 'required';
-            // Assuming the complexity rules can be mapped to Laravel's Password rule or just regex
-            $rules['password'] = ['required', 'confirmed', Password::defaults()];
-        } else {
-            $request->request->remove('password');
-            $request->request->remove('current_password');
+        $this->normalizeProfileInput($request);
+        if (is_string($request->input('username'))) {
+            $request->merge(['username' => strtolower(trim($request->input('username')))]);
         }
 
-        $request->validate($rules);
+        $rules = $this->accountRules($request, $user, phoneRequired: true);
+        $rules['username'] = ['sometimes', 'required', 'string', 'min:3', 'max:50', 'regex:/^[a-z0-9._-]+$/',
+            Rule::unique('users', 'username')->ignore($user->id)];
 
-        if ($request->filled('current_password')) {
-            if (! \Hash::check($request->current_password, $user->password)) {
-                return back()->withErrors(['current_password' => 'Current password does not match.'])->withInput();
-            }
+        $validated = $request->validate($rules, $this->accountMessages() + [
+            'username.required' => 'Username is required.',
+            'username.min' => 'Username must be at least 3 characters.',
+            'username.regex' => 'Username can only contain lowercase letters, numbers, dots, dashes and underscores.',
+            'username.unique' => 'This username is already taken.',
+        ]);
+
+        if (array_key_exists('username', $validated)) {
+            $user->username = $validated['username'];
         }
 
-        $data = array_filter($request->only('name', 'phone', 'language', 'timezone', 'date_format'), function($value) {
-            return !is_null($value) && $value !== '';
-        });
-        if (isset($data['phone'])) {
-            $data['phone'] = MobileNumber::format($data['phone']);
-        }
+        $this->saveAccount($request, $user, $validated);
 
-        // Generate a username if empty
-        if (empty($user->username) && !empty($request->name)) {
-            $data['username'] = strtolower(preg_replace('/\s+/', '', $request->name)).$user->id;
-        }
-
-        if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('profiles', 'public');
-            $data['photo'] = '/storage/'.$path;
-        }
-
-        if ($request->filled('password')) {
-            $data['password'] = \Hash::make($request->password);
-        }
-
-        $user->update($data);
-
-        return back()->with('success', 'Profile updated successfully');
+        return back()->with('success', 'Profile updated successfully.');
     }
 }

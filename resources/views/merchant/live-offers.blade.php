@@ -26,7 +26,7 @@
                     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col overflow-hidden hover:shadow-md transition">
                         @if($offer->image)
                             <div class="h-48 w-full bg-slate-100 relative">
-                                <img src="{{ str_starts_with($offer->image, 'http') ? $offer->image : asset('storage/' . $offer->image) }}" class="w-full h-full object-cover" alt="Offer Image">
+                                <img src="{{ \App\Support\Media::url($offer->image) }}" class="w-full h-full object-cover" alt="Offer Image">
                                 <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-xl shadow-sm border border-white/20 flex items-center space-x-1.5">
                                     <span class="text-sm font-black text-[#b00000]">{{ $offer->orex_coins }}</span>
                                     <span class="text-[10px] font-bold text-slate-600 uppercase tracking-wide">Aurex Coins</span>

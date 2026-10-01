@@ -2,19 +2,39 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\UpdatesProfile;
 use App\Models\Business;
 use App\Models\Customer;
+use App\Models\CustomerVisit;
+use App\Models\Offer;
 use App\Models\RewardRequest;
-use App\Rules\MobileNumber;
+use App\Support\Loyalty;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rules\Password;
+use RuntimeException;
 
 class CustomerDashboardController extends Controller
 {
+    use UpdatesProfile;
+
     public function index()
     {
-        return view('customer.home');
+        $user = auth()->user();
+        $customer = Customer::forUser($user);
+        $cards = Loyalty::cards($customer);
+        $totalEarned = (int) $cards->sum('earned');
+
+        return view('customer.home', [
+            'customer' => $customer,
+            'cards' => $cards,
+            'totalEarned' => $totalEarned,
+            'totalBalance' => (int) $cards->sum('balance'),
+            'rewardsRedeemed' => Loyalty::requestsFor($customer)->where('status', 'approved')->count(),
+            'readyCount' => (int) $cards->sum(fn ($c) => $c['readyOffers']->count()),
+            'tier' => Loyalty::tier($totalEarned),
+            'memberSince' => $user->created_at,
+            'customerCode' => 'CU-'.strtoupper(substr(md5($customer->id), 0, 8)),
+        ]);
     }
 
     public function scan()
@@ -22,9 +42,10 @@ class CustomerDashboardController extends Controller
         return view('customer.scan');
     }
 
+    /** Old demo page: the real "after scan" step is the coin popup, then the rewards page. */
     public function afterScan()
     {
-        return view('customer.after-scan');
+        return redirect()->route('customer.claim-reward');
     }
 
     /**
@@ -33,59 +54,57 @@ class CustomerDashboardController extends Controller
      */
     public function collect(Business $business)
     {
-        $user = auth()->user();
-        $customer = Customer::firstOrCreate(
-            ['email' => $user->email],
-            ['name' => $user->name, 'phone' => $user->phone ?: '00000'.rand(10000, 99999)]
-        );
+        $customer = Customer::forUser(auth()->user());
+        $blocked = $customer->status && $customer->status !== 'Active';
 
         // One coin per business per customer every few minutes, so refreshing the page can't farm coins.
-        $recent = DB::table('customer_visits')
-            ->where('customer_id', $customer->id)
+        $recent = CustomerVisit::where('customer_id', $customer->id)
             ->where('business_id', $business->id)
             ->where('scanned_at', '>=', now()->subMinutes(self::COLLECT_COOLDOWN_MINUTES))
             ->exists();
 
-        if (! $recent) {
-            DB::table('customer_visits')->insert([
+        $awarded = ! $recent && ! $blocked;
+        if ($awarded) {
+            CustomerVisit::create([
                 'customer_id' => $customer->id,
                 'business_id' => $business->id,
                 'scanned_at' => now(),
                 'stamp_awarded' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
             ]);
         }
 
-        $coins = DB::table('customer_visits')
-            ->where('customer_id', $customer->id)
-            ->where('business_id', $business->id)
-            ->where('stamp_awarded', true)
-            ->count();
-
         return view('customer.coin-collected', [
             'business' => $business,
-            'awarded' => ! $recent,
-            'coins' => $coins,
-            'redirectTo' => route('customer.claim-reward'),
+            'awarded' => $awarded,
+            'blocked' => $blocked,
+            'coins' => Loyalty::balance($customer, $business->id),
+            // Relative, so the popup continues on whichever host the customer is on (live or localhost).
+            'redirectTo' => route('customer.claim-reward', absolute: false),
         ]);
     }
 
     public const COLLECT_COOLDOWN_MINUTES = 5;
 
+    /** "View All" from the home page: same screen as the rewards tab. */
     public function rewards()
     {
-        $tab = request('tab', 'claim');
+        return redirect()->route('customer.claim-reward', request()->only('tab'));
+    }
 
-        // Find by customer name since dummy data uses names
-        $requests = RewardRequest::where('customer_name', auth()->user()->name)
-            ->latest()
-            ->get();
+    /** Spend coins on one of a business's offers. */
+    public function claimOffer(Offer $offer)
+    {
+        try {
+            $request = Loyalty::claim(Customer::forUser(auth()->user()), $offer);
+        } catch (RuntimeException $e) {
+            return redirect()->route('customer.claim-reward')->with('error', $e->getMessage());
+        }
 
-        $claimable = $requests->where('status', 'pending');
-        $history = $requests->whereIn('status', ['approved', 'declined']);
+        $message = $request->status === 'approved'
+            ? 'Reward claimed! Show code '.$request->code.' at the counter.'
+            : 'Reward claimed! Show code '.$request->code.' at the counter so the shop can approve it.';
 
-        return view('customer.rewards', compact('tab', 'claimable', 'history'));
+        return redirect()->route('customer.claim-reward', ['tab' => 'claim'])->with('success', $message);
     }
 
     public function profile()
@@ -96,50 +115,32 @@ class CustomerDashboardController extends Controller
     public function updateProfile(Request $request)
     {
         $user = auth()->user();
-        $rules = [
-            'name' => 'nullable|string|max:255',
-            'phone' => ['nullable', new MobileNumber],
-            'photo' => 'nullable|image|max:2048',
-            'language' => 'nullable|string',
-            'timezone' => 'nullable|string',
-            'date_format' => 'nullable|string',
-        ];
+        $oldEmail = $user->email;
+        $this->normalizeProfileInput($request);
 
-        // Only validate password if they explicitly provide both fields
-        if ($request->filled('password') && $request->filled('current_password')) {
-            $rules['current_password'] = 'required';
-            $rules['password'] = ['required', 'confirmed', Password::defaults()];
-        } else {
-            // Ignore password update if incomplete (e.g. browser autofill)
-            $request->request->remove('password');
-            $request->request->remove('current_password');
-        }
+        $validated = $request->validate(
+            $this->accountRules($request, $user, phoneRequired: false),
+            $this->accountMessages()
+        );
 
-        $request->validate($rules);
+        DB::transaction(function () use ($request, $user, $validated, $oldEmail) {
+            $this->saveAccount($request, $user, $validated);
 
-        if ($request->filled('current_password')) {
-            if (! \Hash::check($request->current_password, $user->password)) {
-                return back()->withErrors(['current_password' => 'Current password does not match.'])->withInput();
+            // Coin history is keyed by email, so carry it over to the new address.
+            if ($user->email !== $oldEmail && ! Customer::where('email', $user->email)->exists()) {
+                Customer::where('email', $oldEmail)->update(['email' => $user->email]);
             }
-        }
-
-        $data = array_filter($request->only('name', 'phone', 'language', 'timezone', 'date_format'), function($value) {
-            return !is_null($value) && $value !== '';
+            if ($record = Customer::where('email', $user->email)->first()) {
+                $record->name = $user->name;
+                if ($user->phone) {
+                    // Phone is unique across customers; keep the old one if this number is taken.
+                    $record->phone = Customer::availablePhone($user->phone, $record->id) ?? $record->phone;
+                }
+                $record->save();
+            }
         });
-        if (isset($data['phone'])) {
-            $data['phone'] = MobileNumber::format($data['phone']);
-        }
-        
-        if ($request->hasFile('photo')) {
-            $data['photo'] = '/storage/'.$request->file('photo')->store('profiles', 'public');
-        }
-        
-        if ($request->filled('password')) {
-            $data['password'] = \Hash::make($request->password);
-        }
-        $user->update($data);
 
-        return back()->with('success', 'Profile updated successfully');
+        return back()->with('success', 'Profile updated successfully.');
     }
 
     public function showStatus($type)
@@ -152,19 +153,23 @@ class CustomerDashboardController extends Controller
         return view('customer.status', compact('type'));
     }
 
+    /**
+     * Rewards screen (where the coin popup lands):
+     *  - available: offers the customer can claim now, and progress towards the rest,
+     *  - claim: claimed rewards waiting to be shown at the counter,
+     *  - history: approved and declined claims.
+     */
     public function claimReward()
     {
-        $tab = request('tab', 'claim');
+        $tab = in_array(request('tab'), ['available', 'claim', 'history'], true) ? request('tab') : 'available';
+        $customer = Customer::forUser(auth()->user());
 
-        // Find by customer name since dummy data uses names
-        $requests = RewardRequest::where('customer_name', auth()->user()->name)
-            ->latest()
-            ->get();
+        $requests = Loyalty::requestsFor($customer)->with('business')->latest()->get();
+        $claimable = $requests->where('status', 'pending')->values();
+        $history = $requests->whereIn('status', ['approved', 'declined'])->values();
+        $cards = Loyalty::cards($customer);
 
-        $claimable = $requests->where('status', 'pending');
-        $history = $requests->whereIn('status', ['approved', 'declined']);
-
-        return view('customer.claim-reward', compact('tab', 'claimable', 'history'));
+        return view('customer.claim-reward', compact('tab', 'claimable', 'history', 'cards'));
     }
 
     public function logout()

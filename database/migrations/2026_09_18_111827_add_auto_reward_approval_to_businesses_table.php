@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('businesses', function (Blueprint $table) {
-            $table->boolean('auto_reward_approval')->default(false)->after('auto_approval');
+        if (Schema::hasTable('businesses')) Schema::table('businesses', function (Blueprint $table) {
+            if (! Schema::hasColumn('businesses', 'auto_reward_approval')) { $table->boolean('auto_reward_approval')->default(false)->after('auto_approval'); }
         });
     }
 

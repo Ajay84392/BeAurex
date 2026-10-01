@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropUnique('users_email_unique');
-            $table->unique(['email', 'role']);
+        if (Schema::hasTable('users')) Schema::table('users', function (Blueprint $table) {
+            if (Schema::hasIndex('users', 'users_email_unique')) { $table->dropUnique('users_email_unique'); }
+            if (! Schema::hasIndex('users', ['email', 'role'], 'unique')) { $table->unique(['email', 'role']); }
         });
     }
 

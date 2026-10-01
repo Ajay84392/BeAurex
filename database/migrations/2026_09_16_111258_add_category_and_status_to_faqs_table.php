@@ -8,9 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('faqs', function (Blueprint $table) {
-            $table->string('category')->default('General')->after('answer');
-            $table->string('status')->default('Published')->after('category');
+        if (Schema::hasTable('faqs')) Schema::table('faqs', function (Blueprint $table) {
+            if (! Schema::hasColumn('faqs', 'category')) { $table->string('category')->default('General')->after('answer'); }
+            if (! Schema::hasColumn('faqs', 'status')) { $table->string('status')->default('Published')->after('category'); }
         });
     }
 

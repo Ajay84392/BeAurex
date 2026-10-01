@@ -103,21 +103,27 @@
 
         flashButtons.forEach(btn => btn.addEventListener('click', () => setTorch(!torchOn)));
 
-        const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+        // Where a scanned code should take the customer. A BeAurex merchant QR is a link to its
+        // coin-collect page (/customer/collect/{id}); open that path on *this* site, so a QR made on
+        // localhost works on beaurex.in and vice versa. Anything else is not a BeAurex code.
+        function scanTarget(text) {
+            try {
+                const url = new URL(text.trim(), window.location.origin);
+                if (/^\/customer\/collect\/\d+\/?$/.test(url.pathname)) return url.pathname;
+            } catch (e) {}
+            return '/customer/status/qr-invalid';
+        }
+        window.beaurexScanTarget = scanTarget;
+
+        let handled = false;
+        const qrCodeSuccessCallback = (decodedText) => {
+            // The scanner reports the same code many times a second; act on the first one only.
+            if (handled) return;
+            handled = true;
+            const target = scanTarget(decodedText);
             const stop = torchOn ? setTorch(false).then(() => html5QrCode.stop()) : html5QrCode.stop();
-            stop.then(() => {
-                // A BeAurex merchant QR is a link to its coin-collect page; open it directly.
-                let target = null;
-                try {
-                    const url = new URL(decodedText);
-                    if (url.origin === window.location.origin && url.pathname.startsWith('/customer/collect/')) {
-                        target = url.pathname;
-                    }
-                } catch (e) {}
-                window.location.href = target || ('/customer/after-scan?code=' + encodeURIComponent(decodedText));
-            }).catch(err => {
-                console.log(err);
-            });
+            // Leave even if stopping the camera fails, so the coin popup always opens.
+            stop.catch(err => console.log(err)).finally(() => { window.location.href = target; });
         };
 
         function showError(message) {

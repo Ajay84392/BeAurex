@@ -11,14 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('businesses', function (Blueprint $table) {
-            $table->string('payment_status')->default('Trial');
-            $table->timestamp('payment_date')->nullable();
-            $table->decimal('payment_amount', 10, 2)->nullable();
-            $table->string('plan')->default('Trial Plan');
-            $table->timestamp('plan_valid_till')->nullable();
-            $table->string('status')->default('Trial');
-            $table->boolean('complimentary')->default(false);
+        if (Schema::hasTable('businesses')) Schema::table('businesses', function (Blueprint $table) {
+            if (! Schema::hasColumn('businesses', 'payment_status')) { $table->string('payment_status')->default('Trial'); }
+            if (! Schema::hasColumn('businesses', 'payment_date')) { $table->timestamp('payment_date')->nullable(); }
+            if (! Schema::hasColumn('businesses', 'payment_amount')) { $table->decimal('payment_amount', 10, 2)->nullable(); }
+            if (! Schema::hasColumn('businesses', 'plan')) { $table->string('plan')->default('Trial Plan'); }
+            if (! Schema::hasColumn('businesses', 'plan_valid_till')) { $table->timestamp('plan_valid_till')->nullable(); }
+            if (! Schema::hasColumn('businesses', 'status')) { $table->string('status')->default('Trial'); }
+            if (! Schema::hasColumn('businesses', 'complimentary')) { $table->boolean('complimentary')->default(false); }
         });
     }
 

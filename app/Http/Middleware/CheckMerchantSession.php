@@ -16,9 +16,19 @@ class CheckMerchantSession
     public function handle(Request $request, Closure $next): Response
     {
         if (! session('merchant_logged_in') || auth()->user()?->role !== 'merchant') {
-            return redirect('/merchant/login');
+            return redirect()->guest('/merchant/login');
         }
 
-        return $next($request);
+        // A merchant must finish email verification before using the dashboard.
+        if (! auth()->user()->email_verified_at) {
+            return redirect()->route('merchant.verify');
+        }
+
+        // ...and the business set-up steps, so the dashboard and QR always belong to a real business.
+        if (CheckMerchantOnboarding::pendingStep(auth()->user()->onboarding_step)) {
+            return CheckMerchantOnboarding::resume(auth()->user());
+        }
+
+        return NoStore::apply($next($request));
     }
 }

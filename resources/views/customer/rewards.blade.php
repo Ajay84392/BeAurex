@@ -42,7 +42,7 @@
         <h2 class="text-[17px] font-black text-slate-900 mb-2">No Rewards Yet</h2>
         <p class="text-[13px] font-medium text-slate-500 mb-8 max-w-[250px] mx-auto leading-relaxed">Collect more Aurex coins from your favourite businesses to earn exciting rewards!</p>
         
-        <a href="/customer" class="w-full bg-[#900000] hover:bg-[#700000] text-white font-bold py-3.5 rounded-xl transition text-center text-[13px]">
+        <a href="/customer" class="w-full bg-[#8a0000] hover:bg-[#700000] text-white font-bold py-3.5 rounded-xl transition text-center text-[13px]">
             Explore Businesses
         </a>
     </div>

@@ -2,21 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    @include('partials.theme')
     <title>Account Created - BeAurex</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/jpeg" href="/favicon.jpg">
-    <style>
-        body { font-family: "Inter", sans-serif; }
-    </style>
 </head>
 <body class="bg-[#f1f5f9] text-[#0f172a] antialiased min-h-[100dvh] flex flex-col items-center justify-center p-4 relative overflow-hidden">
     <!-- Confetti Background Layer -->
     <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div class="absolute top-1/4 left-1/4 w-3 h-3 bg-red-400 rounded-sm rotate-45 opacity-60"></div>
         <div class="absolute top-1/3 right-1/3 w-4 h-4 bg-emerald-400 rounded-full opacity-60"></div>
-        <div class="absolute bottom-1/3 left-1/3 w-3 h-3 bg-blue-400 rounded-full opacity-60"></div>
+        <div class="absolute bottom-1/3 left-1/3 w-3 h-3 bg-red-400 rounded-full opacity-60"></div>
         <div class="absolute top-1/2 right-1/4 w-2 h-2 bg-yellow-400 rounded-sm rotate-12 opacity-60"></div>
     </div>
 

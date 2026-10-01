@@ -3,35 +3,10 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>BeAurex Admin - @yield('title', 'Panel')</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="//unpkg.com/alpinejs" defer></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
-        rel="stylesheet">
-    <link rel="icon" type="image/jpeg" href="/favicon.jpg">
+    @include('partials.theme')
+    <title>@yield('title', 'Admin') - BeAurex Admin</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
-        body {
-            font-family: "Inter", sans-serif;
-        }
-
-        .table-container::-webkit-scrollbar {
-            height: 8px;
-        }
-
-        .table-container::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 4px;
-        }
-
-        .table-container::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-
-        .table-container::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
 
         @yield('styles')
     </style>
@@ -40,12 +15,12 @@
 <body class="bg-[#f1f5f9] font-sans antialiased text-[#0f172a] h-[100dvh] flex overflow-hidden" x-data="{ logoutAdminModal: false, sidebarOpen: false }">
 
     <!-- Mobile Sidebar Overlay -->
-    <div x-show="sidebarOpen" class="fixed inset-0 z-40 bg-black/50 md:hidden" style="display: none;"
+    <div x-show="sidebarOpen" class="fixed inset-0 z-40 bg-black/50 lg:hidden" style="display: none;"
         @click="sidebarOpen = false"></div>
 
     <!-- Sidebar -->
     <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-        class="fixed md:static inset-y-0 left-0 w-[240px] bg-[#b00000] text-white flex flex-col h-full overflow-y-auto shadow-2xl flex-shrink-0 z-50 transform md:translate-x-0 transition-transform duration-200 ease-in-out">
+        class="fixed lg:static inset-y-0 left-0 w-[260px] lg:w-[240px] max-w-[85vw] bg-[#b00000] text-white flex flex-col h-full overflow-y-auto shadow-2xl flex-shrink-0 z-50 transform lg:translate-x-0 transition-transform duration-200 ease-in-out">
         <!-- Logo -->
         <div class="h-[72px] flex items-center px-6">
             <div class="flex items-center space-x-3">
@@ -139,25 +114,29 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 flex flex-col h-full bg-[#f1f5f9] overflow-hidden">
+    <main class="flex-1 min-w-0 flex flex-col h-full bg-[#f1f5f9] overflow-hidden">
 
         <!-- Topbar -->
         <header
-            class="h-[72px] bg-white border-b border-[#e2e8f0] flex items-center justify-between px-6 flex-shrink-0 z-30">
+            class="h-[72px] bg-white border-b border-[#e2e8f0] flex items-center justify-between px-4 sm:px-6 flex-shrink-0 z-30 gap-3">
             <!-- Mobile Menu / Hamburger -->
             <button @click="sidebarOpen = true"
-                class="text-[#475569] hover:text-slate-700 focus:outline-none md:hidden">
+                class="text-[#475569] hover:text-slate-700 focus:outline-none lg:hidden p-2 -ml-2" aria-label="Open menu">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>
                 </svg>
             </button>
+            <a href="/admin/dashboard" class="flex items-center space-x-2 lg:hidden min-w-0">
+                <img src="/images/logo.jpg" alt="BeAurex" class="w-8 h-8 rounded-lg object-cover">
+                <span class="text-lg font-black tracking-tight text-[#b00000] truncate">BeAurex</span>
+            </a>
 
             <!-- Right side: Notifications & Profile -->
             <div class="flex items-center space-x-6 ml-auto">
                 <!-- Profile Dropdown -->
                 <div class="relative" x-data="{ open: false }" @click.away="open = false">
                     <div @click="open = !open" class="flex items-center space-x-3 cursor-pointer">
-                        <img src="https://ui-avatars.com/api/?name=Super+Admin&background=0D8ABC&color=fff"
+                        <img src="https://ui-avatars.com/api/?name=Super+Admin&background=b00000&color=fff"
                             alt="Super Admin" class="w-9 h-9 rounded-full object-cover">
                         <div class="hidden md:block text-right">
                             <div class="text-sm font-bold text-[#0f172a] leading-tight">Super Admin</div>
@@ -217,9 +196,12 @@
             <div class="flex space-x-3">
                 <button @click="logoutAdminModal = false"
                     class="flex-1 py-2.5 bg-white border border-[#8a0000] text-[#8a0000] font-bold rounded-xl hover:bg-red-50 transition">Cancel</button>
-                <a href="/admin/logout"
-                    class="flex-1 py-2.5 bg-[#b00000] text-white font-bold rounded-xl hover:bg-[#8a0000] transition block text-center">Log
-                    Out</a>
+                <form method="POST" action="{{ route('admin.logout') }}" class="flex-1">
+                    @csrf
+                    <button type="submit"
+                        class="w-full py-2.5 bg-[#b00000] text-white font-bold rounded-xl hover:bg-[#8a0000] transition">Log
+                        Out</button>
+                </form>
             </div>
         </div>
     </div>
