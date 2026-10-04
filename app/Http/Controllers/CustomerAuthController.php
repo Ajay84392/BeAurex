@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\SendsOtp;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\User;
+use Illuminate\Validation\ValidationException;
 
 class CustomerAuthController extends Controller
 {
@@ -12,7 +13,7 @@ class CustomerAuthController extends Controller
 
     public function showLogin()
     {
-        return view('auth.login', ['role' => 'customer']);
+        return view('auth.portal-login', ['role' => 'customer']);
     }
 
     public function processLogin(LoginRequest $request)
@@ -21,8 +22,8 @@ class CustomerAuthController extends Controller
         // Send them back to finish it (registering again re-sends the code and sets the password).
         $pending = User::where('email', $request->validated('email'))->where('role', 'customer')->whereNull('email_verified_at')->first();
         if ($pending) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                "email" => "Your account is not verified yet. Please use the \"Email OTP\" tab to log in, or click \"Forgot Password\" to set a password.",
+            throw ValidationException::withMessages([
+                'email' => 'Your email is not verified yet. Click "Forgot Password?" to verify it with a code and set your password.',
             ]);
         }
 

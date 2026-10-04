@@ -41,7 +41,7 @@ class LoginRequest extends AuthRequest
             ]);
         }
 
-        $user = User::where('email', $this->input('email'))->where('role', $role)->first();
+        $user = User::forLogin($this->input('email'), $role);
 
         if (! $user || ! Hash::check($this->input('password'), $user->password)) {
             RateLimiter::hit($key, 60);

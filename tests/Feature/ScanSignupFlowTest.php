@@ -56,11 +56,12 @@ class ScanSignupFlowTest extends TestCase
         $this->assertDatabaseCount('customer_visits', 0);
     }
 
-    public function test_google_is_hidden_and_refused_until_configured(): void
+    public function test_google_is_shown_but_refused_until_configured(): void
     {
         config(['services.google.client_id' => null, 'services.google.client_secret' => null]);
-        $this->get('/customer/login')->assertDontSee('Continue with Google');
-        $this->get('/auth/google/customer')->assertRedirect('/customer/login');
+        $this->get('/customer/login')->assertSee('Continue with Google');
+        $this->get('/merchant/login')->assertDontSee('Continue with Google');
+        $this->get('/auth/google/customer')->assertRedirect('/customer/login')->assertSessionHasErrors('form');
         $this->get('/auth/google/customer/callback')->assertNotFound();
         $this->assertGuest();
     }
@@ -97,6 +98,19 @@ class ScanSignupFlowTest extends TestCase
         $this->get('/auth/google/customer/callback')->assertRedirect($this->collectUrl());
         $this->assertAuthenticatedAs($user);
         $this->assertSame(1, User::where('email', 'riya@gmail.com')->count());
+    }
+
+    public function test_google_never_logs_into_a_merchant_account(): void
+    {
+        User::create(['name' => 'Shop', 'email' => 'shop@gmail.com', 'password' => Hash::make('Pass@1234'), 'role' => 'merchant']);
+        $this->enableGoogle('shop@gmail.com');
+
+        $this->get('/auth/google/customer/callback')->assertRedirect(route('google.signup'));
+        $this->assertGuest();
+        $this->post('/customer/register/google', ['name' => 'Shop Owner', 'terms' => '1']);
+
+        $this->assertSame('customer', auth()->user()->role);
+        $this->assertSame(['customer', 'merchant'], User::where('email', 'shop@gmail.com')->orderBy('role')->pluck('role')->all());
     }
 
     public function test_google_account_without_verified_email_is_refused(): void

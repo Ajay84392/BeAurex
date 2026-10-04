@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\SendsOtp;
 use App\Http\Requests\Auth\GoogleSignupRequest;
 use App\Models\Customer;
 use App\Models\User;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -55,8 +56,10 @@ class GoogleAuthController extends Controller
                 ->withErrors(['form' => 'Google sign-in was cancelled or failed. Please try again.']);
         }
 
+        // Only trust an address Google itself says is verified (field name differs by API version).
         $email = strtolower(trim((string) $google->getEmail()));
-        if ($email === '' || ($google->user['email_verified'] ?? true) === false) {
+        $verified = filter_var($google->user['email_verified'] ?? $google->user['verified_email'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        if ($email === '' || ! $verified || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return redirect()->route('login')
                 ->withErrors(['form' => 'Your Google account has no verified email address. Please sign up with your email instead.']);
         }
@@ -109,7 +112,7 @@ class GoogleAuthController extends Controller
                     'password' => Hash::make(Str::random(40)),
                     'role' => 'customer',
                 ]);
-            } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            } catch (UniqueConstraintViolationException $e) {
                 return OtpAuthController::emailUsedElsewhere($e);
             }
         }

@@ -3,10 +3,9 @@
     $selectedTimezone = old('timezone', \App\Support\ProfileOptions::timezone($user->timezone));
     $selectedDateFormat = old('date_format', \App\Support\ProfileOptions::dateFormat($user->date_format));
 @endphp
-<section class="border-t border-slate-100 pt-8">
-    <h2 class="text-[15px] font-black text-slate-900 mb-5">Preferences</h2>
+<x-profile.section key="preferences" title="Preferences" :fields="['language', 'timezone', 'date_format']" class="border-t border-slate-100 pt-8">
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+    <div class="grid grid-cols-1 {{ $grid ?? 'md:grid-cols-3' }} gap-5">
         <div>
             <label for="language" class="{{ $label }}">Language</label>
             <select id="language" name="language" class="{{ $input }} cursor-pointer @error('language') {{ $invalid }} @enderror">
@@ -37,4 +36,4 @@
             <x-auth.error name="date_format" />
         </div>
     </div>
-</section>
+</x-profile.section>

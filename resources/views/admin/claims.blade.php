@@ -58,7 +58,14 @@
                 <!-- Coupon Code -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Coupon Code <span class="text-red-500">*</span></label>
-                    <input type="text" name="coupon_code" value="{{ $editDeal['coupon_code'] ?? '' }}" placeholder="E.G., NEWYEAR2024" class="w-full px-4 py-2.5 rounded-lg border border-[#e2e8f0] focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 text-sm font-medium text-slate-700">
+                    <!-- Capital letters only: typed letters become capitals, numbers/spaces/symbols are dropped. -->
+                    <input type="text" name="coupon_code" value="{{ old('coupon_code', $editDeal['coupon_code'] ?? '') }}" placeholder="E.G., NEWYEAR"
+                        required pattern="[A-Z]+" title="Capital letters (A-Z) only" autocapitalize="characters" autocomplete="off" spellcheck="false"
+                        oninput="this.value = this.value.toUpperCase().replace(/[^A-Z]/g, '')"
+                        class="w-full px-4 py-2.5 rounded-lg border {{ $errors->has('coupon_code') ? 'border-red-500' : 'border-[#e2e8f0]' }} focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 text-sm font-medium text-slate-700 uppercase">
+                    <p class="text-[11px] mt-1 {{ $errors->has('coupon_code') ? 'text-red-600 font-semibold' : 'text-slate-400' }}">
+                        {{ $errors->first('coupon_code') ?: 'Capital letters A-Z only. No numbers, spaces or symbols.' }}
+                    </p>
                 </div>
 
                 <!-- Bonus Amount -->
@@ -136,7 +143,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-sm">
-                        @foreach(array_reverse($deals) as $index => $deal)
+                        @foreach($deals as $deal)
                         <tr class="hover:bg-slate-50 transition">
                             <td class="px-4 py-3 font-semibold">{{ $deal['deal_name'] ?? '-' }}</td>
                             <td class="px-4 py-3 font-mono text-slate-600 bg-slate-50 rounded px-1">{{ $deal['coupon_code'] ?? '-' }}</td>
@@ -150,7 +157,7 @@
                             <td class="px-4 py-3 text-right">
                                 <div class="flex items-center justify-end space-x-3">
                                     <!-- Edit Button -->
-                                    <a href="/admin/claims/{{ $index }}/edit" class="text-slate-500 hover:text-[#b00000] bg-slate-100 hover:bg-red-50 p-1.5 rounded transition" title="Edit">
+                                    <a href="/admin/claims/{{ $deal->id }}/edit" class="text-slate-500 hover:text-[#b00000] bg-slate-100 hover:bg-red-50 p-1.5 rounded transition" title="Edit">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                     </a>
                                     
@@ -161,7 +168,7 @@
                                     </label>
 
                                     <!-- Delete Button -->
-                                    <form action="/admin/claims/{{ $index }}" method="POST" class="inline-block m-0 p-0" onsubmit="return confirm('Are you sure you want to delete this deal?');">
+                                    <form action="/admin/claims/{{ $deal->id }}" method="POST" class="inline-block m-0 p-0" onsubmit="return confirm('Are you sure you want to delete this deal?');">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded transition" title="Delete">

@@ -3,88 +3,77 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Referral;
+use App\Models\Deal;
 use Illuminate\Http\Request;
 
 class ClaimController extends Controller
 {
     public function index(Request $request)
     {
-        $deals = session()->get('deals', []);
+        $deals = Deal::latest()->latest('id')->get();
+
         return view('admin.claims', compact('deals'));
     }
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'plan_name' => 'nullable|string',
-            'plan_type' => 'nullable|string',
-            'state' => 'nullable|string',
-            'deal_name' => 'required|string',
-            'coupon_code' => 'required|string',
-            'bonus_amount' => 'nullable|numeric',
-            'discount_amount' => 'nullable|numeric',
-            'discount_percentage' => 'nullable|numeric',
-            'validity_date' => 'required|date',
-            'maximum_usage' => 'nullable|integer',
-        ]);
-
-        $request->session()->push('deals', $data);
+        Deal::create($this->validated($request));
 
         return redirect()->back()->with('success', 'Deal added successfully!');
     }
 
     public function show(string $id)
     {
-        return view('admin.claims');
+        return redirect('/admin/claims');
     }
 
     public function edit(string $id)
     {
-        $deals = session()->get('deals', []);
-        if (!isset($deals[$id])) {
+        $editDeal = Deal::find($id);
+        if (! $editDeal) {
             return redirect()->route('claims.index')->with('error', 'Deal not found');
         }
-        $editDeal = $deals[$id];
-        $editId = $id;
-        
+        $deals = Deal::latest()->latest('id')->get();
+        $editId = $editDeal->id;
+
         return view('admin.claims', compact('deals', 'editDeal', 'editId'));
     }
 
     public function update(Request $request, string $id)
     {
-        $deals = session()->get('deals', []);
-        if (!isset($deals[$id])) {
+        $deal = Deal::find($id);
+        if (! $deal) {
             return redirect()->route('claims.index')->with('error', 'Deal not found');
         }
 
-        $data = $request->validate([
-            'plan_name' => 'nullable|string',
-            'plan_type' => 'nullable|string',
-            'state' => 'nullable|string',
-            'deal_name' => 'required|string',
-            'coupon_code' => 'required|string',
-            'bonus_amount' => 'nullable|numeric',
-            'discount_amount' => 'nullable|numeric',
-            'discount_percentage' => 'nullable|numeric',
-            'validity_date' => 'required|date',
-            'maximum_usage' => 'nullable|integer',
-        ]);
-
-        $deals[$id] = $data;
-        session()->put('deals', $deals);
+        $deal->update($this->validated($request));
 
         return redirect('/admin/claims')->with('success', 'Deal updated successfully!');
     }
 
     public function destroy(string $id)
     {
-        $deals = session()->get('deals', []);
-        if (isset($deals[$id])) {
-            unset($deals[$id]);
-            session()->put('deals', $deals);
-        }
+        // Merchants using this deal fall back to "No Deal" (deal_id is nulled on delete).
+        Deal::whereKey($id)->delete();
 
         return redirect()->back()->with('success', 'Deal deleted successfully!');
+    }
+
+    private function validated(Request $request): array
+    {
+        return $request->validate([
+            'plan_name' => 'nullable|string|max:255',
+            'plan_type' => 'nullable|string|max:255',
+            'state' => 'nullable|string|max:255',
+            'deal_name' => 'required|string|max:255',
+            'coupon_code' => ['required', 'string', 'max:255', 'regex:/^[A-Z]+$/'],
+            'bonus_amount' => 'nullable|numeric|min:0|max:99999999',
+            'discount_amount' => 'nullable|numeric|min:0|max:99999999',
+            'discount_percentage' => 'nullable|numeric|min:0|max:100',
+            'validity_date' => 'required|date',
+            'maximum_usage' => 'nullable|integer|min:0',
+        ], [
+            'coupon_code.regex' => 'The coupon code can only contain capital letters (A-Z), with no numbers, spaces or symbols.',
+        ]);
     }
 }

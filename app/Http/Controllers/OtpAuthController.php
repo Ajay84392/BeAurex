@@ -26,18 +26,17 @@ class OtpAuthController extends Controller
      */
     public function register(RegisterRequest $request)
     {
+        // RegisterRequest has already refused an email with a verified customer account,
+        // so any account found here is an unfinished sign-up being retried.
         $email = $request->validated('email');
         $user = User::where('email', $email)->where('role', 'customer')->first();
-
-        if ($user && $user->email_verified_at) {
-            return self::alreadyRegistered('customer', $email);
-        }
 
         try {
             $user ??= User::create([
                 'name' => $request->validated('name'),
                 'email' => $email,
-                'password' => Hash::make(Str::random(32)),
+                // Unusable until the email code is verified; then the chosen password applies.
+                'password' => Hash::make(Str::random(40)),
                 'role' => 'customer',
             ]);
         } catch (UniqueConstraintViolationException $e) {
@@ -68,7 +67,7 @@ class OtpAuthController extends Controller
     public function sendLoginOtp(EmailRequest $request, string $role)
     {
         $email = $request->validated('email');
-        $user = User::where('email', $email)->where('role', $role)->first();
+        $user = User::forLogin($email, $role);
 
         if ($user) {
             $this->issueOtp($user);
@@ -169,18 +168,6 @@ class OtpAuthController extends Controller
             ->withErrors(['email' => 'This email is already used by another BeAurex account. Please use a different email address, or log in to that account.']);
     }
 
-    /**
-     * Send someone who already has a verified account of this role to its login page.
-     */
-    public static function alreadyRegistered(string $role, string $email)
-    {
-        $login = ['admin' => '/admin', 'merchant' => '/merchant/login', 'customer' => '/customer/login'][$role];
-
-        return redirect($login)
-            ->withErrors(['email' => 'An account with this email already exists. Please log in, or use Forgot Password.'])
-            ->withInput(['email' => $email]);
-    }
-
     private function pendingUser(): ?User
     {
         $email = session('otp_pending_email');
@@ -190,7 +177,7 @@ class OtpAuthController extends Controller
             return null;
         }
 
-        return User::where('email', $email)->where('role', $role)->first();
+        return User::forLogin($email, $role);
     }
 
     private function verifyUrl(?string $role): string

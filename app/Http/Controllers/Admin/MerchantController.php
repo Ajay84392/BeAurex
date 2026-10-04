@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\CustomerVisit;
+use App\Models\Deal;
 use App\Models\Plan;
 use App\Models\RewardRequest;
 use Carbon\Carbon;
@@ -50,6 +51,8 @@ class MerchantController extends Controller
         }
 
         $merchants = $query->latest()->paginate(10)->withQueryString();
+        // Deals saved on Manage Deals (/admin/claims) fill every row's "Set a Deal" dropdown.
+        $deals = Deal::latest()->latest('id')->get();
 
         $totalMerchants = Business::count();
         $activeMerchants = Business::where('status', 'Active')->count();
@@ -58,7 +61,7 @@ class MerchantController extends Controller
         $onboardingToday = Business::whereDate('created_at', today())->count();
         $plans = Plan::where('is_active', true)->get();
 
-        return view('admin.merchants.index', compact('merchants', 'totalMerchants', 'activeMerchants', 'trialMerchants', 'pendingPayment', 'onboardingToday', 'plans'));
+        return view('admin.merchants.index', compact('merchants', 'totalMerchants', 'activeMerchants', 'trialMerchants', 'pendingPayment', 'onboardingToday', 'plans', 'deals'));
     }
 
     public const STATUSES = ['Active', 'Trial', 'Pending', 'Inactive'];
@@ -81,6 +84,22 @@ class MerchantController extends Controller
         $merchant->update(['complimentary' => (bool) $validated['complimentary']]);
 
         return response()->json(['success' => true, 'complimentary' => (bool) $merchant->complimentary]);
+    }
+
+    /** "Set a Deal": pick one of the deals saved on Manage Deals, or none. */
+    public function updateDeal(Request $request, string $id)
+    {
+        $merchant = Business::findOrFail($id);
+
+        $validated = $request->validate([
+            'deal_id' => ['nullable', 'integer', 'exists:deals,id'],
+        ], [
+            'deal_id.exists' => 'That deal no longer exists. Please refresh and try again.',
+        ]);
+
+        $merchant->update(['deal_id' => $validated['deal_id'] ?? null]);
+
+        return response()->json(['success' => true, 'deal_id' => $merchant->deal_id]);
     }
 
     public function show(string $id)

@@ -8,7 +8,7 @@
     confirmModal: false,
     saving: false,
     errorMessage: '',
-    updateType: '', // 'status' or 'complimentary'
+    updateType: '', // 'status', 'complimentary' or 'deal'
     merchantName: '',
     merchantId: '',
     merchantDbId: '',
@@ -17,23 +17,26 @@
     revert: null,
 
     // Called when a row's dropdown changes; revertFn puts that dropdown back if the change is not saved.
-    initiateChange(type, name, mId, dbId, newValue, oldValue, revertFn) {
+    initiateChange(type, name, mId, dbId, newValue, oldValue, revertFn, label = null) {
         if (newValue == oldValue) return; // loose: '1' vs 1
         this.updateType = type;
         this.merchantName = name;
         this.merchantId = mId;
         this.merchantDbId = dbId;
         this.pendingValue = newValue;
-        this.pendingLabel = type === 'complimentary' ? (newValue == 1 ? 'Yes' : 'No') : newValue;
+        this.pendingLabel = label ?? (type === 'complimentary' ? (newValue == 1 ? 'Yes' : 'No') : newValue);
         this.revert = revertFn;
         this.errorMessage = '';
         this.confirmModal = true;
     },
 
     confirmChange() {
-        const isStatus = this.updateType === 'status';
-        const endpoint = '/admin/merchants/' + this.merchantDbId + (isStatus ? '/status' : '/complimentary');
-        const body = isStatus ? { status: this.pendingValue } : { complimentary: this.pendingValue == 1 };
+        const endpoint = '/admin/merchants/' + this.merchantDbId + '/' + this.updateType;
+        const body = {
+            status: { status: this.pendingValue },
+            complimentary: { complimentary: this.pendingValue == 1 },
+            deal: { deal_id: this.pendingValue === '' ? null : Number(this.pendingValue) },
+        }[this.updateType];
         this.saving = true;
         this.errorMessage = '';
         fetch(endpoint, {
@@ -241,9 +244,16 @@
                                 <td class="px-5 py-4">{{ $merchant->payment_amount ? '₹ ' . number_format($merchant->payment_amount, 2) : '-' }}</td>
                                 <td class="px-5 py-4 text-slate-600 text-xs">{{ $merchant->plan }}</td>
                                 <td class="px-5 py-4 text-slate-600 text-xs">{{ $merchant->plan_valid_till ? \Carbon\Carbon::parse($merchant->plan_valid_till)->format('M d, Y') : '-' }}</td>
-                                <td class="px-5 py-4 text-center">
-                                    <!-- Keep Set Deal as visual dummy or implement if needed -->
-                                    <button class="text-xs font-semibold bg-red-50 text-red-600 px-3 py-1 rounded-lg border border-red-100 hover:bg-red-100 transition">Set Deal</button>
+                                <!-- Set a Deal: one of the deals saved on Manage Deals (/admin/claims) -->
+                                <td class="px-5 py-4" x-data="{ rowDeal: '{{ $merchant->deal_id }}' }">
+                                    <select x-model="rowDeal" aria-label="Set a deal" @change="initiateChange('deal', '{{ addslashes($merchant->name) }}', 'MRC-{{ 1000 + $merchant->id }}', {{ $merchant->id }}, rowDeal, '{{ $merchant->deal_id }}', () => rowDeal = '{{ $merchant->deal_id }}', $event.target.selectedOptions[0].text)"
+                                        :class="rowDeal ? 'text-red-600 border-red-200 bg-red-50' : 'text-slate-600 border-slate-200 bg-white'"
+                                        class="text-xs border rounded px-2 py-1 max-w-[220px] focus:outline-none focus:ring-1 focus:ring-red-500 font-semibold transition-colors cursor-pointer">
+                                        <option value="">No Deal</option>
+                                        @foreach($deals as $deal)
+                                            <option value="{{ $deal->id }}">{{ $deal->deal_name }} ({{ $deal->coupon_code }})</option>
+                                        @endforeach
+                                    </select>
                                 </td>
                                                                 <td class="px-5 py-4" x-data="{ rowStatus: '{{ $merchant->status }}' }">
                                     <select x-model="rowStatus" aria-label="Merchant status" @change="initiateChange('status', '{{ addslashes($merchant->name) }}', 'MRC-{{ 1000 + $merchant->id }}', {{ $merchant->id }}, rowStatus, '{{ $merchant->status }}', () => rowStatus = '{{ $merchant->status }}')" :class="{'text-[#22C55E]': rowStatus === 'Active', 'text-slate-600': rowStatus === 'Trial', 'text-[#F59E0B]': rowStatus === 'Pending', 'text-[#EF4444]': rowStatus === 'Inactive'}" class="text-xs border border-slate-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-red-500 font-semibold transition-colors cursor-pointer">
@@ -289,9 +299,9 @@
                 <div class="w-12 h-12 rounded-full bg-orange-50 text-orange-500 mx-auto flex items-center justify-center mb-4">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                 </div>
-                <h3 id="merchantConfirmTitle" class="text-lg font-bold text-[#0f172a] mb-2" x-text="updateType === 'status' ? 'Update Merchant Status' : 'Update Complimentary Plan'"></h3>
+                <h3 id="merchantConfirmTitle" class="text-lg font-bold text-[#0f172a] mb-2" x-text="{ status: 'Update Merchant Status', complimentary: 'Update Complimentary Plan', deal: 'Set a Deal' }[updateType]"></h3>
                 <p class="text-sm text-[#475569] mb-6 leading-relaxed">
-                    Are you sure you want to change the <span x-text="updateType === 'status' ? 'status' : 'complimentary plan'"></span> of merchant &quot;<span x-text="merchantName" class="font-bold text-slate-700"></span>&quot; (<span x-text="merchantId"></span>) to <br><span x-text="pendingLabel" class="font-bold text-[#b00000] text-base"></span>?
+                    Are you sure you want to change the <span x-text="{ status: 'status', complimentary: 'complimentary plan', deal: 'deal' }[updateType]"></span> of merchant &quot;<span x-text="merchantName" class="font-bold text-slate-700"></span>&quot; (<span x-text="merchantId"></span>) to <br><span x-text="pendingLabel" class="font-bold text-[#b00000] text-base"></span>?
                 </p>
                 <p x-show="errorMessage" x-text="errorMessage" class="mb-4 text-xs font-semibold text-[#EF4444]" role="alert"></p>
                 <div class="flex space-x-3">

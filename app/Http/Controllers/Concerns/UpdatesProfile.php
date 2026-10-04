@@ -30,7 +30,7 @@ trait UpdatesProfile
             'phone' => $phoneRequired
                 ? ['sometimes', 'required', 'string', new MobileNumber]
                 : ['nullable', 'string', new MobileNumber],
-            'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
+            'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
             'language' => ['sometimes', 'required', Rule::in(array_keys(ProfileOptions::LANGUAGES))],
             'timezone' => ['sometimes', 'required', Rule::in(array_keys(ProfileOptions::TIMEZONES))],
             'date_format' => ['sometimes', 'required', Rule::in(ProfileOptions::DATE_FORMATS)],
@@ -54,8 +54,8 @@ trait UpdatesProfile
             'language.in' => 'Please choose a language from the list.',
             'timezone.in' => 'Please choose a timezone from the list.',
             'date_format.in' => 'Please choose a date format from the list.',
-            'photo.image' => 'The photo must be an image (JPG, PNG, GIF or WEBP).',
-            'photo.mimes' => 'The photo must be a JPG, PNG, GIF or WEBP file.',
+            'photo.image' => 'The photo must be an image (JPG, JPEG or PNG).',
+            'photo.mimes' => 'The photo must be a JPG, JPEG or PNG file.',
             'photo.max' => 'The photo may not be larger than 2 MB.',
             'current_password.required' => 'Enter your current password to change your password or email.',
             'current_password.current_password' => 'Current password is incorrect.',

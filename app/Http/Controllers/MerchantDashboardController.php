@@ -3,22 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\UpdatesProfile;
-use App\Mail\LoginOtpMail;
 use App\Models\Business;
+use App\Models\Coupon;
 use App\Models\CustomerVisit;
 use App\Models\Offer;
 use App\Models\Plan;
 use App\Models\RewardRequest;
-use App\Models\User;
 use App\Support\Media;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Storage;
 
 class MerchantDashboardController extends Controller
 {
@@ -31,24 +26,41 @@ class MerchantDashboardController extends Controller
 
         $visits = CustomerVisit::where('business_id', $business->id);
         $monthStart = now()->startOfMonth();
+        $lastMonthStart = now()->subMonth()->startOfMonth();
+        $lastMonthEnd = now()->subMonth()->endOfMonth();
 
         $totalScans = (clone $visits)->count();
         $scansThisMonth = (clone $visits)->where('scanned_at', '>=', $monthStart)->count();
+        $scansLastMonth = (clone $visits)->whereBetween('scanned_at', [$lastMonthStart, $lastMonthEnd])->count();
+        $scansGrowth = $scansLastMonth > 0 ? round((($scansThisMonth - $scansLastMonth) / $scansLastMonth) * 100, 1) : ($scansThisMonth > 0 ? 100 : 0);
+
         $totalCustomers = (clone $visits)->distinct()->count('customer_id');
         // Customers whose first visit here was this month.
         $newCustomersThisMonth = CustomerVisit::where('business_id', $business->id)
             ->selectRaw('customer_id, MIN(scanned_at) as first_visit')->groupBy('customer_id')
             ->havingRaw('MIN(scanned_at) >= ?', [$monthStart])->get()->count();
+        $newCustomersLastMonth = CustomerVisit::where('business_id', $business->id)
+            ->selectRaw('customer_id, MIN(scanned_at) as first_visit')->groupBy('customer_id')
+            ->havingRaw('MIN(scanned_at) BETWEEN ? AND ?', [$lastMonthStart, $lastMonthEnd])->get()->count();
+        $customersGrowth = $newCustomersLastMonth > 0 ? round((($newCustomersThisMonth - $newCustomersLastMonth) / $newCustomersLastMonth) * 100, 1) : ($newCustomersThisMonth > 0 ? 100 : 0);
 
         $approved = RewardRequest::where('business_id', $business->id)->where('status', 'approved');
         $rewardsRedeemed = (clone $approved)->count();
         $redeemedThisMonth = (clone $approved)->where('updated_at', '>=', $monthStart)->count();
+        $redeemedLastMonth = (clone $approved)->whereBetween('updated_at', [$lastMonthStart, $lastMonthEnd])->count();
+        $rewardsGrowth = $redeemedLastMonth > 0 ? round((($redeemedThisMonth - $redeemedLastMonth) / $redeemedLastMonth) * 100, 1) : ($redeemedThisMonth > 0 ? 100 : 0);
+
         $pendingRewards = RewardRequest::where('business_id', $business->id)->where('status', 'pending')->count();
 
         // Repeat rate: customers with more than one visit / all customers.
         $repeatCustomers = CustomerVisit::where('business_id', $business->id)
             ->select('customer_id')->groupBy('customer_id')->havingRaw('COUNT(*) > 1')->get()->count();
         $repeatRate = $totalCustomers > 0 ? round($repeatCustomers / $totalCustomers * 100) : 0;
+
+        $repeatCustomersLastMonth = CustomerVisit::where('business_id', $business->id)
+            ->where('scanned_at', '<', $monthStart)
+            ->select('customer_id')->groupBy('customer_id')->havingRaw('COUNT(*) > 1')->get()->count();
+        $repeatGrowth = $repeatCustomersLastMonth > 0 ? round((($repeatCustomers - $repeatCustomersLastMonth) / $repeatCustomersLastMonth) * 100, 1) : ($repeatCustomers > 0 ? 100 : 0);
 
         // Plan shown in the banner comes from the business record (set by admin / payments).
         $plan = Plan::where('name', $business->plan)->first();
@@ -62,19 +74,33 @@ class MerchantDashboardController extends Controller
             'business',
             'totalScans',
             'scansThisMonth',
+            'scansGrowth',
             'totalCustomers',
             'newCustomersThisMonth',
+            'customersGrowth',
             'rewardsRedeemed',
             'redeemedThisMonth',
+            'rewardsGrowth',
             'pendingRewards',
             'repeatRate',
             'repeatCustomers',
+            'repeatGrowth',
             'plan',
             'planValidTill',
             'qrCode',
             'qrUrl',
             'qrImage'
         ));
+    }
+
+    /** Full-screen QR for the counter: where the merchant lands when opening their own QR link. */
+    public function qr()
+    {
+        return view('merchant.qr', [
+            'business' => self::ownBusiness(),
+            'qrUrl' => self::qrTargetUrl(),
+            'qrImage' => self::qrImageUrl(600),
+        ]);
     }
 
     /**
@@ -120,7 +146,17 @@ class MerchantDashboardController extends Controller
         // Only ever show the logged-in merchant's own business.
         $business = Business::where('user_id', auth()->id())->first();
 
-        return view('merchant.profile', compact('business'));
+        // Refer & earn: the merchant's own code, a ready-to-share sign-up link and how many friends joined.
+        $user = auth()->user();
+        $referralCode = $user->referralCode();
+        $referralLink = route('merchant.register', ['ref' => $referralCode]);
+        $referralsJoined = $user->referralsMade()->where('status', 'Completed')->count();
+        $referralsPending = $user->referralsMade()->where('status', 'Pending')->count();
+
+        // Coupon codes the platform currently offers, for sharing.
+        $coupons = Coupon::where('is_active', true)->latest()->get()->filter->isValid()->values();
+
+        return view('merchant.profile', compact('business', 'referralCode', 'referralLink', 'referralsJoined', 'referralsPending', 'coupons'));
     }
 
     public function updateProfile(Request $request)
@@ -140,7 +176,7 @@ class MerchantDashboardController extends Controller
             'city' => ['nullable', 'string', 'max:100', 'regex:/^[\pL\s.\'-]+$/u'],
             'state' => ['nullable', 'string', 'max:100', 'regex:/^[\pL\s.\'-]+$/u'],
             'pincode' => ['nullable', 'digits:6'],
-            'logo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
+            'logo' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
         ];
 
         $validated = $request->validate($rules, $this->accountMessages() + [
@@ -149,8 +185,8 @@ class MerchantDashboardController extends Controller
             'city.regex' => 'City can only contain letters.',
             'state.regex' => 'State can only contain letters.',
             'pincode.digits' => 'Pincode must be exactly 6 digits.',
-            'logo.image' => 'The logo must be an image (JPG, PNG, GIF or WEBP).',
-            'logo.mimes' => 'The logo must be a JPG, PNG, GIF or WEBP file.',
+            'logo.image' => 'The logo must be an image (JPG, JPEG or PNG).',
+            'logo.mimes' => 'The logo must be a JPG, JPEG or PNG file.',
             'logo.max' => 'The logo may not be larger than 2 MB.',
         ]);
 

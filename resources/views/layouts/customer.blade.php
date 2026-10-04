@@ -96,7 +96,7 @@
         </header>
 
         <!-- View Content -->
-        <div class="w-full max-w-7xl mx-auto md:p-8 overflow-auto flex-1">
+        <div class="w-full max-w-[1600px] mx-auto md:p-8 overflow-auto flex-1">
             @yield('content')
         </div>
     </main>

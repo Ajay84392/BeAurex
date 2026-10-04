@@ -58,8 +58,9 @@
                     
                     @if(strtolower($plan->type) === 'professional')
                         <!-- Professional Plan -->
-                        <div class="bg-white border-2 border-red-600 p-8 rounded-3xl shadow-xl relative flex flex-col justify-between pt-12">
-                            <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[11px] font-black px-4 py-1 rounded-full uppercase tracking-wider shadow-sm">Most Popular</span>
+                        <div class="bg-white border-2 border-red-600 p-8 rounded-3xl shadow-xl relative flex flex-col justify-between pt-12" {!! $plan->cardAttributes() !!}>
+                            <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[11px] font-black px-4 py-1 rounded-full uppercase tracking-wider shadow-sm"
+                                {{ $plan->bg_color ? 'style=background-color:' . $plan->bg_color . ';' : '' }}>Most Popular</span>
                             <div>
                                 <h3 class="text-xl font-extrabold text-red-600 tracking-tight">{{ $plan->name }}</h3>
                                 <div class="mt-6 mb-6 pb-6 border-b border-slate-100">
@@ -100,7 +101,7 @@
                         </div>
                     @elseif(strtolower($plan->type) === 'legacy')
                         <!-- Legacy Plan -->
-                        <div class="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-sm text-white relative flex flex-col justify-between pt-12">
+                        <div class="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-sm text-white relative flex flex-col justify-between pt-12" {!! $plan->cardAttributes() !!}>
                             <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-slate-700 text-amber-400 text-[11px] font-black px-4 py-1 rounded-full uppercase tracking-wider border border-slate-600">Best Value</span>
                             <div>
                                 <h3 class="text-xl font-extrabold text-white tracking-tight">{{ $plan->name }}</h3>
@@ -143,7 +144,7 @@
                         </div>
                     @else
                         <!-- Standard Plan -->
-                        <div class="bg-white border border-slate-200/90 p-8 rounded-3xl shadow-sm hover:shadow-md transition flex flex-col justify-between relative pt-10">
+                        <div class="bg-white border border-slate-200/90 p-8 rounded-3xl shadow-sm hover:shadow-md transition flex flex-col justify-between relative pt-10" {!! $plan->cardAttributes() !!}>
                             <div>
                                 <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">{{ $plan->name }}</h3>
                                 <div class="mt-6 mb-6 pb-6 border-b border-slate-100">
@@ -200,4 +201,8 @@
                 <p>You can reorder plans by dragging. Changes will be reflected to merchants.</p>
             </div>
         </div>
+@endsection
+
+@section('scripts')
+    @include('partials.plan-colors')
 @endsection

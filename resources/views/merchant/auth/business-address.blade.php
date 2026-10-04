@@ -5,242 +5,224 @@
     @include('partials.theme')
     <title>Business Address - BeAurex</title>
     <style>
-        input:focus, select:focus { outline: none; border-color: #b00000; box-shadow: 0 0 0 3px rgba(176, 0, 0, 0.08); }
+        .field { width: 100%; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: .75rem; padding: .625rem 1rem; font-size: .875rem; font-weight: 500; color: #0f172a; transition: border-color .15s, box-shadow .15s; }
+        .field:focus { outline: none; border-color: #b00000; box-shadow: 0 0 0 3px rgba(176,0,0,.08); background: #fff; }
+        .field:disabled { opacity: .6; cursor: not-allowed; }
+        .field.invalid { border-color: #f87171; }
     </style>
 </head>
 <body class="bg-[#f1f5f9] text-[#0f172a] antialiased min-h-[100dvh] flex flex-col items-center justify-center p-4">
-    <div class="w-full max-w-sm">
-        
-                <div class="bg-white rounded-2xl border border-[#e2e8f0] shadow-sm overflow-hidden">
-                    <div class="flex flex-col items-center pt-8 pb-6 px-5 sm:px-8 bg-red-50">
-                        <div
-                            class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center text-[#EF4444] shadow-sm mb-4">
-                            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
-                                </path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
+@php
+    $initial = [
+        'state' => old('state', $business?->state),
+        'district' => old('city', $business?->city),
+        'pincode' => old('pin_code', $business?->pincode),
+        'area' => old('area'),
+    ];
+@endphp
+    <div class="w-full max-w-md">
+        <div class="bg-white rounded-2xl border border-[#e2e8f0] shadow-sm overflow-hidden mb-4">
+            <div class="flex flex-col items-center pt-8 pb-6 px-5 sm:px-8 bg-red-50">
+                <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center text-[#EF4444] shadow-sm mb-4">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                </div>
+                <h1 class="text-xl font-black text-[#0f172a] mb-1 text-center">Business Address</h1>
+                <p class="text-xs font-medium text-[#475569] text-center">Add your business location</p>
+            </div>
+
+            <div class="px-5 sm:px-7 py-6">
+                @if($errors->any())
+                    <div class="mb-5 p-3.5 rounded-xl bg-red-50 border border-red-200 text-sm font-semibold text-[#8a0000]" role="alert">Please fix the highlighted fields below.</div>
+                @endif
+
+                <form action="{{ route('merchant.business-address') }}" method="POST" class="space-y-4" id="addressForm">
+                    @csrf
+
+                    <div>
+                        <label for="address_line_1" class="block text-xs font-bold text-slate-700 mb-2">Address Line 1 <span class="text-[#EF4444]">*</span></label>
+                        <input type="text" id="address_line_1" name="address_line_1" value="{{ old('address_line_1') }}" placeholder="Shop no., building, street" required minlength="3" maxlength="150" autocomplete="address-line1"
+                            class="field @error('address_line_1') invalid @enderror">
+                        <x-auth.error name="address_line_1" />
+                    </div>
+
+                    <div>
+                        <label for="address_line_2" class="block text-xs font-bold text-slate-700 mb-2">Address Line 2 <span class="font-medium text-slate-400">(Optional)</span></label>
+                        <input type="text" id="address_line_2" name="address_line_2" value="{{ old('address_line_2') }}" placeholder="Landmark, sector, locality" maxlength="150" autocomplete="address-line2"
+                            class="field @error('address_line_2') invalid @enderror">
+                        <x-auth.error name="address_line_2" />
+                    </div>
+
+                    <div>
+                        <label for="pinInput" class="block text-xs font-bold text-slate-700 mb-2">PIN Code <span class="text-[#EF4444]">*</span></label>
+                        <div class="relative">
+                            <input type="text" id="pinInput" name="pin_code" value="{{ $initial['pincode'] }}" list="pinList" placeholder="Type your 6-digit PIN code" required inputmode="numeric" maxlength="6" pattern="[1-9][0-9]{5}" autocomplete="postal-code"
+                                class="field pr-10 @error('pin_code') invalid @enderror" aria-describedby="pinStatus">
+                            <span id="pinSpinner" class="hidden absolute inset-y-0 right-3 flex items-center"><svg class="w-4 h-4 animate-spin text-slate-400" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity=".25"/><path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span>
                         </div>
-                        <h2 class="text-xl font-black text-[#0f172a] mb-1 text-center">Business Address</h2>
-                        <p class="text-xs font-medium text-[#475569] text-center">Add your business location</p>
+                        <datalist id="pinList"></datalist>
+                        <p id="pinStatus" class="mt-1.5 text-[11px] font-medium text-slate-500" aria-live="polite">Type your PIN and we'll fill in the state and district, or choose them below.</p>
+                        <x-auth.error name="pin_code" />
                     </div>
 
-                    <div class="px-7 py-6">
-                        <form action="{{ route('merchant.business-address') }}" method="POST" class="space-y-4">
-                            @csrf
-                            <div>
-                                <label class="block text-xs font-bold text-slate-700 mb-2">Address Line 1</label>
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
-                                            </path>
-                                        </svg>
-                                    </div>
-                                    <input type="text" name="address_line_1" placeholder="Enter address line 1"
-                                        required
-                                        class="w-full bg-[#f1f5f9] border border-[#e2e8f0] rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium text-[#0f172a] transition">
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-700 mb-2">Address Line 2
-                                    (Optional)</label>
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
-                                            </path>
-                                        </svg>
-                                    </div>
-                                    <input type="text" name="address_line_2" placeholder="Enter address line 2"
-                                        class="w-full bg-[#f1f5f9] border border-[#e2e8f0] rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium text-[#0f172a] transition">
-                                </div>
-                            </div>
-                            
-<div class="flex space-x-3">
-    <!-- State on the left -->
-    <div class="w-1/2">
-        <label class="block text-xs font-bold text-slate-700 mb-2">State</label>
-        <div class="relative">
-            <select name="state" id="stateDropdown" required class="w-full bg-[#f1f5f9] border border-[#e2e8f0] rounded-xl px-4 py-2.5 text-sm font-medium text-[#0f172a] transition appearance-none cursor-pointer">
-                <option value="" disabled selected>Select state</option>
-                <option value="Andhra Pradesh">Andhra Pradesh</option>
-                <option value="Arunachal Pradesh">Arunachal Pradesh</option>
-                <option value="Assam">Assam</option>
-                <option value="Bihar">Bihar</option>
-                <option value="Chhattisgarh">Chhattisgarh</option>
-                <option value="Goa">Goa</option>
-                <option value="Gujarat">Gujarat</option>
-                <option value="Haryana">Haryana</option>
-                <option value="Himachal Pradesh">Himachal Pradesh</option>
-                <option value="Jharkhand">Jharkhand</option>
-                <option value="Karnataka">Karnataka</option>
-                <option value="Kerala">Kerala</option>
-                <option value="Madhya Pradesh">Madhya Pradesh</option>
-                <option value="Maharashtra">Maharashtra</option>
-                <option value="Manipur">Manipur</option>
-                <option value="Meghalaya">Meghalaya</option>
-                <option value="Mizoram">Mizoram</option>
-                <option value="Nagaland">Nagaland</option>
-                <option value="Odisha">Odisha</option>
-                <option value="Punjab">Punjab</option>
-                <option value="Rajasthan">Rajasthan</option>
-                <option value="Sikkim">Sikkim</option>
-                <option value="Tamil Nadu">Tamil Nadu</option>
-                <option value="Telangana">Telangana</option>
-                <option value="Tripura">Tripura</option>
-                <option value="Uttar Pradesh">Uttar Pradesh</option>
-                <option value="Uttarakhand">Uttarakhand</option>
-                <option value="West Bengal">West Bengal</option>
-                <option value="Delhi">Delhi</option>
-            </select>
-            <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none">
-                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    <div class="grid grid-cols-1 xs:grid-cols-2 gap-4">
+                        <div>
+                            <label for="stateSelect" class="block text-xs font-bold text-slate-700 mb-2">State / UT <span class="text-[#EF4444]">*</span></label>
+                            <select id="stateSelect" name="state" required class="field cursor-pointer @error('state') invalid @enderror">
+                                <option value="" disabled @selected(! $initial['state'])>Select state</option>
+                                @foreach($states as $state)
+                                    <option value="{{ $state }}" @selected($initial['state'] === $state)>{{ $state }}</option>
+                                @endforeach
+                            </select>
+                            <x-auth.error name="state" />
+                        </div>
+                        <div>
+                            <label for="districtSelect" class="block text-xs font-bold text-slate-700 mb-2">District / City <span class="text-[#EF4444]">*</span></label>
+                            <select id="districtSelect" name="city" required disabled class="field cursor-pointer @error('city') invalid @enderror">
+                                <option value="" disabled selected>Select state first</option>
+                            </select>
+                            <x-auth.error name="city" />
+                        </div>
+                    </div>
+
+                    <div id="areaWrap" class="hidden">
+                        <label for="areaSelect" class="block text-xs font-bold text-slate-700 mb-2">Area / Post Office</label>
+                        <select id="areaSelect" name="area" class="field cursor-pointer @error('area') invalid @enderror"></select>
+                        <x-auth.error name="area" />
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="submit" class="w-full text-white font-bold py-3 rounded-xl text-sm transition bg-[#b00000] hover:bg-[#8a0000]">Continue</button>
+                    </div>
+                </form>
             </div>
         </div>
-    </div>
-    
-    <!-- City on the right -->
-    <div class="w-1/2">
-        <label class="block text-xs font-bold text-slate-700 mb-2">City</label>
-        <div class="relative">
-            <select name="city" id="cityDropdown" required class="w-full bg-[#f1f5f9] border border-[#e2e8f0] rounded-xl px-4 py-2.5 text-sm font-medium text-[#0f172a] transition appearance-none cursor-pointer" disabled>
-                <option value="" disabled selected>Select city</option>
-            </select>
-            <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none">
-                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-            </div>
-        </div>
-    </div>
-</div>
-<div>
-    <label class="block text-xs font-bold text-slate-700 mb-2">PIN Code</label>
-                                <div class="relative">
-                                    <div
-                                        class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z">
-                                            </path>
-                                        </svg>
-                                    </div>
-                                    <input type="text" name="pin_code" placeholder="Enter PIN code" required
-                                        class="w-full bg-[#f1f5f9] border border-[#e2e8f0] rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium text-[#0f172a] transition">
-                                </div>
-                            </div>
-                            <div class="pt-2">
-                                <button type="submit"
-                                    class="w-full text-white font-bold py-3 rounded-xl text-sm transition"
-                                    style="background:#b00000" onmouseover="this.style.background='#8a0000'"
-                                    onmouseout="this.style.background='#b00000'">
-                                    Continue
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
 
-                <!-- 7-Step Progress indicator -->
-                <div class="mt-5 bg-white border border-[#e2e8f0] rounded-2xl px-4 py-4 shadow-sm">
-                    <p class="text-[10px] font-bold text-slate-700 mb-3 text-center">Merchant Onboarding</p>
-                    <div class="flex items-center justify-between">
-                        <div
-                            class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white bg-[#22C55E]">
-                            ✓</div>
-                        <div class="flex-1 h-px mx-1 bg-green-200"></div>
-                        <div
-                            class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white bg-[#22C55E]">
-                            ✓</div>
-                        <div class="flex-1 h-px mx-1 bg-green-200"></div>
-                        <div
-                            class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white bg-[#22C55E]">
-                            ✓</div>
-                        <div class="flex-1 h-px mx-1 bg-green-200"></div>
-                        <div
-                            class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white bg-[#22C55E]">
-                            ✓</div>
-                        <div class="flex-1 h-px mx-1 bg-green-200"></div>
-                        <div
-                            class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white bg-[#22C55E]">
-                            ✓</div>
-                        <div class="flex-1 h-px mx-1 bg-green-200"></div>
-                        <div
-                            class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white bg-[#b00000] ring-2 ring-red-100 ring-offset-1">
-                            6</div>
-                        <div class="flex-1 h-px mx-1 bg-slate-200"></div>
-                        <div
-                            class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold bg-slate-100 text-slate-400">
-                            7</div>
-                    </div>
-                    <div class="flex justify-between mt-1.5 px-1">
-                        <span class="text-[8px] font-semibold text-green-600">Login</span>
-                        <span class="text-[8px] font-bold text-[#b00000]">Address</span>
-                        <span class="text-[8px] font-medium text-slate-400">Complete</span>
-                    </div>
-                </div>
-
-            
+        @include('merchant.auth.partials.onboarding-progress', ['step' => 6, 'label' => 'Address'])
     </div>
 
 <script>
-    const citiesByState = {
-        "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore", "Tirupati"],
-        "Arunachal Pradesh": ["Itanagar", "Tawang", "Ziro", "Pasighat", "Roing"],
-        "Assam": ["Guwahati", "Silchar", "Dibrugarh", "Jorhat", "Nagaon"],
-        "Bihar": ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur", "Purnia"],
-        "Chhattisgarh": ["Raipur", "Bhilai", "Bilaspur", "Korba", "Rajnandgaon"],
-        "Goa": ["Panaji", "Margao", "Vasco da Gama", "Mapusa", "Ponda"],
-        "Gujarat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar"],
-        "Haryana": ["Faridabad", "Gurugram", "Panipat", "Ambala", "Yamunanagar"],
-        "Himachal Pradesh": ["Shimla", "Mandi", "Solan", "Dharamshala", "Kullu"],
-        "Jharkhand": ["Ranchi", "Jamshedpur", "Dhanbad", "Bokaro", "Deoghar"],
-        "Karnataka": ["Bengaluru", "Mysuru", "Hubballi", "Mangaluru", "Belagavi"],
-        "Kerala": ["Thiruvananthapuram", "Kochi", "Kozhikode", "Kollam", "Thrissur"],
-        "Madhya Pradesh": ["Indore", "Bhopal", "Jabalpur", "Gwalior", "Ujjain"],
-        "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Nashik", "Aurangabad"],
-        "Manipur": ["Imphal", "Thoubal", "Bishnupur", "Churachandpur", "Kakching"],
-        "Meghalaya": ["Shillong", "Tura", "Nongstoin", "Jowai", "Baghmara"],
-        "Mizoram": ["Aizawl", "Lunglei", "Saiha", "Champhai", "Kolasib"],
-        "Nagaland": ["Kohima", "Dimapur", "Mokokchung", "Tuensang", "Wokha"],
-        "Odisha": ["Bhubaneswar", "Cuttack", "Rourkela", "Brahmapur", "Sambalpur"],
-        "Punjab": ["Ludhiana", "Amritsar", "Jalandhar", "Patiala", "Bathinda"],
-        "Rajasthan": ["Jaipur", "Jodhpur", "Kota", "Bikaner", "Ajmer"],
-        "Sikkim": ["Gangtok", "Namchi", "Geyzing", "Mangan", "Singtam"],
-        "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem"],
-        "Telangana": ["Hyderabad", "Warangal", "Nizamabad", "Karimnagar", "Khammam"],
-        "Tripura": ["Agartala", "Dharmanagar", "Kailashahar", "Udaipur", "Belonia"],
-        "Uttar Pradesh": ["Lucknow", "Kanpur", "Ghaziabad", "Agra", "Varanasi"],
-        "Uttarakhand": ["Dehradun", "Haridwar", "Roorkee", "Haldwani", "Rudrapur"],
-        "West Bengal": ["Kolkata", "Asansol", "Siliguri", "Durgapur", "Bardhaman"],
-        "Delhi": ["New Delhi", "North Delhi", "South Delhi", "East Delhi", "West Delhi"]
-    };
+    (() => {
+        const urls = {
+            districts: @json(route('locations.districts', [], false)),
+            pincodes: @json(route('locations.pincodes', [], false)),
+            pincode: @json(url('/locations/pincode')),
+        };
+        const initial = @json($initial);
+        const stateSel = document.getElementById('stateSelect');
+        const districtSel = document.getElementById('districtSelect');
+        const pinInput = document.getElementById('pinInput');
+        const pinList = document.getElementById('pinList');
+        const pinStatus = document.getElementById('pinStatus');
+        const spinner = document.getElementById('pinSpinner');
+        const areaWrap = document.getElementById('areaWrap');
+        const areaSel = document.getElementById('areaSelect');
+        const cache = {};
 
-    const stateDropdown = document.getElementById("stateDropdown");
-    const cityDropdown = document.getElementById("cityDropdown");
+        const getJson = url => cache[url] ??= fetch(url, { headers: { Accept: 'application/json' } })
+            .then(r => r.ok ? r.json() : Promise.reject(r.status));
 
-    stateDropdown.addEventListener("change", function() {
-        const state = this.value;
-        cityDropdown.innerHTML = '<option value="" disabled selected>Select city</option>';
-        
-        if (state && citiesByState[state]) {
-            citiesByState[state].forEach(city => {
-                const option = document.createElement("option");
-                option.value = city;
-                option.textContent = city;
-                cityDropdown.appendChild(option);
-            });
-            cityDropdown.disabled = false;
-        } else {
-            cityDropdown.disabled = true;
+        function status(text, tone) {
+            pinStatus.textContent = text;
+            pinStatus.className = 'mt-1.5 text-[11px] font-medium ' + (tone === 'ok' ? 'text-emerald-600' : tone === 'bad' ? 'text-[#EF4444]' : 'text-slate-500');
         }
-    });
+
+        function fillSelect(select, items, placeholder, chosen) {
+            select.innerHTML = '';
+            const ph = new Option(placeholder, '', !chosen, !chosen);
+            ph.disabled = true;
+            select.add(ph);
+            items.forEach(v => select.add(new Option(v, v, false, v === chosen)));
+            select.disabled = items.length === 0;
+        }
+
+        async function loadDistricts(state, chosen) {
+            districtSel.disabled = true;
+            fillSelect(districtSel, [], 'Loading districts…');
+            const districts = await getJson(urls.districts + '?state=' + encodeURIComponent(state)).catch(() => []);
+            fillSelect(districtSel, districts, 'Select district', chosen);
+        }
+
+        async function loadPinSuggestions() {
+            pinList.innerHTML = '';
+            if (!stateSel.value || !districtSel.value) return;
+            const pins = await getJson(urls.pincodes + '?state=' + encodeURIComponent(stateSel.value) + '&district=' + encodeURIComponent(districtSel.value)).catch(() => []);
+            pins.forEach(p => {
+                const o = document.createElement('option');
+                o.value = p.pincode;
+                o.label = p.areas.length > 80 ? p.areas.slice(0, 77) + '…' : p.areas;
+                pinList.appendChild(o);
+            });
+            if (!/^\d{6}$/.test(pinInput.value)) status(pins.length + ' PIN codes in ' + districtSel.value + ' — tap the PIN box to pick one.');
+        }
+
+        function showAreas(areas, chosen) {
+            areaSel.innerHTML = '';
+            areaSel.add(new Option('Select your area (optional)', '', !chosen, !chosen));
+            areas.forEach(a => areaSel.add(new Option(a, a, false, a === chosen)));
+            areaWrap.classList.toggle('hidden', areas.length === 0);
+        }
+
+        async function lookupPin(fromTyping) {
+            const pin = pinInput.value;
+            if (!/^[1-9]\d{5}$/.test(pin)) {
+                areaWrap.classList.add('hidden');
+                pinInput.setCustomValidity(pin.length === 6 ? 'PIN codes start with 1-9.' : '');
+                if (pin.length && pin.length < 6) status('Keep typing — a PIN code has 6 digits.');
+                return;
+            }
+            spinner.classList.remove('hidden');
+            const info = await getJson(urls.pincode + '/' + pin).catch(() => null);
+            spinner.classList.add('hidden');
+
+            if (!info) {
+                pinInput.setCustomValidity('We could not find this PIN code. Please check it.');
+                status('We could not find PIN ' + pin + ' in the India Post directory. Please check it.', 'bad');
+                areaWrap.classList.add('hidden');
+                return;
+            }
+            pinInput.setCustomValidity('');
+
+            // Fill in the state and district from the PIN (unless the user already picked a valid match).
+            const matchesChoice = info.places.some(p => p.state === stateSel.value && p.district === districtSel.value);
+            if (!matchesChoice) {
+                stateSel.value = info.state;
+                await loadDistricts(info.state, info.district);
+                loadPinSuggestions();
+            }
+            status('✓ ' + districtSel.value + ', ' + stateSel.value + ' · ' + info.areas.length + (info.areas.length === 1 ? ' area' : ' areas'), 'ok');
+            showAreas(info.areas, fromTyping ? '' : initial.area);
+        }
+
+        stateSel.addEventListener('change', async () => {
+            await loadDistricts(stateSel.value);
+            pinList.innerHTML = '';
+            status('Now choose your district, then your PIN code.');
+        });
+        districtSel.addEventListener('change', async () => {
+            await loadPinSuggestions();
+            // A PIN typed earlier that is not in this district no longer fits.
+            if (/^\d{6}$/.test(pinInput.value)) {
+                const info = await getJson(urls.pincode + '/' + pinInput.value).catch(() => null);
+                if (!info || !info.places.some(p => p.state === stateSel.value && p.district === districtSel.value)) {
+                    pinInput.value = '';
+                    areaWrap.classList.add('hidden');
+                    status('Pick a PIN code for ' + districtSel.value + '.');
+                }
+            }
+        });
+        pinInput.addEventListener('input', () => {
+            pinInput.value = pinInput.value.replace(/\D/g, '').slice(0, 6);
+            if (pinInput.value.length === 6) lookupPin(true);
+            else { pinInput.setCustomValidity(''); areaWrap.classList.add('hidden'); }
+        });
+
+        // Restore what was chosen before (validation error or editing again).
+        (async () => {
+            if (initial.state) await loadDistricts(initial.state, initial.district);
+            if (initial.district) loadPinSuggestions();
+            if (/^\d{6}$/.test(initial.pincode || '')) lookupPin(false);
+        })();
+    })();
 </script>
 </body>
 </html>

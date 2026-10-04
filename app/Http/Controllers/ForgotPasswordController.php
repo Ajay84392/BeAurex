@@ -37,7 +37,7 @@ class ForgotPasswordController extends Controller
         $email = $request->validated('email');
         $role = $request->validated('role') ?? 'customer';
 
-        if ($user = User::where('email', $email)->where('role', $role)->first()) {
+        if ($user = User::forLogin($email, $role)) {
             $this->issueOtp($user);
         }
 
@@ -133,7 +133,7 @@ class ForgotPasswordController extends Controller
             return null;
         }
 
-        return User::where('email', $email)->where('role', session('reset_role', 'customer'))->first();
+        return User::forLogin($email, session('reset_role', 'customer'));
     }
 
     /**

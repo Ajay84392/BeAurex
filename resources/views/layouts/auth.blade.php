@@ -16,20 +16,12 @@
 </head>
 <body class="bg-[#f1f5f9] text-[#0f172a] antialiased min-h-[100dvh] flex flex-col items-center justify-center px-4 py-8">
     <div class="w-full max-w-sm">
-        <div class="bg-white rounded-2xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+        <div class="bg-white rounded-[1.75rem] border border-[#e2e8f0] shadow-lg overflow-hidden">
 
-            {{-- Brand row: identical on every auth page --}}
-            <div class="flex items-center justify-between px-6 py-4 bg-[#f8fafc] border-b border-[#e2e8f0]">
-                <a href="{{ url('/') }}" class="flex items-center space-x-2.5">
-                    <img src="/images/logo.jpg" alt="BeAurex" class="w-9 h-9 rounded-xl object-cover shadow-sm">
-                    <span class="text-lg font-black tracking-tight text-[#0f172a]">BeAurex</span>
-                </a>
-                @hasSection('portal')
-                    <span class="text-[11px] font-bold uppercase tracking-wide text-[#b00000] bg-red-50 border border-red-100 rounded-full px-2.5 py-1">@yield('portal')</span>
-                @endif
-            </div>
+            {{-- Brand header: identical on every auth page --}}
+            @include('auth.partials.card-hero', ['label' => \Illuminate\Support\Str::before(trim($__env->yieldContent('portal')), ' Portal')])
 
-            <div class="px-6 sm:px-8 pt-7 pb-8">
+            <div class="px-6 sm:px-8 pt-3 pb-8">
                 <div class="text-center mb-6">
                     <h1 class="text-2xl font-black text-[#0f172a] mb-1.5">@yield('heading')</h1>
                     <p class="text-sm font-medium text-[#475569]">@yield('subtitle')</p>
@@ -72,7 +64,7 @@
 
                 @yield('content')
 
-                @if(($googleRole ?? false) && \App\Http\Controllers\GoogleAuthController::enabled())
+                @if($googleRole ?? false)
                     <div class="flex items-center my-5">
                         <div class="flex-1 border-t border-[#e2e8f0]"></div>
                         <span class="px-3 text-xs font-semibold text-slate-400">or</span>
@@ -93,9 +85,9 @@
             @endif
         </div>
 
-        @unless($hasTermsCheckbox ?? false)
+        {{-- @unless($hasTermsCheckbox ?? false)
             <p class="mt-4 text-center text-xs font-medium text-slate-500">By continuing, you agree to our <a href="#" class="text-[#b00000] hover:underline font-bold">Terms &amp; Conditions</a> and <a href="#" class="text-[#b00000] hover:underline font-bold">Privacy Policy</a>.</p>
-        @endunless
+        @endunless --}}
     </div>
 
     <script>

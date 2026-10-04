@@ -146,6 +146,8 @@
                     </div>
                 </div>
 
+                @include('admin.plans.partials.colors')
+
                 <!-- Features & Preview Split -->
                 <div class="flex flex-col md:flex-row gap-8 lg:gap-12">
 
@@ -236,6 +238,7 @@
 @endsection
 
 @section('scripts')
+    @include('admin.plans.partials.colors-script')
     <script>
         function updateCharCount(inputId, countId) {
             var len = document.getElementById(inputId).value.length;
@@ -373,6 +376,7 @@
                 </div>`;
             }
             document.getElementById('preview_card_container').innerHTML = html;
+            applyPlanColorsToPreview();
         }
         window.onload = updatePreview;
 </script>

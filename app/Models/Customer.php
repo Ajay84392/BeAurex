@@ -26,12 +26,13 @@ class Customer extends Model
     public static function availablePhone(?string $phone, ?int $exceptId = null): ?string
     {
         if (blank($phone)) {
-            return null;
+            // Return a unique fake phone number so databases without the nullable phone migration won't crash
+            return '00000'.rand(100000, 999999).uniqid();
         }
 
         $taken = self::where('phone', $phone)->when($exceptId, fn ($q) => $q->where('id', '!=', $exceptId))->exists();
 
-        return $taken ? null : $phone;
+        return $taken ? '00000'.rand(100000, 999999).uniqid() : $phone;
     }
 
     public function visits()

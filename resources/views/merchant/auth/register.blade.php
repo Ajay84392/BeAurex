@@ -1,42 +1,561 @@
-@php($hasTermsCheckbox = true)
+<!DOCTYPE html>
+<html lang="en">
 
-@extends('layouts.auth')
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>BeAurex Merchant — Register</title>
+    @include('partials.favicon')
+    <style>
+        :root {
+            --red: #8b0000;
+            --red2: #a30000;
+            --acc: #c00000;
+            --ink: #1a1a1a;
+            --mut: #6b7280;
+            --line: #e5e7eb;
+            --cream: #fdf4e6;
+            --pink: #fdeeee;
+            box-sizing: border-box;
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px)
+        }
 
-@section('title', 'Create Business Account')
-@section('portal', 'Merchant Portal')
-@section('heading', 'Create Account')
-@section('subtitle', "Let's get your business account set up")
+        * {
+            box-sizing: border-box;
+            margin: 0
+        }
 
-@section('content')
-    <form action="{{ url('/merchant/register') }}" method="POST" class="space-y-4">
-        @csrf
+        html {
+            scroll-padding-top: env(safe-area-inset-top, 0px)
+        }
 
-        <x-auth.input name="name" label="Owner Name" placeholder="John Doe" autocomplete="name" required minlength="2" maxlength="100" />
-        <x-auth.input name="email" type="email" label="Business Email" placeholder="business@example.com" autocomplete="email" required maxlength="255" />
+        body {
+            background: #eef0f3;
+            font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+            color: var(--ink);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px
+        }
 
-        <div>
-            <label for="phoneField" class="auth-label">Mobile Number</label>
-            <div class="flex">
-                <span class="bg-[#f1f5f9] border border-[#e2e8f0] border-r-0 rounded-l-xl px-3.5 flex items-center font-bold text-slate-700 text-sm">+91</span>
-                <input type="tel" id="phoneField" name="phone" value="{{ old('phone') }}" placeholder="9876543210" required data-mobile inputmode="numeric" maxlength="10" pattern="[6-9][0-9]{9}" title="10-digit mobile number starting with 6-9" autocomplete="tel-national"
-                    @error('phone') aria-invalid="true" aria-describedby="phone-error" @enderror
-                    class="auth-input rounded-l-none @error('phone') border-red-400 @enderror">
+        .phone {
+            width: 100%;
+            max-width: 400px;
+            min-height: 460px;
+            background: var(--red);
+            border-radius: 36px;
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, .18);
+            display: flex;
+            flex-direction: column
+        }
+
+        @media(max-width:480px) {
+            body {
+                padding: 0;
+                background: var(--red)
+            }
+
+            .phone {
+                max-width: none;
+                border-radius: 0;
+                min-height: 100vh;
+                box-shadow: none
+            }
+        }
+
+        .sheet {
+            background: #fff;
+            border-radius: 36px;
+            margin-top: 0;
+            flex: 1;
+            padding: 36px 24px 24px;
+            display: flex;
+            flex-direction: column
+        }
+
+        .brand {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 8px;
+            margin-bottom: 24px
+        }
+
+        .logo-img {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            object-fit: cover;
+            box-shadow: 0 4px 10px rgba(139, 0, 0, .25)
+        }
+
+        .bn {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -.02em;
+            line-height: 1
+        }
+
+        .bn span {
+            color: var(--acc)
+        }
+
+        .bs {
+            font-size: 11px;
+            color: var(--red);
+            font-weight: 800;
+            margin-top: 4px;
+            background: var(--pink);
+            padding: 3px 10px;
+            border-radius: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: 1px solid rgba(139, 0, 0, 0.15);
+            display: inline-block
+        }
+
+        h1 {
+            font-size: 22px;
+            font-weight: 700;
+            text-align: center
+        }
+
+        .sub {
+            font-size: 13px;
+            color: var(--mut);
+            margin: 4px 0 24px;
+            text-align: center
+        }
+
+        label.l {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin: 14px 0 6px
+        }
+
+        .f {
+            position: relative
+        }
+
+        .f svg {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #8a8f98
+        }
+
+        .f .li {
+            left: 14px
+        }
+
+        .f .ri {
+            position: absolute;
+            right: 14px;
+            cursor: pointer;
+            background: none;
+            border: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            top: 0;
+            bottom: 0;
+            transform: none;
+            padding: 0;
+            margin: 0
+        }
+
+        .f .ri svg {
+            position: static;
+            transform: none;
+            margin: 0
+        }
+
+        .f input {
+            width: 100%;
+            height: 48px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 0 44px;
+            font-size: 14px;
+            color: var(--ink);
+            background: #fff
+        }
+
+        .f input:focus {
+            outline: none;
+            border-color: var(--red);
+            box-shadow: 0 0 0 3px rgba(139, 0, 0, .1)
+        }
+
+        .f.err input {
+            border-color: var(--acc)
+        }
+
+        .em {
+            color: var(--acc);
+            font-size: 12px;
+            margin-top: 5px;
+            display: none
+        }
+
+        .f.err+.em {
+            display: block
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 14px 0 18px;
+            font-size: 13px
+        }
+
+        .row label {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            color: var(--mut);
+            font-weight: 500
+        }
+
+        .row input {
+            accent-color: var(--red);
+            width: 16px;
+            height: 16px
+        }
+
+        .row a {
+            color: var(--acc);
+            font-weight: 600;
+            text-decoration: none
+        }
+
+        .pb {
+            width: 100%;
+            height: 50px;
+            border: 0;
+            border-radius: 12px;
+            background: var(--red2);
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .pb:hover {
+            background: var(--red)
+        }
+
+        .or {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 18px 0;
+            font-size: 11px;
+            color: #9ca3af;
+            font-weight: 600
+        }
+
+        .or:before,
+        .or:after {
+            content: "";
+            flex: 1;
+            border-top: 1px solid var(--line)
+        }
+
+        .gb {
+            width: 100%;
+            height: 48px;
+            border: 1px solid #f0b4b4;
+            background: #fff;
+            color: var(--acc);
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer
+        }
+
+        .ft {
+            text-align: center;
+            font-size: 13px;
+            color: var(--mut);
+            margin-top: 20px;
+            margin-bottom: 8px
+        }
+
+        .ft a {
+            color: var(--acc);
+            font-weight: 700;
+            text-decoration: none
+        }
+    </style>
+    @include('partials.auth-responsive')
+    @include('partials.register-compact')
+</head>
+
+<body>
+    <div class="phone">
+        <div class="sheet">
+            <div class="ah">
+                <a href="{{ url('/merchant/login') }}" class="back" aria-label="Back to login"><svg fill="none"
+                        stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg></a>
+                <h1>Merchant Register</h1>
             </div>
-            <p class="text-[11px] font-medium text-slate-500 mt-1.5">10 digits, e.g. 9876543210</p>
-            <x-auth.error name="phone" />
+            <p class="sub">Create your business account</p>
+
+            <form id="fm" method="POST" action="{{ url('/merchant/register') }}" novalidate>
+                @csrf
+                <div class="grid">
+                    <div class="fld wide">
+                        <label class="l" for="name">Full Name</label>
+                        <div class="f @error('name') err @enderror" id="fn"><svg class="li" fill="none"
+                                stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg><input id="name" name="name" type="text" placeholder="Your full name"
+                                autocomplete="name" value="{{ old('name') }}" required></div>
+                        <div class="em" id="nm-err">
+                            @error('name')
+                                {{ $message }}
+                            @else
+                                Name is required
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="fld wide">
+                        <label class="l" for="em">Email Address</label>
+                        <div class="f @error('email') err @enderror" id="fe"><svg class="li" fill="none"
+                                stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path
+                                    d="M3 8l7.9 5.3a2 2 0 002.2 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg><input id="em" name="email" type="email" placeholder="you@business.com"
+                                autocomplete="email" value="{{ old('email') }}" required></div>
+                        <div class="em" id="em-err">
+                            @error('email')
+                                {{ $message }}
+                            @else
+                                Enter a valid email address
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="fld">
+                        <label class="l" for="ph">Mobile Number</label>
+                        <div class="f @error('phone') err @enderror" id="fph"><svg class="li" fill="none"
+                                stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.95.68l1.5 4.49a1 1 0 01-.5 1.21l-2.26 1.13a11.04 11.04 0 005.52 5.52l1.13-2.26a1 1 0 011.21-.5l4.49 1.5a1 1 0 01.68.95V19a2 2 0 01-2 2h-1C9.72 21 3 14.28 3 6V5z" />
+                            </svg><input id="ph" name="phone" type="tel" inputmode="numeric" maxlength="10"
+                                placeholder="10-digit no." autocomplete="tel-national" value="{{ old('phone') }}"
+                                required></div>
+                        <div class="em" id="ph-err">
+                            @error('phone')
+                                {{ $message }}
+                            @else
+                                Enter a valid 10-digit mobile number
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="fld">
+                        <label class="l" for="ref">Referral Code <span
+                                class="opt">(optional)</span></label>
+                        <div class="f @error('referral_code') err @enderror" id="fref"><svg class="li"
+                                fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                            </svg><input id="ref" name="referral_code" type="text" maxlength="20"
+                                autocomplete="off" placeholder="Enter code" style="text-transform:uppercase"
+                                value="{{ old('referral_code', request()->query('ref')) }}"></div>
+                        <div class="em" id="ref-err">
+                            @error('referral_code')
+                                {{ $message }}
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="fld">
+                        <label class="l" for="pw">Password</label>
+                        <div class="f @error('password') err @enderror" id="fp">
+                            <svg class="li" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <path
+                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                            <input id="pw" name="password" type="password" placeholder="Password"
+                                autocomplete="new-password" required>
+                            <button type="button" class="ri" id="eye" aria-label="Show password">
+                                <svg id="eye-open" fill="none" stroke="currentColor" stroke-width="2"
+                                    viewBox="0 0 24 24">
+                                    <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path
+                                        d="M2.5 12C3.7 8 7.5 5 12 5s8.3 3 9.5 7c-1.2 4-5 7-9.5 7S3.700 16 2.500 12z" />
+                                </svg>
+                                <svg id="eye-closed" style="display:none;" fill="none" stroke="currentColor"
+                                    stroke-width="2" viewBox="0 0 24 24">
+                                    <path
+                                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="em" id="pw-err">
+                            @error('password')
+                                {{ $message }}
+                            @else
+                                Password must be at least 6 characters
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="fld">
+                        <label class="l" for="pwc">Confirm Password</label>
+                        <div class="f @error('password_confirmation') err @enderror" id="fpc">
+                            <svg class="li" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <path
+                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                            <input id="pwc" name="password_confirmation" type="password"
+                                placeholder="Re-enter" autocomplete="new-password" required>
+                            <button type="button" class="ri" id="eyec" aria-label="Show password">
+                                <svg id="eyec-open" fill="none" stroke="currentColor" stroke-width="2"
+                                    viewBox="0 0 24 24">
+                                    <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path
+                                        d="M2.5 12C3.7 8 7.5 5 12 5s8.3 3 9.5 7c-1.2 4-5 7-9.5 7S3.700 16 2.500 12z" />
+                                </svg>
+                                <svg id="eyec-closed" style="display:none;" fill="none" stroke="currentColor"
+                                    stroke-width="2" viewBox="0 0 24 24">
+                                    <path
+                                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="em" id="pwc-err">
+                            @error('password_confirmation')
+                                {{ $message }}
+                            @else
+                                Passwords must match
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row"><label><input type="checkbox" name="terms" value="1" id="terms"
+                            @checked(old('terms')) required>I Read to the terms and conditions</label></div>
+                <div class="em" id="terms-err" @error('terms') style="display:block" @enderror>
+                    @error('terms')
+                        {{ $message }}
+                    @else
+                        Please accept the terms to continue
+                    @enderror
+                </div>
+                <button class="pb" type="submit">Create Account</button>
+            </form>
+            <div class="ft">Already have an account? <a href="{{ url('/merchant/login') }}">Login</a></div>
+            {{-- <div class="or">OR</div>
+            <a href="{{ route('google.redirect', ['role' => 'merchant']) }}" style="text-decoration:none;">
+                <button class="gb" type="button"><svg width="18" height="18" viewBox="0 0 24 24">
+                        <path fill="#4285F4"
+                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                        <path fill="#34A853"
+                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                        <path fill="#FBBC05"
+                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" />
+                        <path fill="#EA4335"
+                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                    </svg>Continue with Google</button>
+            </a> --}}
+
         </div>
+    </div>
+    <script>
+        var nm = document.getElementById('name'),
+            em = document.getElementById('em'),
+            pw = document.getElementById('pw'),
+            pwc = document.getElementById('pwc'),
+            eye = document.getElementById('eye'),
+            eyec = document.getElementById('eyec');
 
-        <x-auth.password id="merchantPassword" placeholder="Create a strong password" strength />
-        <x-auth.password name="password_confirmation" id="merchantPasswordConfirm" label="Confirm Password" placeholder="Re-enter your password" confirms="merchantPassword" />
+        if (eye) {
+            eye.onclick = function() {
+                var show = pw.type === 'password';
+                pw.type = show ? 'text' : 'password';
+                document.getElementById('eye-open').style.display = show ? 'none' : 'block';
+                document.getElementById('eye-closed').style.display = show ? 'block' : 'none';
+            };
+        }
+        if (eyec) {
+            eyec.onclick = function() {
+                var show = pwc.type === 'password';
+                pwc.type = show ? 'text' : 'password';
+                document.getElementById('eyec-open').style.display = show ? 'none' : 'block';
+                document.getElementById('eyec-closed').style.display = show ? 'block' : 'none';
+            };
+        }
+        document.getElementById('fm').onsubmit = function(e) {
+            var n = nm.value.trim().length > 0;
+            var a = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.value);
+            var b = pw.value.length >= 6;
+            var c = pwc.value === pw.value;
+            var p = /^[6-9]\d{9}$/.test(ph.value);
+            var t = terms.checked;
+            if (!n || !a || !b || !c || !p || !t) {
+                e.preventDefault();
+                document.getElementById('fn').classList.toggle('err', !n);
+                document.getElementById('fe').classList.toggle('err', !a);
+                document.getElementById('fph').classList.toggle('err', !p);
+                document.getElementById('fp').classList.toggle('err', !b);
+                document.getElementById('fpc').classList.toggle('err', !c);
+                document.getElementById('terms-err').style.display = t ? 'none' : 'block';
+            }
+        };
+        // Mobile: digits only, at most 10.
+        var ph = document.getElementById('ph'),
+            ref = document.getElementById('ref'),
+            terms = document.getElementById('terms');
+        ph.addEventListener('input', function() {
+            ph.value = ph.value.replace(/\D/g, '').slice(0, 10);
+            document.getElementById('fph').classList.remove('err');
+        });
+        ref.addEventListener('input', function() {
+            ref.value = ref.value.toUpperCase().replace(/\s/g, '');
+            document.getElementById('fref').classList.remove('err');
+        });
+        terms.addEventListener('change', function() {
+            if (terms.checked) document.getElementById('terms-err').style.display = 'none';
+        });
+        if (nm) nm.addEventListener('input', function() {
+            document.getElementById('fn').classList.remove('err');
+        });
+        if (em) em.addEventListener('input', function() {
+            document.getElementById('fe').classList.remove('err');
+        });
+        if (pw) pw.addEventListener('input', function() {
+            document.getElementById('fp').classList.remove('err');
+        });
+        if (pwc) pwc.addEventListener('input', function() {
+            document.getElementById('fpc').classList.remove('err');
+        });
+    </script>
+</body>
 
-        <x-auth.terms />
-
-        <button type="submit" class="btn-primary w-full text-white font-bold py-3.5 rounded-xl text-sm transition">Continue to Verify</button>
-        <p class="text-[11px] font-medium text-slate-500 text-center">We'll email you a 4-digit code to verify your account.</p>
-    </form>
-@endsection
-
-@section('switch')
-    Already have an account?
-    <a href="{{ url('/merchant/login') }}" class="font-bold hover:underline ml-1 text-[#b00000]">Login</a>
-@endsection
+</html>

@@ -114,4 +114,17 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Account
+    |--------------------------------------------------------------------------
+    |
+    | The admin panel accepts exactly one account. Login, email-code login and
+    | forgot-password all refuse any other email. Create or reset it with
+    | `php artisan db:seed --class=AdminSeeder` or `php artisan admin:password`.
+    |
+    */
+
+    'admin_email' => env('ADMIN_EMAIL', 'admin@beaurex.com'),
+
 ];

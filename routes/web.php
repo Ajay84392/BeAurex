@@ -11,8 +11,11 @@ use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Admin\ReferralController as AdminReferralController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\AdminAuthController;
+use App\Http\Controllers\CustomerAuthController;
 use App\Http\Controllers\CustomerDashboardController;
 use App\Http\Controllers\ForgotPasswordController;
+use App\Http\Controllers\GoogleAuthController;
+use App\Http\Controllers\LocationController;
 use App\Http\Controllers\MerchantAuthController;
 use App\Http\Controllers\MerchantDashboardController;
 use App\Http\Controllers\OtpAuthController;
@@ -23,38 +26,44 @@ use App\Http\Middleware\CheckMerchantSession;
 use App\Http\Middleware\NoStore;
 use App\Http\Middleware\RedirectIfPortalAuthenticated;
 use App\Models\Faq;
+use App\Models\Plan;
 use App\Models\Setting;
-use App\Models\User;
-use Illuminate\Http\Request;
+use App\Support\Media;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 // ─── Older uploads ───────────────────────────────────────────────────────────
 // Images uploaded before public/uploads existed live in storage/app/public. The live host refuses
 // to serve the public/storage symlink (403), so stream them through Laravel instead.
 Route::get('/media/{path}', function (string $path) {
-    $folder = Illuminate\Support\Str::before($path, '/');
-    abort_if(str_contains($path, '..') || ! in_array($folder, App\Support\Media::LEGACY_FOLDERS, true), 404);
-    abort_unless(Illuminate\Support\Facades\Storage::disk('public')->exists($path), 404);
+    $folder = Str::before($path, '/');
+    abort_if(str_contains($path, '..') || ! in_array($folder, Media::LEGACY_FOLDERS, true), 404);
+    abort_unless(Storage::disk('public')->exists($path), 404);
 
-    return Illuminate\Support\Facades\Storage::disk('public')->response($path, null, [
+    return Storage::disk('public')->response($path, null, [
         'Cache-Control' => 'public, max-age=604800',
     ]);
 })->where('path', '.+')->name('media');
+
+// ─── India Post locations (State → District → PIN → Area dropdowns) ───────────
+Route::middleware('throttle:120,1')->prefix('locations')->group(function () {
+    Route::get('/districts', [LocationController::class, 'districts'])->name('locations.districts');
+    Route::get('/pincodes', [LocationController::class, 'pincodes'])->name('locations.pincodes');
+    Route::get('/pincode/{pincode}', [LocationController::class, 'pincode'])->where('pincode', '[0-9]{6}')->name('locations.pincode');
+});
 
 // ─── Homepage ────────────────────────────────────────────────────────────────
 Route::get('/', function () {
     $faqs = Faq::where('is_active', true)->orderBy('sort_order')->orderBy('id')->get();
     $settings = Setting::pluck('value', 'key');
-    $plans = App\Models\Plan::where('is_active', true)->get();
+    $plans = Plan::where('is_active', true)->get();
 
     return view('welcome', compact('faqs', 'settings', 'plans'));
 });
 
 // ─── Google OAuth ─────────────────────────────────────────────────────────────
-use App\Http\Controllers\GoogleAuthController;
-
 // "Continue with Google" (customers). New Google users confirm their account before it is created.
 Route::middleware(RedirectIfPortalAuthenticated::class.':customer')->group(function () {
     Route::get('/auth/google/{role}', [GoogleAuthController::class, 'redirect'])->name('google.redirect');
@@ -64,7 +73,6 @@ Route::middleware(RedirectIfPortalAuthenticated::class.':customer')->group(funct
 });
 
 // ─── Customer Auth ────────────────────────────────────────────────────────────
-use App\Http\Controllers\CustomerAuthController;
 
 Route::get('/customer/login', [CustomerAuthController::class, 'showLogin'])->name('login')->middleware(RedirectIfPortalAuthenticated::class.':customer');
 Route::post('/customer/login', [CustomerAuthController::class, 'processLogin'])->middleware(['throttle:10,1', RedirectIfPortalAuthenticated::class.':customer']);
@@ -73,9 +81,10 @@ Route::get('/customer/register', function () {
 })->name('customer.register')->middleware(RedirectIfPortalAuthenticated::class.':customer');
 Route::post('/customer/register', [OtpAuthController::class, 'register'])->middleware(['throttle:10,1', RedirectIfPortalAuthenticated::class.':customer']);
 
-// OTP login (customer, merchant, admin) + verify routes
+// Email-code (OTP) login: admins only. Customers and merchants sign in with their password;
+// the verify routes below are still used to confirm the email at sign-up.
 Route::post('/{role}/login/otp', [OtpAuthController::class, 'sendLoginOtp'])
-    ->whereIn('role', OtpAuthController::ROLES)
+    ->whereIn('role', ['admin'])
     ->middleware('throttle:10,1')
     ->name('otp.login');
 Route::post('/otp/resend', [OtpAuthController::class, 'resend'])->middleware('throttle:5,1')->name('otp.resend');
@@ -122,6 +131,7 @@ Route::middleware([CheckAdminSession::class])->group(function () {
 
     Route::patch('/admin/merchants/{merchant}/status', [AdminMerchantController::class, 'updateStatus'])->name('admin.merchants.status');
     Route::patch('/admin/merchants/{merchant}/complimentary', [AdminMerchantController::class, 'updateComplimentary'])->name('admin.merchants.complimentary');
+    Route::patch('/admin/merchants/{merchant}/deal', [AdminMerchantController::class, 'updateDeal'])->name('admin.merchants.deal');
     Route::patch('/admin/merchants/{merchant}/extend', [AdminMerchantController::class, 'extendValidity'])->name('admin.merchants.extend');
     Route::resource('/admin/merchants', AdminMerchantController::class);
     Route::redirect('/admin/plan', '/admin/plans');
@@ -178,13 +188,15 @@ Route::middleware([CheckMerchantSession::class])->group(function () {
     Route::get('/merchant/download-qr', function () {
         $url = MerchantDashboardController::qrImageUrl(800);
         $image = @file_get_contents($url);
-        if (!$image) {
+        if (! $image) {
             return back()->with('error', 'Could not fetch QR code.');
         }
+
         return response($image)
             ->header('Content-Type', 'image/png')
             ->header('Content-Disposition', 'attachment; filename="aurex-reward-qr.png"');
     })->name('merchant.download-qr');
+    Route::get('/merchant/qr', [MerchantDashboardController::class, 'qr'])->name('merchant.qr');
     Route::get('/merchant/profile', [MerchantDashboardController::class, 'profile'])->name('merchant.profile');
     Route::post('/merchant/profile', [MerchantDashboardController::class, 'updateProfile'])->name('merchant.profile.update');
     Route::post('/merchant/profile/auto-approve', [MerchantDashboardController::class, 'updateAutoApproval'])->name('merchant.profile.auto-approve');

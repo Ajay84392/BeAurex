@@ -60,81 +60,95 @@
                 <!-- 4 Stats Cards Grid -->
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                     <!-- Total Scans -->
-                    <div
-                        class="bg-white rounded-2xl p-4 shadow-sm border border-[#e2e8f0] flex flex-col items-center text-center justify-center py-6 transition">
-                        <div class="flex justify-center items-center w-full space-x-3 mb-2">
-                            <div
-                                class="w-8 h-8 rounded-lg bg-red-50 text-[#b00000] flex items-center justify-center shrink-0">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                    stroke-width="2.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                                    </path>
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-[#e2e8f0] flex flex-col justify-between transition">
+                        <div>
+                            <div class="w-8 h-8 rounded-lg bg-red-50 text-[#b00000] flex items-center justify-center shrink-0 mb-3">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                 </svg>
                             </div>
-                            <span class="text-[11px] font-semibold text-[#64748b]">Total Scans</span>
+                            <div class="text-[11px] font-semibold text-[#64748b] mb-1">Total Scans</div>
+                            <div class="text-2xl font-black text-[#0f172a] leading-none mb-3">{{ number_format($totalScans) }}</div>
                         </div>
-                        <div class="text-2xl font-black text-[#0f172a] leading-none mb-1.5">{{ number_format($totalScans) }}
+                        <div class="text-[10px] font-bold {{ $scansGrowth >= 0 ? 'text-emerald-600' : 'text-red-600' }} flex items-center space-x-1">
+                            <span>{{ $scansGrowth > 0 ? '+' : '' }}{{ $scansGrowth }}%</span>
+                            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+                                @if($scansGrowth >= 0)
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"></path>
+                                @else
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 4.5l15 15m0 0V8.25m0 11.25H8.25"></path>
+                                @endif
+                            </svg>
                         </div>
-                        <div class="text-[10px] font-bold text-slate-500 text-center">{{ $scansThisMonth > 0 ? '+'.number_format($scansThisMonth).' this month' : 'None this month' }}</div>
                     </div>
 
                     <!-- Total Customers -->
-                    <div
-                        class="bg-white rounded-2xl p-4 shadow-sm border border-[#e2e8f0] flex flex-col items-center text-center justify-center py-6 transition">
-                        <div class="flex justify-center items-center w-full space-x-3 mb-2">
-                            <div
-                                class="w-8 h-8 rounded-lg bg-red-50 text-[#b00000] flex items-center justify-center shrink-0">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                    stroke-width="2.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-[#e2e8f0] flex flex-col justify-between transition">
+                        <div>
+                            <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 mb-3">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                                 </svg>
                             </div>
-                            <span class="text-[11px] font-semibold text-[#64748b]">Total Customers</span>
+                            <div class="text-[11px] font-semibold text-[#64748b] mb-1">Total Customers</div>
+                            <div class="text-2xl font-black text-[#0f172a] leading-none mb-3">{{ number_format($totalCustomers) }}</div>
                         </div>
-                        <div class="text-2xl font-black text-[#0f172a] leading-none mb-1.5">
-                            {{ number_format($totalCustomers) }}</div>
-                        <div class="text-[10px] font-bold text-slate-500 text-center">{{ $newCustomersThisMonth > 0 ? '+'.number_format($newCustomersThisMonth).' new this month' : 'No new this month' }}</div>
+                        <div class="text-[10px] font-bold {{ $customersGrowth >= 0 ? 'text-emerald-600' : 'text-red-600' }} flex items-center space-x-1">
+                            <span>{{ $customersGrowth > 0 ? '+' : '' }}{{ $customersGrowth }}%</span>
+                            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+                                @if($customersGrowth >= 0)
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"></path>
+                                @else
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 4.5l15 15m0 0V8.25m0 11.25H8.25"></path>
+                                @endif
+                            </svg>
+                        </div>
                     </div>
 
                     <!-- Rewards Redeemed -->
-                    <div
-                        class="bg-white rounded-2xl p-4 shadow-sm border border-[#e2e8f0] flex flex-col items-center text-center justify-center py-6 transition">
-                        <div class="flex justify-center items-center w-full space-x-3 mb-2">
-                            <div
-                                class="w-8 h-8 rounded-lg bg-emerald-50 text-[#16a34a] flex items-center justify-center shrink-0">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                    stroke-width="2.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7">
-                                    </path>
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-[#e2e8f0] flex flex-col justify-between transition">
+                        <div>
+                            <div class="w-8 h-8 rounded-lg bg-emerald-50 text-[#16a34a] flex items-center justify-center shrink-0 mb-3">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path>
                                 </svg>
                             </div>
-                            <span class="text-[11px] font-semibold text-[#64748b]">Rewards Redeemed</span>
+                            <div class="text-[11px] font-semibold text-[#64748b] mb-1">Rewards Redeemed</div>
+                            <div class="text-2xl font-black text-[#0f172a] leading-none mb-3">{{ number_format($rewardsRedeemed) }}</div>
                         </div>
-                        <div class="text-2xl font-black text-[#0f172a] leading-none mb-1.5">
-                            {{ number_format($rewardsRedeemed) }}</div>
-                        <div class="text-[10px] font-bold text-slate-500 text-center">{{ $pendingRewards > 0 ? number_format($pendingRewards).' waiting for approval' : ($redeemedThisMonth > 0 ? '+'.$redeemedThisMonth.' this month' : 'None this month') }}</div>
+                        <div class="text-[10px] font-bold {{ $rewardsGrowth >= 0 ? 'text-emerald-600' : 'text-red-600' }} flex items-center space-x-1">
+                            <span>{{ $rewardsGrowth > 0 ? '+' : '' }}{{ $rewardsGrowth }}%</span>
+                            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+                                @if($rewardsGrowth >= 0)
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"></path>
+                                @else
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 4.5l15 15m0 0V8.25m0 11.25H8.25"></path>
+                                @endif
+                            </svg>
+                        </div>
                     </div>
 
                     <!-- Repeat Rate -->
-                    <div
-                        class="bg-white rounded-2xl p-4 shadow-sm border border-[#e2e8f0] flex flex-col items-center text-center justify-center py-6 transition">
-                        <div class="flex justify-center items-center w-full space-x-3 mb-2">
-                            <div
-                                class="w-8 h-8 rounded-lg bg-orange-50 text-orange-500 flex items-center justify-center shrink-0">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                    stroke-width="2.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
-                                    </path>
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-[#e2e8f0] flex flex-col justify-between transition">
+                        <div>
+                            <div class="w-8 h-8 rounded-lg bg-orange-50 text-orange-500 flex items-center justify-center shrink-0 mb-3">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                                 </svg>
                             </div>
-                            <span class="text-[11px] font-semibold text-[#64748b]">Repeat Rate</span>
+                            <div class="text-[11px] font-semibold text-[#64748b] mb-1">Repeat Rate</div>
+                            <div class="text-2xl font-black text-[#0f172a] leading-none mb-3">{{ round($repeatRate) }}%</div>
                         </div>
-                        <div class="text-2xl font-black text-[#0f172a] leading-none mb-1.5">{{ round($repeatRate) }}%</div>
-                        <div class="text-[10px] font-bold text-slate-500 text-center">{{ number_format($repeatCustomers) }} returning {{ \Illuminate\Support\Str::plural('customer', $repeatCustomers) }}</div>
+                        <div class="text-[10px] font-bold {{ $repeatGrowth >= 0 ? 'text-emerald-600' : 'text-red-600' }} flex items-center space-x-1">
+                            <span>{{ $repeatGrowth > 0 ? '+' : '' }}{{ $repeatGrowth }}%</span>
+                            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+                                @if($repeatGrowth >= 0)
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"></path>
+                                @else
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 4.5l15 15m0 0V8.25m0 11.25H8.25"></path>
+                                @endif
+                            </svg>
+                        </div>
                     </div>
                 </div>
 
@@ -175,39 +189,49 @@
                                     </svg>
                                     <span>Download QR</span>
                                 </a>
-                                {{-- <button type="button" onclick="printQR()"
-                                    class="w-full bg-white hover:bg-slate-50 border border-[#fca5a5] text-[#b00000] font-bold py-2.5 rounded-xl transition flex justify-center items-center space-x-2 text-xs shadow-sm">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                        stroke-width="2.5">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
-                                        </path>
-                                    </svg>
-                                    <span>Print QR</span>
-                                </button> --}}
+                                <!-- Copy the link the QR points to, so it can be shared and opened without scanning -->
+                                <div x-data="{
+                                        url: @js($qrUrl),
+                                        copied: false,
+                                        async copy() {
+                                            try {
+                                                await navigator.clipboard.writeText(this.url);
+                                            } catch (e) {
+                                                // Clipboard API needs a secure page; fall back to a hidden textarea.
+                                                const t = document.createElement('textarea');
+                                                t.value = this.url;
+                                                t.setAttribute('readonly', '');
+                                                t.style.position = 'fixed';
+                                                t.style.opacity = '0';
+                                                document.body.appendChild(t);
+                                                t.select();
+                                                document.execCommand('copy');
+                                                t.remove();
+                                            }
+                                            this.copied = true;
+                                            clearTimeout(this.timer);
+                                            this.timer = setTimeout(() => this.copied = false, 4000);
+                                        }
+                                    }" class="relative">
+                                    <button type="button" @click="copy()"
+                                        class="w-full bg-white hover:bg-slate-50 border border-[#fca5a5] text-[#b00000] font-bold py-2.5 rounded-xl transition flex justify-center items-center space-x-2 text-xs shadow-sm">
+                                        <svg x-show="!copied" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                        </svg>
+                                        <svg x-show="copied" style="display: none" class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        <span x-text="copied ? 'Copied!' : 'Copy URL'">Copy URL</span>
+                                    </button>
+                                    <a x-show="copied" style="display: none" x-transition.opacity :href="url" target="_blank" rel="noopener"
+                                        class="mt-1.5 flex items-center justify-center gap-1 text-[10px] font-bold text-[#b00000] hover:underline">
+                                        <span>Open link</span>
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                    <script>
-                        function printQR() {
-                            const qrUrl =
-                                @json(\App\Http\Controllers\MerchantDashboardController::qrImageUrl(800));
-                            var printWindow = window.open('', '_blank');
-                            printWindow.document.write(`
-                                                                                            <html>
-                                                                                                <head>
-                                                                <link rel="icon" type="image/jpeg" href="{{ asset('favicon.jpg') }}">
-                                                                                                    <title>Print QR Code</title>
-                                                                                                    <style>
-                                                                                                        body { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: sans-serif; }
-                                                                                                        img { width: 400px; height: 400px; }
-                                                                                                        h2 { margin-top: 20px; font-size: 28px; font-weight: bold; text-align: center; }
-                                                                                                        p { margin-top: 10px; font-size: 18px; color: #555; text-align: center; }
-                                                                                                    </style>
-                                                                                                </head>
-                                                                                            </html>
-                    </script>
 
                     <!-- Pro Plan Banner -->
                     <div

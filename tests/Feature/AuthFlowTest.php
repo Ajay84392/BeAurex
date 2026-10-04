@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Http\Controllers\CustomerDashboardController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\OtpAuthController;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\RegisterRequest;
 use App\Mail\LoginOtpMail;
 use App\Models\Business;
 use App\Models\User;
@@ -12,6 +14,7 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class AuthFlowTest extends TestCase
@@ -19,6 +22,8 @@ class AuthFlowTest extends TestCase
     use DatabaseTransactions;
 
     private const PASSWORD = 'Pass@1234';
+
+    private const ADMIN = 'admin@beaurex.com';
 
     protected function setUp(): void
     {
@@ -74,9 +79,13 @@ class AuthFlowTest extends TestCase
             $response = $this->get($url)->assertOk()->assertSee('name="_token"', false);
             $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
         }
-        foreach (['/customer/login', '/merchant/login', '/admin'] as $url) {
-            $this->get($url)->assertSee('Email OTP')->assertSee('Forgot Password?');
+        // Customers and merchants: password only, with a link to create an account. Admins keep email-code login.
+        foreach (['customer', 'merchant'] as $role) {
+            $this->get("/$role/login")->assertSee($role === 'merchant' ? 'Create Business Account' : 'Create Customer Account')->assertSee('Forgot Password?')->assertDontSee('Email OTP');
+            $this->get("/$role/register")->assertSee('Sign In');
+            $this->post("/$role/login/otp", ['email' => 'same@example.com'])->assertNotFound();
         }
+        $this->get('/admin')->assertSee('Email OTP')->assertSee('Forgot Password?');
         $this->get('/customer/register')->assertSee('name="terms"', false);
     }
 
@@ -129,16 +138,34 @@ class AuthFlowTest extends TestCase
         $this->assertNotNull($user->fresh()->email_verified_at);
     }
 
-    public function test_duplicate_email_registration_is_sent_to_login(): void
+    public function test_duplicate_email_registration_is_refused_on_the_form(): void
     {
         $this->makeUser('customer', 'dup@example.com');
-        $this->post('/customer/register', $this->registration(['email' => 'dup@example.com']))
-            ->assertRedirect('/customer/login')->assertSessionHasErrors('email');
+        $this->from('/customer/register')->post('/customer/register', $this->registration(['email' => ' DUP@example.com']))
+            ->assertRedirect('/customer/register')->assertSessionHasErrors(['email' => RegisterRequest::EMAIL_TAKEN]);
         $this->assertSame(1, User::where('email', 'dup@example.com')->where('role', 'customer')->count());
 
         // The same email may still register for a different portal.
         $this->post('/merchant/register', $this->registration(['email' => 'dup@example.com', 'phone' => '9876543210']))
             ->assertRedirect(route('merchant.verify'));
+    }
+
+    public function test_merchant_cannot_register_a_taken_email_or_phone(): void
+    {
+        $this->makeUser('merchant', 'shop@example.com')->forceFill(['phone' => '+91 9876543210'])->save();
+
+        $this->from('/merchant/register')->post('/merchant/register', $this->registration(['email' => 'shop@example.com', 'phone' => '9000000001']))
+            ->assertRedirect('/merchant/register')->assertSessionHasErrors(['email' => RegisterRequest::EMAIL_TAKEN]);
+        $this->post('/merchant/register', $this->registration(['email' => 'other@example.com', 'phone' => '+91 98765 43210']))
+            ->assertSessionHasErrors(['phone' => RegisterRequest::PHONE_TAKEN]);
+        $this->assertDatabaseMissing('users', ['email' => 'other@example.com']);
+        $this->assertGuest();
+
+        // An unfinished (unverified) sign-up does not block anyone: it can be completed again.
+        $this->post('/merchant/register', $this->registration(['email' => 'half@example.com', 'phone' => '9000000002']))->assertRedirect(route('merchant.verify'));
+        $this->post('/merchant/logout');
+        $this->post('/merchant/register', $this->registration(['email' => 'half@example.com', 'phone' => '9000000002']))->assertRedirect(route('merchant.verify'));
+        $this->assertSame(1, User::where('email', 'half@example.com')->count());
     }
 
     // ── Login ────────────────────────────────────────────────────────────────
@@ -151,8 +178,8 @@ class AuthFlowTest extends TestCase
         $this->login('customer', 'bad-email')->assertSessionHasErrors(['email' => 'Please enter a valid email address.']);
 
         // Wrong password and unknown account give the exact same message.
-        $this->login('customer', 'same@example.com', 'Wrong@1234')->assertSessionHasErrors(['email' => \App\Http\Requests\Auth\LoginRequest::FAILED_MESSAGE]);
-        $this->login('customer', 'ghost@example.com')->assertSessionHasErrors(['email' => \App\Http\Requests\Auth\LoginRequest::FAILED_MESSAGE]);
+        $this->login('customer', 'same@example.com', 'Wrong@1234')->assertSessionHasErrors(['email' => LoginRequest::FAILED_MESSAGE]);
+        $this->login('customer', 'ghost@example.com')->assertSessionHasErrors(['email' => LoginRequest::FAILED_MESSAGE]);
         $this->assertGuest();
 
         // A sign-up that never got its email code is told how to get in (Email OTP / Forgot Password).
@@ -208,13 +235,31 @@ class AuthFlowTest extends TestCase
         $this->get('/admin/dashboard')->assertRedirect('/admin');
     }
 
+    public function test_only_the_configured_admin_email_can_sign_in(): void
+    {
+        $this->makeUser('admin', self::ADMIN, 'password');
+        $other = $this->makeUser('admin', 'old-admin@example.com', 'password');
+
+        // Another admin row, even with the right password, is refused everywhere: password, email code and reset.
+        $this->login('admin', 'old-admin@example.com', 'password')->assertSessionHasErrors(['email' => LoginRequest::FAILED_MESSAGE]);
+        $this->post('/admin/login/otp', ['email' => 'old-admin@example.com'])->assertSessionHas('status', OtpAuthController::CODE_SENT_MESSAGE);
+        $this->post('/forgot-password', ['email' => 'old-admin@example.com', 'role' => 'admin']);
+        Mail::assertNotSent(LoginOtpMail::class, fn ($m) => $m->hasTo('old-admin@example.com'));
+        $this->assertNull($other->fresh()->otp);
+        $this->assertGuest();
+
+        $this->login('admin', self::ADMIN, 'wrong')->assertSessionHasErrors(['email' => LoginRequest::FAILED_MESSAGE]);
+        $this->login('admin', ' Admin@BeAurex.com ', 'password')->assertRedirect('/admin/dashboard');
+        $this->get('/admin')->assertRedirect('/admin/dashboard');
+    }
+
     public function test_otp_login_works_and_does_not_reveal_unknown_emails(): void
     {
-        $this->makeUser('admin');
+        $this->makeUser('admin', self::ADMIN);
 
-        $known = $this->post('/admin/login/otp', ['email' => 'same@example.com']);
+        $known = $this->post('/admin/login/otp', ['email' => self::ADMIN]);
         $known->assertRedirect('/admin/verify-otp')->assertSessionHas('status', OtpAuthController::CODE_SENT_MESSAGE);
-        $this->post('/admin/verify-otp', ['otp' => $this->lastOtp('same@example.com')])->assertRedirect('/admin/dashboard');
+        $this->post('/admin/verify-otp', ['otp' => $this->lastOtp(self::ADMIN)])->assertRedirect('/admin/dashboard');
         $this->assertAuthenticated();
         $this->post('/admin/logout');
 
@@ -226,10 +271,10 @@ class AuthFlowTest extends TestCase
 
     public function test_otp_is_single_use_and_locks_after_five_wrong_guesses(): void
     {
-        $user = $this->makeUser('customer');
+        $user = $this->makeUser('admin', self::ADMIN);
 
-        $this->post('/customer/login/otp', ['email' => 'same@example.com']);
-        $code = $this->lastOtp('same@example.com');
+        $this->post('/admin/login/otp', ['email' => self::ADMIN]);
+        $code = $this->lastOtp(self::ADMIN);
         $wrong = $code === '1111' ? '2222' : '1111';
 
         for ($i = 0; $i < 5; $i++) {
@@ -333,8 +378,9 @@ class AuthFlowTest extends TestCase
     public function test_logout_is_post_only_and_ends_the_session(): void
     {
         foreach (['customer' => ['/customer/profile', '/customer/logout', '/customer'], 'merchant' => ['/merchant/profile', '/merchant/logout', '/merchant'], 'admin' => ['/admin/profile', '/admin/logout', '/admin/dashboard']] as $role => [$profile, $logout, $home]) {
-            $this->makeUser($role);
-            $this->login($role);
+            $email = $role === 'admin' ? self::ADMIN : 'same@example.com';
+            $this->makeUser($role, $email);
+            $this->login($role, $email);
 
             $page = $this->get($profile)->assertOk()->assertSee('Log Out?');
             $this->assertStringContainsString('no-store', $page->headers->get('Cache-Control'));
@@ -363,13 +409,27 @@ class AuthFlowTest extends TestCase
 
         $this->get('/customer/login')->assertRedirect(route('customer.home'));
         $this->get('/customer/register')->assertRedirect(route('customer.home'));
+        $this->post('/customer/register', $this->registration())->assertRedirect(route('customer.home'));
+        $this->post('/customer/login', ['email' => 'same@example.com', 'password' => self::PASSWORD])->assertRedirect(route('customer.home'));
         $this->get('/merchant/register')->assertOk();
+        $this->post('/customer/logout');
+
+        $this->makeUser('merchant', 'shop@example.com');
+        $this->login('merchant', 'shop@example.com');
+        foreach (['/merchant/login', '/merchant/register'] as $page) {
+            $this->get($page)->assertRedirect(route('merchant.dashboard'));
+        }
+        $this->post('/merchant/logout');
+
+        $this->makeUser('admin', self::ADMIN);
+        $this->login('admin', self::ADMIN);
+        $this->get('/admin')->assertRedirect('/admin/dashboard');
     }
 
     public function test_expired_form_goes_back_with_friendly_message(): void
     {
         // CSRF checks are skipped in tests, so simulate the 419 an expired token produces.
-        \Illuminate\Support\Facades\Route::post('/_test-expired', fn () => abort(419))->middleware('web');
+        Route::post('/_test-expired', fn () => abort(419))->middleware('web');
 
         $this->from('/customer/login')->post('/_test-expired', ['email' => 'keep@example.com', 'password' => 'secret'])
             ->assertRedirect('/customer/login')
@@ -405,8 +465,8 @@ class AuthFlowTest extends TestCase
         $this->post('/merchant/profile', ['pincode' => '12ab'])->assertSessionHasErrors('pincode');
         $this->post('/merchant/logout');
 
-        $admin = $this->makeUser('admin', 'a@example.com');
-        $this->login('admin', 'a@example.com');
+        $admin = $this->makeUser('admin', self::ADMIN);
+        $this->login('admin', self::ADMIN);
         $this->post('/admin/profile', ['phone' => '9000000001'])->assertSessionHasNoErrors();
         $this->assertSame('+91 9000000001', $admin->fresh()->phone);
     }
@@ -428,5 +488,20 @@ class AuthFlowTest extends TestCase
         $this->travel(CustomerDashboardController::COLLECT_COOLDOWN_MINUTES + 1)->minutes();
         $this->get($collectUrl)->assertSee('Coin Collected!');
         $this->assertDatabaseCount('customer_visits', 2);
+    }
+
+    public function test_merchant_opening_own_qr_link_sees_their_qr(): void
+    {
+        $merchant = $this->makeUser('merchant', 'shop@example.com');
+        $business = Business::create(['user_id' => $merchant->id, 'name' => 'Ka-feen Cafe', 'email' => 'shop@example.com']);
+        $other = Business::create(['user_id' => $this->makeUser('merchant', 'other@example.com')->id, 'name' => 'Other Shop', 'email' => 'other@example.com']);
+        $this->login('merchant', 'shop@example.com');
+
+        $this->get(route('customer.collect', $business))->assertRedirect(route('merchant.qr'));
+        $this->get(route('merchant.qr'))->assertOk()->assertSee('Ka-feen Cafe')->assertSee(route('customer.collect', $business));
+        $this->assertDatabaseCount('customer_visits', 0);
+
+        // Someone else's QR still asks for a customer login.
+        $this->get(route('customer.collect', $other))->assertRedirect('/customer/login');
     }
 }
